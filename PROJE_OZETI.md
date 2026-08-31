@@ -38,6 +38,7 @@ Temel sonuçlar:
 20. `Yok sayılan hesaplar` cihazda ve Instagram sahibi hesap bazında saklanır. Yok sayma ham snapshot takipçi/takip edilen sayılarını değiştirmez; yalnız analiz listelerini filtreler.
 21. Test sürümleri production paketinden ayrılmış `.dev` paket kimliği kullanır. Sabit device-test imzası sayesinde ilk `.dev` kurulumundan sonraki test APK'ları kaldırmadan güncellenebilir. Production signing bundan tamamen ayrı kurulacaktır.
 22. Android launcher için seçilen koyu takip-analiz uygulama simgesi uygulanmıştır.
+23. Gerçek Android cihazda `TabBarView` içindeki analiz gövdesinin görünmez kalması nedeniyle sonuç ekranı artık `TabBarView/PageView` kullanmaz. Sekme başlığı `TabBar` ile korunur, gövdede yalnız seçili sekmenin `_UserList` bileşeni render edilir.
 
 ## Önemli ürün riskleri
 
@@ -121,7 +122,8 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Flutter 3.47.2 resmi Android platform wrapper.
 - [x] Android debug APK build doğrulaması.
 - [x] Fiziksel Android cihazda gerçek Meta export ZIP testi.
-- [x] Sayılar görünürken kullanıcı satırlarının boş kaldığı liste render bug'ı için sliver tabanlı düzeltme ve regression testi.
+- [x] Android'de analiz gövdesinin boş kalmasına neden olan `TabBarView` kaldırıldı; seçili sekme tek gövdede render ediliyor.
+- [x] 360x800 telefon viewport regression testi; açıklama, arama alanı, kullanıcı satırları ve sekme değişimi doğrulanıyor.
 
 ### MVP 2 — geçmiş ve değişim analizi
 - [x] Drift/SQLite şeması.
@@ -171,20 +173,21 @@ CI:
 - PR #11 tema/monogram başarılı ve `main`e alındı.
 - PR #12 Instagram export rehberi başarılı ve `main`e alındı.
 - PR #14 güncel Meta `following.json` parser düzeltmesi başarılı ve `main`e alındı.
-- PR #15 tema sadeleştirme + liste render düzeltmesi + yok sayılan hesaplar + launcher simgesi başarılı ve `main`e alındı.
-- PR #15 son App CI: `flutter pub get` ✅, `flutter analyze` ✅, tüm Flutter testleri ✅.
+- PR #15 tema sadeleştirme + ilk liste render düzeltmesi + yok sayılan hesaplar + launcher simgesi başarılı ve `main`e alındı.
+- PR #16 Android analiz gövdesi düzeltmesi başarılı ve `main`e alındı.
+- PR #16 App CI: `flutter pub get` ✅, `flutter analyze` ✅, tüm Flutter testleri ✅; 360x800 telefon viewport ve sekme değiştirme regression testi dahil.
 - Flutter 3.47.2 Android wrapper üretimi başarılı.
 - Drift code generation ve database/history/retention testleri başarılı.
 - Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
 - Gerçek `Her zaman` Meta exportunda 569 follower başarıyla okundu.
 - Aynı exportun `following.json` dosyasında 1053 benzersiz takip edilen kayıt doğrulandı ve uygulama 1053 okudu.
-- Device Test APK run #4 tamamen başarılı: dependency, analyze, test, stable test signing, debug APK build ve GitHub prerelease yayınlama adımlarının tamamı geçti.
-- Güncel prerelease etiketi: `device-test-stable-signing-4`.
-- Güncel test APK SHA-256: `b4eaba73141f06b8161aee169073b95379b46617eb68858d409ff9877ee8ee66`.
+- Device Test APK run #5 tamamen başarılı: dependency, analyze, test, stable test signing, debug APK build ve GitHub prerelease yayınlama adımlarının tamamı geçti.
+- Güncel prerelease etiketi: `device-test-stable-signing-5`.
+- Güncel test APK SHA-256: `84c53cba83d635ecb558dbb47ee55dd6a9b97f888c2f322af06048ac06a4ebba`.
 
 ## Açık problemler / riskler
 
-1. Güncel PR #15 build'i fiziksel cihazda tekrar kontrol edilmelidir: özellikle 792+ hesaplı listede kullanıcı satırlarının görünmesi ve `Yok say` davranışı.
+1. `device-test-stable-signing-5` fiziksel cihazda gerçek 569/1053 export ile kontrol edilmelidir; kullanıcı listesi ve arama alanının görünmesi doğrulanmadan cihaz bug'ı kapatılmış sayılmayacaktır.
 2. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır. Device-test imzası production için kesinlikle kullanılmayacaktır.
 3. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
 4. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
@@ -192,8 +195,8 @@ CI:
 
 ## Sıradaki işler
 
-1. `device-test-stable-signing-4` APK'yı fiziksel Android cihazda kurup gerçek `Her zaman` ZIP ile kontrol etmek.
-2. Kullanıcı listelerinin görünmesini ve `Yok say` / geri alma / yönetim ekranını doğrulamak.
-3. Yeni `.dev` test sürümünden sonra bir sonraki APK'nın kaldırmadan güncelleme olduğunu doğrulamak.
+1. `device-test-stable-signing-5` APK'yı mevcut `.dev` uygulamanın üzerine güncelleme olarak kurmak.
+2. Gerçek `Her zaman` ZIP ile kullanıcı listelerinin, arama/sıralamanın ve `Yok say` işleminin görünmesini doğrulamak.
+3. Güncellemenin uygulamayı kaldırmadan kurulduğunu doğrulamak.
 4. Production release signing ve güvenli secret düzenini kurmak.
 5. Ardından X resmi arşiv importer'ına geçmek.
