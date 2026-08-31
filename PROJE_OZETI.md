@@ -27,6 +27,7 @@ Temel sonuçlar:
 9. Instagram ZIP ilk MVP'de diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır. Kullanıcıya Meta'dan yalnız “Followers and following” verisini dışa aktarması önerilir. Daha büyük arşiv ihtiyacı doğrulanırsa streaming importer'a geçilir.
 10. Instagram JSON ve HTML ilişki exportları aynı ortak modele çevrilir; HTML parser CSS sınıflarına değil profil URL'lerine dayanır.
 11. Flutter sunum katmanı import veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase`, ZIP importundan snapshot ve analiz sonucuna kadar tüm akışı tek noktada yürütür.
+12. İlk Flutter uygulama katmanı Flutter 3.47.2 hedefiyle geliştirilir. State management Riverpod, routing go_router, Android sistem dosya seçimi file_picker üzerinden yapılır.
 
 ## Önemli ürün riski
 
@@ -46,7 +47,7 @@ Sonuç: Canlı X senkronizasyonu MVP şartı değildir. Önce resmi X arşiv imp
 - domain: SocialAccount, SocialUser, FollowSnapshot, FollowAnalysis ve analiz kuralları.
 - data: Instagram/X importer, local database, secure storage, opsiyonel API servisleri.
 
-### İlk çekirdek
+### Çekirdek
 `packages/follow_core`
 - saf Dart
 - platform bağımsız analiz motoru
@@ -56,78 +57,35 @@ Sonuç: Canlı X senkronizasyonu MVP şartı değildir. Önce resmi X arşiv imp
 - Instagram ZIP -> snapshot -> analiz use-case'i
 - unit testler
 
-### Sonraki mobil yapı
-Önerilen Flutter klasörleri:
+### Mobil uygulama
+`apps/mobile`
+- Flutter sunum katmanı
+- Riverpod import state'i
+- go_router navigasyonu
+- sistem ZIP dosya seçici
+- Instagram ana kartı
+- Takip Etmeyenler / Karşılıklı / Seni Takip Edenler sonuç ekranı
+- X için pasif “Yakında” kartı
 
-lib/
-  app/
-    router/
-    theme/
-  core/
-    error/
-    utils/
-  features/
-    dashboard/
-    instagram_import/
-    analysis/
-    history/
-    settings/
-  data/
-    local/
-    secure_storage/
-
-## Ortak veri modelleri
-
-### SocialPlatform
-- instagram
-- x
-
-### SocialAccount
-- platform
-- accountId
-- username
-- displayName
-
-### SocialUser
-- platform
-- platformUserId (varsa)
-- username
-- displayName (varsa)
-- profileUrl (varsa)
-- identityKey
-
-### FollowSnapshot
-- account
-- capturedAt
-- followers
-- following
-- sourceType (archive/api)
-- sourceVersion/format bilgisi
-
-### FollowAnalysis
-- mutual
-- nonFollowers
-- fans
-- unfollowers
-- newFollowers
-- newFollowing
-- noLongerFollowing
+Not: Flutter/Dart kaynak uygulama kabuğu repodadır. Android'in Flutter tarafından üretilen `android/` platform wrapper dosyaları ayrı adımda Flutter 3.47.2 ile oluşturulacaktır; eski Gradle şablonları elle kopyalanmayacaktır.
 
 ## MVP sırası
 
-### MVP 1 — Instagram çekirdeği
+### MVP 1 — Instagram
 - [x] Ortak analiz modeli tasarımı.
 - [x] Set tabanlı analiz motoru.
 - [x] Instagram JSON ilişki parser'ı.
-- [x] ZIP dosyasını doğrulama ve güvenli bellek limitleri.
+- [x] ZIP doğrulama ve güvenli bellek limitleri.
 - [x] Export dosya yollarını otomatik keşfetme.
 - [x] Çok parçalı followers dosyalarını birleştirme.
 - [x] HTML export desteği.
 - [x] Temel ve güvenlik unit testleri.
-- [x] Import sonucunu `FollowSnapshot` ve `FollowAnalysisEngine`e bağlayan use-case.
-- [ ] Flutter Android kabuğu.
-- [ ] Android dosya seçici.
-- [ ] Sonuç listeleri.
+- [x] Import -> `FollowSnapshot` -> `FollowAnalysisEngine` use-case'i.
+- [x] Flutter uygulama kaynak kabuğu.
+- [x] Sistem ZIP dosya seçici entegrasyon kodu.
+- [x] İlk üç analiz sonuç listesi.
+- [ ] Android platform wrapper (`flutter create --platforms=android`).
+- [ ] Gerçek cihazda dosya seçme ve analiz testi.
 - [ ] Local snapshot kaydı.
 
 ### MVP 2 — geçmiş
@@ -154,32 +112,33 @@ Branch düzeni:
 - PR olmadan main'e özellik kodu taşınmaz.
 
 CI:
-- Sadece PR ve main core değişikliklerinde.
-- `dart analyze` + `dart test`.
+- `Core CI`: yalnız `packages/follow_core/**` değişikliklerinde `dart analyze` + `dart test`.
+- `App CI`: yalnız `apps/mobile/**` değişikliklerinde Flutter 3.47.2 ile `flutter analyze` + `flutter test`.
+- İki workflow da aynı branch'teki eski run'ı iptal eder.
 - Artifact upload yok.
-- `concurrency.cancel-in-progress: true` ile aynı branch'teki eski run iptal edilir.
 - Doküman-only değişikliklerde workflow çalışmaz.
 - Release APK/AAB ayrı, manuel veya tag tabanlı workflow olacaktır.
 
 ## Açık problemler
 
-1. Meta export dosya yapısı zamanla değişebilir. Parser'lar dosya yolu ve markup konusunda toleranslı tutulmalı ve gerçek export fixture'larıyla korunmalıdır.
+1. Meta export dosya yapısı zamanla değişebilir. Parser'lar gerçek ve anonimleştirilmiş export fixture'larıyla korunmalıdır.
 2. Kullanıcı adı değişiklikleri archive-only kimlik eşlemesini bozabilir.
 3. 128 MiB bellek içi ZIP limiti, kullanıcının tüm Instagram arşivini seçmesi durumunda yetersiz olabilir. MVP kullanıcıyı yalnız takip verisini export etmeye yönlendirecek; ihtiyaç oluşursa streaming dosya okuma eklenecek.
-4. Gerçek kullanıcı export örnekleriyle uyumluluk testi yapılmalıdır; fixture'larda kişisel veri repoya eklenmemelidir.
+4. Flutter kaynak kabuğu hazır olsa da Android platform wrapper oluşturulmadan APK üretilemez.
 
 ## Son durum
 
-- Analiz motoru `main` üzerinde stabil.
-- Instagram JSON ve HTML ZIP importer'ları `main` üzerinde stabil.
-- ZIP imza doğrulaması, boyut limitleri, unsafe path koruması ve multipart discovery mevcut.
-- ZIP -> import -> `FollowSnapshot` -> `FollowAnalysis` uçtan uca use-case'i eklendi.
-- Sunucu veya API anahtarı gerektiren bir Instagram bileşeni yoktur.
+- Instagram analiz çekirdeği `main` üzerinde stabil ve testli.
+- JSON + HTML resmi export ZIP desteği mevcut.
+- ZIP -> snapshot -> analiz uçtan uca use-case'i mevcut.
+- Flutter ana ekranı, ZIP seçme akışı ve ilk sonuç ekranı kaynak kod olarak eklendi.
+- App CI Flutter 3.47.2'ye sabitlendi; artifact üretmez.
+- Instagram tarafında sunucu, API anahtarı, şifre veya scraping yoktur.
 
 ## Sıradaki işler
 
-1. Flutter Android uygulama kabuğunu oluşturmak.
-2. Android dosya seçiciden ZIP bytes/path alıp `InstagramFollowAnalysisUseCase`e bağlamak.
-3. “Takip Etmeyenler / Karşılıklı / Seni Takip Edenler” sonuç ekranlarını yapmak.
-4. Gerçek ve anonimleştirilmiş Meta export fixture'larıyla uyumluluğu genişletmek.
-5. Drift tabanlı local snapshot kaydını eklemek.
+1. App CI sonucunu doğrulamak ve Flutter kaynak kabuğunu `main`e almak.
+2. Flutter 3.47.2 ile Android platform wrapper oluşturmak.
+3. Gerçek Android cihazda Meta ZIP seçme ve sonuç doğrulaması yapmak.
+4. Drift tabanlı local snapshot kaydını eklemek.
+5. Snapshot geçmiş ekranlarını eklemek.
