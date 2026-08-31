@@ -2,16 +2,16 @@ name: Bootstrap Android
 
 on:
   push:
-    branches: [feat/android-platform-wrapper]
+    branches:
+      - feat/android-platform-wrapper
     paths:
-      - '.github/workflows/bootstrap-android.yml'
+      - .github/workflows/bootstrap-android.yml
 
 permissions:
   contents: write
 
 jobs:
   bootstrap:
-    if: startsWith(github.event.head_commit.message, 'chore: bootstrap Android platform')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
