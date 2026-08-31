@@ -24,6 +24,8 @@ Temel sonuçlar:
 6. Varsayılan veri yaklaşımı local-first'tür. Sunucu zorunlu değilse sosyal grafik verisi sunucuya gönderilmez.
 7. Analiz motoru platform bağımsız saf Dart çekirdeği olarak ayrılır.
 8. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si kimlik anahtarıdır; ID yoksa normalize edilmiş kullanıcı adı kullanılır.
+9. Instagram ZIP ilk MVP'de diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır. Kullanıcıya Meta'dan yalnız “Followers and following” verisini dışa aktarması önerilir. Daha büyük arşiv ihtiyacı doğrulanırsa streaming importer'a geçilir.
+10. Instagram JSON ve HTML ilişki exportları aynı ortak modele çevrilir; HTML parser CSS sınıflarına değil profil URL'lerine dayanır.
 
 ## Önemli ürün riski
 
@@ -46,9 +48,10 @@ Sonuç: Canlı X senkronizasyonu MVP şartı değildir. Önce resmi X arşiv imp
 ### İlk çekirdek
 `packages/follow_core`
 - saf Dart
-- platform bağımsız
-- analiz motoru
+- platform bağımsız analiz motoru
 - Instagram JSON ilişki parser'ı
+- Instagram HTML ilişki parser'ı
+- Instagram ZIP keşif/doğrulama importer'ı
 - unit testler
 
 ### Sonraki mobil yapı
@@ -76,7 +79,6 @@ lib/
 ### SocialPlatform
 - instagram
 - x
-- future/other ileride eklenebilir
 
 ### SocialAccount
 - platform
@@ -113,13 +115,17 @@ lib/
 
 ### MVP 1 — Instagram çekirdeği
 - [x] Ortak analiz modeli tasarımı.
-- [x] Set tabanlı analiz motoru başlangıcı.
-- [x] Instagram JSON ilişki parser'ı başlangıcı.
-- [x] Temel unit test senaryoları.
-- [ ] ZIP dosyası seçme ve güvenli açma.
-- [ ] Export dosya yollarını otomatik keşfetme.
-- [ ] HTML export desteği.
-- [ ] Flutter sonuç ekranı.
+- [x] Set tabanlı analiz motoru.
+- [x] Instagram JSON ilişki parser'ı.
+- [x] ZIP dosyasını doğrulama ve güvenli bellek limitleri.
+- [x] Export dosya yollarını otomatik keşfetme.
+- [x] Çok parçalı followers dosyalarını birleştirme.
+- [x] HTML export desteği.
+- [x] Temel ve güvenlik unit testleri.
+- [ ] Flutter Android kabuğu.
+- [ ] Android dosya seçici.
+- [ ] Import sonucunu analiz motoruna bağlayan use-case.
+- [ ] Sonuç listeleri.
 - [ ] Local snapshot kaydı.
 
 ### MVP 2 — geçmiş
@@ -146,8 +152,8 @@ Branch düzeni:
 - PR olmadan main'e özellik kodu taşınmaz.
 
 CI:
-- Sadece PR ve main değişikliklerinde.
-- İlk etapta yalnız core unit test.
+- Sadece PR ve main core değişikliklerinde.
+- `dart analyze` + `dart test`.
 - Artifact upload yok.
 - `concurrency.cancel-in-progress: true` ile aynı branch'teki eski run iptal edilir.
 - Doküman-only değişikliklerde workflow çalışmaz.
@@ -155,20 +161,24 @@ CI:
 
 ## Açık problemler
 
-1. Instagram export formatları zamanla değişebilir. Importer path ve JSON shape açısından toleranslı, fixture testleriyle korunmuş olmalıdır.
+1. Meta export dosya yapısı zamanla değişebilir. Parser'lar dosya yolu ve markup konusunda toleranslı tutulmalı ve gerçek export fixture'larıyla korunmalıdır.
 2. Kullanıcı adı değişiklikleri archive-only kimlik eşlemesini bozabilir.
+3. 128 MiB bellek içi ZIP limiti, kullanıcının tüm Instagram arşivini seçmesi durumunda yetersiz olabilir. MVP kullanıcıyı yalnız takip verisini export etmeye yönlendirecek; ihtiyaç oluşursa streaming dosya okuma eklenecek.
+4. Gerçek kullanıcı export örnekleriyle uyumluluk testi yapılmalıdır; fixture'larda kişisel veri repoya eklenmemelidir.
 
 ## Son durum
 
-- `feat/core-analysis-engine` PR #1 CI başarıyla geçti.
-- `dart analyze` ve `dart test` GitHub Actions üzerinde başarılı.
-- PR #1 squash merge ile `main`e alındı.
-- İlk analiz çekirdeği `main` üzerinde stabil durumda.
+- Analiz motoru `main` üzerinde stabil.
+- Instagram JSON ZIP importer'ı `main` üzerinde stabil.
+- ZIP imza doğrulaması, boyut limitleri, unsafe path koruması ve multipart discovery mevcut.
+- HTML import desteği çekirdeğe eklenmiştir.
+- Sunucu veya API anahtarı gerektiren bir Instagram bileşeni yoktur.
 
 ## Sıradaki işler
 
-1. Instagram ZIP dosyası seçme + güvenli açma + export dosya keşfi.
-2. Instagram gerçek export örnekleriyle parser fixture testlerinin genişletilmesi.
-3. HTML export desteği.
-4. Flutter Android kabuğunun oluşturulması ve import akışının bağlanması.
-5. Drift tabanlı local snapshot kaydının eklenmesi.
+1. Flutter Android uygulama kabuğunu oluşturmak.
+2. Android dosya seçiciden ZIP bytes/path alıp `InstagramArchiveImporter`a bağlamak.
+3. Import sonucundan `FollowSnapshot` üretip `FollowAnalysisEngine` çalıştırmak.
+4. “Takip Etmeyenler / Karşılıklı / Seni Takip Edenler” sonuç ekranlarını yapmak.
+5. Gerçek ve anonimleştirilmiş Meta export fixture'larıyla uyumluluğu genişletmek.
+6. Drift tabanlı local snapshot kaydını eklemek.

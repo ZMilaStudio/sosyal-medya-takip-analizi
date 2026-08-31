@@ -27,6 +27,13 @@ void main() {
 ]
 ''';
 
+  String relationHtml(String username) => '''
+<!doctype html>
+<html><body>
+  <a target="_blank" href="https://www.instagram.com/$username/">$username</a>
+</body></html>
+''';
+
   test('discovers and merges multipart follower JSON files', () {
     final bytes = zip({
       'connections/followers_and_following/followers_1.json':
@@ -62,10 +69,37 @@ void main() {
     ]);
   });
 
+  test('imports HTML-only relationship export', () {
+    final bytes = zip({
+      'connections/followers_and_following/followers_1.html':
+          relationHtml('alice'),
+      'connections/followers_and_following/followers_2.html':
+          relationHtml('bob'),
+      'connections/followers_and_following/following.html':
+          relationHtml('alice'),
+    });
+
+    final result = importer.importBytes(bytes);
+    expect(result.followers.map((u) => u.username).toSet(), {'alice', 'bob'});
+    expect(result.following.map((u) => u.username).toSet(), {'alice'});
+  });
+
+  test('supports mixed JSON and HTML relationship files', () {
+    final bytes = zip({
+      'followers_1.json': relationJson('alice'),
+      'followers_2.html': relationHtml('bob'),
+      'following.html': relationHtml('alice'),
+    });
+
+    final result = importer.importBytes(bytes);
+    expect(result.followers.map((u) => u.username).toSet(), {'alice', 'bob'});
+    expect(result.following.map((u) => u.username).toSet(), {'alice'});
+  });
+
   test('deduplicates users across follower parts', () {
     final bytes = zip({
       'followers_1.json': relationJson('Alice'),
-      'followers_2.json': relationJson('alice'),
+      'followers_2.html': relationHtml('alice'),
       'following.json': relationJson('alice'),
     });
 
@@ -73,7 +107,7 @@ void main() {
     expect(result.followers.length, 1);
   });
 
-  test('reports missing following JSON', () {
+  test('reports missing following relationship file', () {
     final bytes = zip({
       'followers_1.json': relationJson('alice'),
     });
@@ -85,24 +119,6 @@ void main() {
           (error) => error.code,
           'code',
           InstagramArchiveImportError.followingFileMissing,
-        ),
-      ),
-    );
-  });
-
-  test('detects HTML-only export as unsupported for current MVP', () {
-    final bytes = zip({
-      'connections/followers_and_following/followers_1.html': '<html></html>',
-      'connections/followers_and_following/following.html': '<html></html>',
-    });
-
-    expect(
-      () => importer.importBytes(bytes),
-      throwsA(
-        isA<InstagramArchiveImportException>().having(
-          (error) => error.code,
-          'code',
-          InstagramArchiveImportError.htmlExportNotSupported,
         ),
       ),
     );
