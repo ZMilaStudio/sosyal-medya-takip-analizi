@@ -5,9 +5,9 @@ import '../../models/social_user.dart';
 
 /// Parses Instagram relationship JSON files from Meta's official data export.
 ///
-/// Export shapes have changed over time. This parser intentionally accepts
-/// both top-level arrays and wrapper maps (for example relationships_following)
-/// and extracts entries containing string_list_data/value records.
+/// Export shapes have changed over time. Followers commonly store the username
+/// in `string_list_data[].value`, while newer following exports can store the
+/// username in the parent relationship object's `title` field instead.
 class InstagramRelationshipParser {
   const InstagramRelationshipParser();
 
@@ -27,22 +27,29 @@ class InstagramRelationshipParser {
 
       final map = Map<String, Object?>.from(node);
       final stringListData = map['string_list_data'];
+      final parentTitle = map['title']?.toString().trim();
 
       if (stringListData is List) {
         for (final raw in stringListData) {
           if (raw is! Map) continue;
           final item = Map<String, Object?>.from(raw);
           final value = item['value']?.toString().trim();
-          if (value == null || value.isEmpty) continue;
-
           final hrefText = item['href']?.toString().trim();
+
+          final username = _firstNonEmpty([
+            value,
+            parentTitle,
+            _usernameFromInstagramHref(hrefText),
+          ]);
+          if (username == null) continue;
+
           final href = hrefText == null || hrefText.isEmpty
               ? null
               : Uri.tryParse(hrefText);
 
           final user = SocialUser(
             platform: SocialPlatform.instagram,
-            username: value,
+            username: username,
             profileUrl: href,
           );
           users[user.identityKey] = user;
@@ -57,5 +64,26 @@ class InstagramRelationshipParser {
 
     walk(decoded);
     return List.unmodifiable(users.values);
+  }
+
+  static String? _firstNonEmpty(Iterable<String?> values) {
+    for (final value in values) {
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  static String? _usernameFromInstagramHref(String? hrefText) {
+    if (hrefText == null || hrefText.isEmpty) return null;
+
+    final uri = Uri.tryParse(hrefText);
+    if (uri == null) return null;
+
+    final host = uri.host.toLowerCase();
+    if (host != 'instagram.com' && host != 'www.instagram.com') return null;
+
+    final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
+    if (segments.isEmpty) return null;
+    return segments.first.trim();
   }
 }
