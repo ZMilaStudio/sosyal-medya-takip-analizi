@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/theme/app_theme.dart';
+import '../../../core/presentation/monogram_avatar.dart';
 import '../../../data/local/follow_history_database.dart';
 import '../../../data/local/follow_history_provider.dart';
 
@@ -95,19 +97,53 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
         onTap: onTap,
-        leading: const CircleAvatar(
-          child: Icon(Icons.camera_alt_outlined),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              MonogramAvatar(username: item.account.username, size: 44),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '@${item.account.username}',
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(item.capturedAt),
+                      style: const TextStyle(color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${item.followersCount} takipçi • ${item.followingCount} takip edilen',
+                      style: const TextStyle(color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
         ),
-        title: Text('@${item.account.username}'),
-        subtitle: Text(
-          '${_formatDate(item.capturedAt)}\n'
-          '${item.followersCount} takipçi • ${item.followingCount} takip edilen',
-        ),
-        isThreeLine: true,
-        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }
@@ -118,23 +154,26 @@ class _RetentionInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.storage_outlined),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Cihazda her hesap için son '
-                '${FollowHistoryDatabase.defaultSnapshotRetention} analiz saklanır. '
-                'En eski kayıtlar otomatik temizlenir.',
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.softPurple,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.storage_outlined, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Cihazda her hesap için son '
+              '${FollowHistoryDatabase.defaultSnapshotRetention} analiz saklanır. '
+              'En eski kayıtlar otomatik temizlenir.',
+              style: const TextStyle(color: AppColors.primaryDark),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -151,16 +190,31 @@ class _EmptyHistory extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.history, size: 46),
-            const SizedBox(height: 12),
+            Container(
+              width: 62,
+              height: 62,
+              decoration: const BoxDecoration(
+                color: AppColors.softPurple,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.history_rounded,
+                color: AppColors.primary,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 14),
             Text(
               'Henüz kayıtlı analiz yok.',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
             const SizedBox(height: 6),
             const Text(
               'İlk Instagram ZIP analizinden sonra geçmiş burada görünür.',
               textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
             ),
           ],
         ),
