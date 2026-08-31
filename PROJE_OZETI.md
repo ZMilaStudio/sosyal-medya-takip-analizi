@@ -26,6 +26,7 @@ Temel sonuçlar:
 8. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si kimlik anahtarıdır; ID yoksa normalize edilmiş kullanıcı adı kullanılır.
 9. Instagram ZIP ilk MVP'de diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır. Kullanıcıya Meta'dan yalnız “Followers and following” verisini dışa aktarması önerilir. Daha büyük arşiv ihtiyacı doğrulanırsa streaming importer'a geçilir.
 10. Instagram JSON ve HTML ilişki exportları aynı ortak modele çevrilir; HTML parser CSS sınıflarına değil profil URL'lerine dayanır.
+11. Flutter sunum katmanı import veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase`, ZIP importundan snapshot ve analiz sonucuna kadar tüm akışı tek noktada yürütür.
 
 ## Önemli ürün riski
 
@@ -52,6 +53,7 @@ Sonuç: Canlı X senkronizasyonu MVP şartı değildir. Önce resmi X arşiv imp
 - Instagram JSON ilişki parser'ı
 - Instagram HTML ilişki parser'ı
 - Instagram ZIP keşif/doğrulama importer'ı
+- Instagram ZIP -> snapshot -> analiz use-case'i
 - unit testler
 
 ### Sonraki mobil yapı
@@ -122,9 +124,9 @@ lib/
 - [x] Çok parçalı followers dosyalarını birleştirme.
 - [x] HTML export desteği.
 - [x] Temel ve güvenlik unit testleri.
+- [x] Import sonucunu `FollowSnapshot` ve `FollowAnalysisEngine`e bağlayan use-case.
 - [ ] Flutter Android kabuğu.
 - [ ] Android dosya seçici.
-- [ ] Import sonucunu analiz motoruna bağlayan use-case.
 - [ ] Sonuç listeleri.
 - [ ] Local snapshot kaydı.
 
@@ -169,16 +171,15 @@ CI:
 ## Son durum
 
 - Analiz motoru `main` üzerinde stabil.
-- Instagram JSON ZIP importer'ı `main` üzerinde stabil.
+- Instagram JSON ve HTML ZIP importer'ları `main` üzerinde stabil.
 - ZIP imza doğrulaması, boyut limitleri, unsafe path koruması ve multipart discovery mevcut.
-- HTML import desteği çekirdeğe eklenmiştir.
+- ZIP -> import -> `FollowSnapshot` -> `FollowAnalysis` uçtan uca use-case'i eklendi.
 - Sunucu veya API anahtarı gerektiren bir Instagram bileşeni yoktur.
 
 ## Sıradaki işler
 
 1. Flutter Android uygulama kabuğunu oluşturmak.
-2. Android dosya seçiciden ZIP bytes/path alıp `InstagramArchiveImporter`a bağlamak.
-3. Import sonucundan `FollowSnapshot` üretip `FollowAnalysisEngine` çalıştırmak.
-4. “Takip Etmeyenler / Karşılıklı / Seni Takip Edenler” sonuç ekranlarını yapmak.
-5. Gerçek ve anonimleştirilmiş Meta export fixture'larıyla uyumluluğu genişletmek.
-6. Drift tabanlı local snapshot kaydını eklemek.
+2. Android dosya seçiciden ZIP bytes/path alıp `InstagramFollowAnalysisUseCase`e bağlamak.
+3. “Takip Etmeyenler / Karşılıklı / Seni Takip Edenler” sonuç ekranlarını yapmak.
+4. Gerçek ve anonimleştirilmiş Meta export fixture'larıyla uyumluluğu genişletmek.
+5. Drift tabanlı local snapshot kaydını eklemek.
