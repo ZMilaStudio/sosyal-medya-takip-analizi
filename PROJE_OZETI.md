@@ -88,7 +88,6 @@ Samsung fiziksel cihazda kategori sekmeleri ve sayaçlar doğru görünürken a�
 PR #18'de tüm gövde tek `ListView.builder` içine alındı ancak `device-test-v2-9` fiziksel cihazda yine boş kaldı.
 
 PR #19 main'e merge edildi:
-- PR: #19 `fix: fiziksel cihaz liste gövdesi ve seçilen launcher simgesi`
 - merge SHA: `5391b0a7e956ddbfe8d3f4305875d5679cc4c984`
 - `DefaultTabController` / `TabBar` kaldırıldı; basit yatay kategori şeridi kullanılıyor.
 - özet + arama/sıralama lazy listenin dışına alındı.
@@ -101,88 +100,67 @@ Bu yapı fiziksel cihazda henüz doğrulanmadı; yeni APK üretilemediği için 
 ### Launcher simgesi
 PR #18 yanlışlıkla seçilen koyu seçenek 4 PNG yerine teal kişi+büyüteç vector bağladı.
 
-PR #19 ile:
-- adaptive icon tekrar `@mipmap/ic_launcher_foreground` PNG'ye bağlandı.
-- yanlış vector override'ları silindi.
-- manifestte gereksiz `roundIcon` kaldırıldı.
-- PR #15'ten kalan seçilmiş koyu launcher PNG kaynakları tekrar esas alındı.
-
-Doğru simge kodda geri yüklendi; fiziksel cihaz doğrulaması yeni APK bekliyor.
+PR #19 ile adaptive icon tekrar seçilmiş koyu seçenek 4 PNG kaynaklarına bağlandı ve yanlış vector override'ları kaldırıldı. Doğru simge kodda geri yüklendi; fiziksel cihaz doğrulaması yeni APK bekliyor.
 
 ## Test APK imza ve güncelleme sistemi
 Deterministic device-test v2:
 - paket: `com.zmilastudio.takipanalizi.dev`
-- production paketinden ayrı
 - sabit test keystore
 - sertifika SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`
 - versionCode = `300000 + GITHUB_RUN_NUMBER`
-- AAPT ile paket/versionCode, apksigner ile sertifika doğrulanır
-- test anahtarı production için kullanılmaz
+- AAPT paket/versionCode ve apksigner sertifika kontrolü
 
 Telefondaki v2-9 temiz kurulmuş tabandır. Sonraki v2 APK aynı paket + sertifika + daha yüksek versionCode ile kaldırmadan güncellenebilmelidir; fiziksel doğrulama bekliyor.
 
 ## GitHub / CI
 Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — **public** (`private=false`, `visibility=public`).
 
-Branch düzeni:
-- `main`: stabil
-- `feat/<konu>` / `fix/<konu>`: PR geliştirme
-- `test/device-apk`: güncel main + device-test dağıtım
-- `backup/device-test-v2-9`: run #9 dönemi yedeği
+Branchler:
+- `main`
+- `test/device-apk`
+- `backup/device-test-v2-9`
 
-Normal CI:
-- Core CI: `dart analyze` + `dart test`
-- App CI: Flutter 3.47.2 `pub get` + `analyze` + `test`
-- normal CI artifact upload yapmaz
-- docs-only workflow tetiklemez
+### Runner engeli kanıtları
+Aşağıdaki runlar runner tahsis edilmeden öldü:
+- App CI `33423035250`
+- Device Test `33423413075`
+- Runner Diagnostic `33423749289`
+- BilgiRotasi public cross-check `33425862577`
 
-## Güncel GitHub Actions engeli — kesinleşen teşhis
-
-### Sosyal Medya Takip Analizi repo kanıtı
-PR #19 App CI run #35 (`33423035250`) iki denemede de yaklaşık 2-3 saniyede öldü:
-- `runner_id=0`
-- `steps=[]`
-- hiçbir Flutter/analyze/test adımı başlamadı
-- log blob oluşmadı
-
-Device Test run #10 (`33423413075`) aynı şekilde runner başlamadan öldü ve APK üretmedi.
-
-Minimal `ubuntu-slim` Runner Diagnostic run #1 (`33423749289`), job `99592185293`:
-- yalnız basit `echo + uname`
-- 4 saniyede failure
+Ortak parmak izi:
 - `runner_id=0`
 - `steps=[]`
 - runner adı boş
 - log blob yok
+- birkaç saniyede failure
 
-### İkinci public repo ile çapraz doğrulama
-Aynı hesaptaki public `ZMilaStudio/BilgiRotasi` reposunda daha önce aynı gün 14:47–14:58 UTC aralığında Actions başarıyla çalıştı.
+Aynı gün daha erken `Device Test #9` ve public `BilgiRotasi` workflow'ları başarıyla çalışmıştı. Sorun gün içinde sonradan hesap seviyesinde başlamış görünüyor.
 
-Ancak 18:35 UTC'deki BilgiRotasi run `33425862577` de aynı parmak iziyle düştü:
-- repo public
-- runner label: `ubuntu-22.04`
-- job `99599133885`
-- `runner_id=0`
-- `steps=[]`
-- 2 saniyede failure
+### 31 Ağustos 2026 Billing ekranı — yeni kesin kanıt
+Kullanıcının GitHub `Billing & licensing -> Budgets` ekran görüntüsünde:
+- Account: `ZMilaStudio`
+- Product: **Actions**
+- **$3.68 spent / $4.00 budget**
+- kullanım göstergesi **%91**
+- **Stop usage: Yes**
+- Codespaces: `$1.13 / $3.00`, Stop usage Yes
+- Packages kartı `%100` gösteriyor; tutar ekran görüntüsünün altında kaldığı için not edilmedi.
 
-Bu çapraz test çok önemli: sorun artık **sosyal-medya-takip-analizi repo/YAML/koduna özgü değildir**. Aynı hesaptaki başka bir public repoda da aynı anda GitHub-hosted runner tahsisi yapılamıyor.
+Bu ekran, hesapta Actions için aktif bir **hard-stop budget** olduğunu doğruluyor. GitHub dokümantasyonuna göre standard GitHub-hosted runner kullanımı public repolarda ücretsizdir; dolayısıyla public repodaki minimal job'ın runner tahsis edilmeden ölmesi normal public Actions dakika kotası değildir.
 
-### Sonuç
-Mevcut kanıtla sorun en güçlü şekilde **hesap düzeyinde GitHub-hosted runner entitlement / billing-backend / account-side Actions provisioning kilidi** olarak sınıflandırılıyor.
+Bununla birlikte `Stop usage: Yes` açık Actions bütçesinin $4 limite çok yaklaşmış olması, GitHub'ın account-side billing/entitlement gate'inin devreye girmesi için şu an en güçlü somut tetikleyicidir. UI $3.68 gösterse de billing verisi gecikmeli/pending olabilir veya hard-stop entitlement durumu public standard runnerlara hatalı biçimde uygulanıyor olabilir.
 
-Aşağıdakiler elenmiş veya çok zayıf:
-- repo private / aylık private Actions dakika kotası
-- Flutter/Android kod hatası
-- bu repo workflow YAML'ı
-- `ubuntu-latest` imajına özgü hata
-- ağır workflow
-- artifact upload/storage kotasının runner başlatmayı kesmesi
-- tek repo ayarı
+### Şu anki teşhis
+En güçlü olasılık: **Actions budget hard-stop / billing entitlement kilidi**.
 
-Public repolarda standard GitHub-hosted runners normalde ücretsiz ve sınırsızdır. Sorunun aynı hesaptaki ikinci public repoda da ortaya çıkması, repo bazlı açıklamaları fiilen eler.
+Hızlı doğrulama yöntemi:
+1. Actions bütçesinde `Stop usage` geçici olarak **No** yapılacak veya bütçe $4'ten örneğin **$10**'a çıkarılacak.
+2. Değişikliğin yayılması için kısa süre beklenecek.
+3. Minimal `Runner Diagnostic` yeniden çalıştırılacak.
+4. Runner atanırsa sorun kesin olarak budget/entitlement gate kaynaklıdır.
+5. Runner yine atanmazsa GitHub Support'a hesap tarafında hosted-runner entitlement sync talebi açılacak.
 
-GitHub connector/API, kullanıcı hesabının **Billing & licensing / Budgets / payment banner** ekranını göstermiyor. Bu üst seviye account entitlement mesajı API job kaydında da yer almıyor; yalnız `runner_id=0`, `steps=[]`, no-log pre-run failure görülüyor.
+Not: Packages'ın %100 olması artifact/package storage açısından ayrıca incelenebilir; ancak artifact kullanmayan minimal `echo` job'ın daha runner verilmeden ölmesini tek başına açıklamaz.
 
 ## Doğrulanmış son durum
 - PR #14 Meta following parser ✅
@@ -194,12 +172,8 @@ GitHub connector/API, kullanıcı hesabının **Billing & licensing / Budgets / 
 - PR #19 yeni sabit gövde + ayrı kullanıcı listesi ✅ main'e merge
 - PR #19 seçilen koyu seçenek 4 launcher wiring ✅ kodda
 - PR #19 sonrası fiziksel cihaz testi ⏳ yeni APK yok
-- Device Test run #9 başarılı; son indirilebilir APK `device-test-v2-9`
-- Device Test run #10 ❌ runner başlamadan kesildi
-- minimal `ubuntu-slim` diagnostic ❌ runner başlamadan kesildi
-- BilgiRotasi public cross-check run `33425862577` ❌ aynı `runner_id=0`, `steps=[]`
-- mevcut APK VersionCode `300009`
-- mevcut APK SHA-256 `5b1462ec41ac150f8965c3eefc6115613d25734e1d7c3b5e873f99c3c4ddd6f8`
+- son indirilebilir APK `device-test-v2-9`, VersionCode `300009`
+- Actions runnerları şu an account-side hard-stop/entitlement nedeniyle başlamıyor gibi görünüyor
 
 ## MVP durumu
 ### Instagram MVP
@@ -233,14 +207,8 @@ GitHub connector/API, kullanıcı hesabının **Billing & licensing / Budgets / 
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki işler
-1. GitHub hesabında `Settings -> Billing & licensing -> Budgets and alerts` / ödeme durumu / Actions hard-stop veya account warning kontrolü yapılacak. Public repo için ücret gerekmemeli; amaç yanlış entitlement kilidini tespit etmek.
-2. UI'da billing/payment mesajı yoksa GitHub Support'a şu kanıtlarla account-side hosted-runner entitlement/provisioning kontrolü istenecek:
-   - App CI `33423035250`
-   - Device Test `33423413075`
-   - Runner Diagnostic `33423749289`
-   - BilgiRotasi public cross-check `33425862577`
-   - ortak parmak izi: `runner_id=0`, `steps=[]`, no log blob
-3. Runner geri gelir gelmez device-test build yeniden üretilecek ve prerelease yayınlanacak.
-4. Yeni APK v2-9 kaldırılmadan kurulacak; `Güncelle`, liste ve koyu seçenek 4 simgesi aynı turda doğrulanacak.
-5. Liste hâlâ boşsa cihaz üstünde görünür marker/logcat ile render constraint doğrudan izole edilecek.
-6. Production signing ve Play Store release düzeni daha sonra kurulacak.
+1. Actions budget hard-stop testi: `Stop usage=No` veya bütçeyi $10'a çıkar.
+2. Minimal Runner Diagnostic'i yeniden çalıştır.
+3. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
+4. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
+5. Hard-stop değişikliğine rağmen runner açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
