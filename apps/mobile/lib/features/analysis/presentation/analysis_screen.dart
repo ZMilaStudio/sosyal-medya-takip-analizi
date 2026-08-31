@@ -104,6 +104,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         description: 'Seni takip ediyorlar, sen onları takip etmiyorsun.',
         users: _visible(result.analysis.fans),
       ),
+      _AnalysisTabData(
+        title: 'Takibi Bırakanlar',
+        description: 'Önceki analizde seni takip ediyordu, artık etmiyor.',
+        users: _visible(result.analysis.unfollowers),
+      ),
+      _AnalysisTabData(
+        title: 'Yeni Takipçiler',
+        description: 'Önceki analizden sonra seni takip etmeye başladılar.',
+        users: _visible(result.analysis.newFollowers),
+      ),
     ];
 
     return DefaultTabController(
