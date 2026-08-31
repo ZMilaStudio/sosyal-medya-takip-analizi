@@ -1,0 +1,93 @@
+name: Device Test APK
+
+on:
+  push:
+    branches:
+      - test/device-apk
+    paths:
+      - '.github/workflows/device-test-apk.yml'
+      - '.github/test-signing/**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    env:
+      DEVICE_TEST_KEYSTORE_PATH: ${{ github.workspace }}/.github/test-signing/takip-analizi-test.keystore
+      DEVICE_TEST_STORE_PASSWORD: device-test-only
+      DEVICE_TEST_KEY_ALIAS: takiptest
+      DEVICE_TEST_KEY_PASSWORD: device-test-only
+      EXPECTED_PACKAGE_ID: com.zmilastudio.takipanalizi.dev
+      EXPECTED_CERT_SHA256: 4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Install deterministic device-test signing key
+        run: |
+          base64 --decode ../../.github/test-signing/takip-analizi-test.keystore.b64 > "$DEVICE_TEST_KEYSTORE_PATH"
+          chmod 600 "$DEVICE_TEST_KEYSTORE_PATH"
+          keytool -list -keystore "$DEVICE_TEST_KEYSTORE_PATH" \
+            -storepass "$DEVICE_TEST_STORE_PASSWORD" \
+            -alias "$DEVICE_TEST_KEY_ALIAS" >/dev/null
+
+      - name: Build signed debug APK
+        run: |
+          VERSION_CODE=$((300000 + GITHUB_RUN_NUMBER))
+          echo "DEVICE_TEST_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          flutter build apk --debug --build-number="$VERSION_CODE"
+
+      - name: Verify package, version and signing certificate
+        run: |
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+
+          BADGING="$($AAPT dump badging "$APK" | head -1)"
+          echo "$BADGING"
+          echo "$BADGING" | grep -F "name='$EXPECTED_PACKAGE_ID'"
+          echo "$BADGING" | grep -F "versionCode='$DEVICE_TEST_VERSION_CODE'"
+
+          CERT_SHA256="$($APKSIGNER verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1 | tr '[:upper:]' '[:lower:]')"
+          echo "APK certificate SHA-256: $CERT_SHA256"
+          test "$CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+      - name: Prepare test package
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk ../../takip-analizi-device-test.apk
+          cd ../..
+          sha256sum takip-analizi-device-test.apk > takip-analizi-device-test.sha256
+
+      - name: Publish prerelease
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="device-test-v2-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" \
+            takip-analizi-device-test.apk \
+            takip-analizi-device-test.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Takip Analizi - Deterministic Device Test" \
+            --notes "Device-test APK. Paket: $EXPECTED_PACKAGE_ID. VersionCode: $DEVICE_TEST_VERSION_CODE. Sabit signing sertifikası SHA-256: $EXPECTED_CERT_SHA256. Bu v2 tabanı bir kez temiz kurulduktan sonra sonraki v2 APK'lar kaldırmadan güncellenebilir. Production sürümü değildir." \
+            --prerelease
