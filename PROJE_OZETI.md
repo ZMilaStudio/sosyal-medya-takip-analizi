@@ -155,14 +155,20 @@ CI:
 
 ## Açık problemler
 
-1. Bu çalışma ortamında Flutter/Dart SDK bulunmadığından oluşturulan çekirdek testleri burada çalıştırılamadı; PR CI ile doğrulanacaktır.
-2. Instagram export formatları zamanla değişebilir. Importer path ve JSON shape açısından toleranslı, fixture testleriyle korunmuş olmalıdır.
-3. Kullanıcı adı değişiklikleri archive-only kimlik eşlemesini bozabilir.
+1. Instagram export formatları zamanla değişebilir. Importer path ve JSON shape açısından toleranslı, fixture testleriyle korunmuş olmalıdır.
+2. Kullanıcı adı değişiklikleri archive-only kimlik eşlemesini bozabilir.
+
+## Son durum
+
+- `feat/core-analysis-engine` PR #1 CI başarıyla geçti.
+- `dart analyze` ve `dart test` GitHub Actions üzerinde başarılı.
+- PR #1 squash merge ile `main`e alındı.
+- İlk analiz çekirdeği `main` üzerinde stabil durumda.
 
 ## Sıradaki işler
 
-1. `feat/core-analysis-engine` PR CI sonucunun doğrulanması ve PR'ın main'e alınması.
+1. Instagram ZIP dosyası seçme + güvenli açma + export dosya keşfi.
 2. Instagram gerçek export örnekleriyle parser fixture testlerinin genişletilmesi.
-3. ZIP dosyası seçme + güvenli açma + export dosya keşfi.
+3. HTML export desteği.
 4. Flutter Android kabuğunun oluşturulması ve import akışının bağlanması.
 5. Drift tabanlı local snapshot kaydının eklenmesi.
