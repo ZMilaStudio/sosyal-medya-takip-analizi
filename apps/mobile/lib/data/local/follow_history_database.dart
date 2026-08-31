@@ -91,7 +91,7 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
       final snapshotId = await into(storedSnapshots).insert(
         StoredSnapshotsCompanion.insert(
           accountId: accountId,
-          capturedAt: snapshot.capturedAt,
+          capturedAt: snapshot.capturedAt.toUtc(),
           sourceType: snapshot.sourceType.name,
           sourceFormat: Value(snapshot.sourceFormat),
         ),
@@ -174,7 +174,7 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
 
     return FollowSnapshot(
       account: account,
-      capturedAt: snapshot.capturedAt,
+      capturedAt: snapshot.capturedAt.toUtc(),
       followers: followers,
       following: following,
       sourceType: SnapshotSourceType.values.byName(snapshot.sourceType),
