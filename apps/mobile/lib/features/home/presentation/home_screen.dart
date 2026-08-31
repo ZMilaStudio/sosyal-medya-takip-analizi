@@ -98,7 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ],
                       const SizedBox(height: 18),
-                      _GradientImportButton(
+                      _ImportButton(
                         loading: isLoading,
                         onPressed: isLoading ? null : _pickInstagramArchive,
                       ),
@@ -109,6 +109,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             : () => context.push('/history'),
                         icon: const Icon(Icons.history_rounded),
                         label: const Text('Analiz Geçmişi'),
+                      ),
+                      const SizedBox(height: 6),
+                      OutlinedButton.icon(
+                        onPressed: isLoading
+                            ? null
+                            : () => context.push('/ignored-accounts'),
+                        icon: const Icon(Icons.visibility_off_outlined),
+                        label: const Text('Yok Sayılan Hesaplar'),
                       ),
                       const SizedBox(height: 4),
                       TextButton.icon(
@@ -182,8 +190,8 @@ class _SurfaceCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F5139A8),
-            blurRadius: 24,
+            color: Color(0x0A1E2938),
+            blurRadius: 22,
             offset: Offset(0, 8),
           ),
         ],
@@ -205,16 +213,9 @@ class _InstagramMark extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFA16BFF), AppColors.primary],
+          colors: [Color(0xFF7B8797), AppColors.primary],
         ),
         borderRadius: BorderRadius.circular(15),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x336C43F3),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
       ),
       child: const Icon(
         Icons.camera_alt_outlined,
@@ -311,7 +312,7 @@ class _SoonBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1EFF6),
+        color: AppColors.softPurple,
         borderRadius: BorderRadius.circular(14),
       ),
       child: const Text(
@@ -333,7 +334,7 @@ class _LocalInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBFAFF),
+        color: const Color(0xFFFAFBFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
@@ -366,8 +367,8 @@ class _LocalInfo extends StatelessWidget {
   }
 }
 
-class _GradientImportButton extends StatelessWidget {
-  const _GradientImportButton({
+class _ImportButton extends StatelessWidget {
+  const _ImportButton({
     required this.loading,
     required this.onPressed,
   });
@@ -386,7 +387,7 @@ class _GradientImportButton extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF7851F6), Color(0xFF5D34DF)],
+              colors: [Color(0xFF6B7789), Color(0xFF556171)],
             ),
             borderRadius: BorderRadius.circular(18),
           ),
