@@ -48,46 +48,12 @@ Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
 - `Seni Takip Edenler (308)` sayısı doğru görünür ✅
 - backup: `backup/device-v2-17-links-working`
 
-## v2-19 — Yok sayılan hesaplar fiziksel sonucu
-`v2-17` çalışan yapısı korunarak yalnız ignored entegrasyonu geri eklendi.
-
-Fiziksel Samsung sonucu:
-- üç analiz listesi çalışıyor ✅
-- profil bağlantısı çalışıyor ✅
-- üç nokta → Yok say çalışıyor ✅
-- kategori sayısı azalıyor ✅
-- `Geri al` işlevi çalışıyor ✅
-- sağ üst Yok Sayılan Hesaplar ekranı çalışıyor ✅
-- ilk sürümde SnackBar otomatik kapanmıyordu ❌
-
-Teknik:
-- commit `25d50a7855060577ef5cb5d3961e3d4fdba64b58`
-- VersionCode `300019`
-- prerelease `device-test-v2-19`
-
-## v2-20 — SnackBar ilk düzeltme denemesi
-- commit `de992b49b92ed7f2cde165d63b12f6b3f1af5781`
-- Timer ile 3 saniyelik kapanış eklendi.
-- Analyze ✅
-- widget test ❌: dispose sırasında pending timer.
-- APK üretilmedi; kullanılmayacak.
-
 ## v2-21 — Yok say özelliği tamamen fiziksel PASS
 - commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
 - VersionCode `300021`
-- APK SHA-256 `fd8e1bc23884a6d04e454004f309442a19eb4bbc62ba04484f3d9cd6c7b914e5`
 - prerelease `device-test-v2-21`
 - backup: `backup/device-v2-21-ignored-working`
-
-Fiziksel Samsung sonucu:
-- liste ✅
-- profil bağlantısı ✅
-- Yok say ✅
-- kategori sayısı güncelleme ✅
-- Geri al ✅
-- Yok Sayılan Hesaplar yönetimi ✅
-- SnackBar yaklaşık 3 saniye sonra otomatik kapanıyor ✅
-- **v2-21 fiziksel PASS** ✅
+- liste / profil / Yok say / Geri al / ignored yönetimi / 3 sn SnackBar kapanışı fiziksel PASS ✅
 
 ## v2-22 — Arama + sıralama FİZİKSEL PASS
 - kaynak commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
@@ -105,21 +71,21 @@ Fiziksel Samsung sonucu:
 - **v2-22 fiziksel PASS** ✅
 
 ## v2-23 — Takibi Bırakanlar + Yeni Takipçiler adayı
-Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri ekleniyor.
+Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri eklendi.
 
 Model doğrulaması:
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
 - Bu iki küme yalnız önceki snapshot varsa hesaplanır.
-- Önceki snapshot yoksa iki sekmenin de `(0)` göstermesi beklenen/doğru davranıştır.
+- Önceki snapshot yoksa iki sekmenin de `(0)` göstermesi doğru davranıştır.
 
 UI:
 - mevcut 3 sekme korunur.
 - 4. sekme `Takibi Bırakanlar`.
 - 5. sekme `Yeni Takipçiler`.
-- iki yeni sekmede de mevcut çalışan CircleAvatar, profil açma, arama, A-Z/Z-A, Yok say ve SnackBar altyapısı aynen kullanılır.
+- iki yeni sekmede mevcut çalışan CircleAvatar, profil açma, arama, A-Z/Z-A, Yok say ve SnackBar altyapısı aynen kullanılır.
 - ignored filtresi tarihsel sekmelere de uygulanır.
-- launcher bu sürümde değiştirilmez.
+- launcher bu sürümde değiştirilmedi.
 
 Regresyon testi:
 - önceki snapshot olmadan yeni sekmelerin `(0)` görünmesi kontrol edilir.
@@ -127,10 +93,12 @@ Regresyon testi:
 - TabController ile 4. ve 5. sekme gövdelerinin doğru kullanıcıyı render ettiği doğrulanır.
 - v2-22 arama/sıralama/Yok say testleri korunur.
 
-Hazırlık commitleri:
-- analiz ekranı commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
+Hazırlık:
+- analiz commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
 - test commit `c8b69a91fdc198869487b08f128c7fdd1446d0db`
+- final staging commit `5d8168d10891e2f602f8ff0999fe1404e23a2686`
 - geçici branch `tmp/restore-history-tabs`
+- test/device branch'e tek ref hareketi ile tek Actions build açılacak.
 - fiziksel cihaz doğrulaması: ⏳
 
 ## Test APK imza sistemi
@@ -163,4 +131,4 @@ Hazırlık commitleri:
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-v2-23 kod/test paketi test/device branch'ine tek final commit olarak taşınacak. CI başarılı olursa APK mevcut v2-22'nin üzerine kurulacak. Fiziksel testte 5 sekmenin görünmesi, ilk 3 sekmenin bozulmaması ve geçmiş verisi varsa son iki sekmenin doğru kullanıcıları göstermesi kontrol edilecek.
+v2-23 test/device branch'ine tek ref hareketiyle taşınacak. CI başarılı olursa APK mevcut v2-22'nin üzerine kurulacak. Fiziksel testte 5 sekmenin görünmesi, ilk 3 sekmenin bozulmaması ve geçmiş verisi varsa son iki sekmenin doğru kullanıcıları göstermesi kontrol edilecek.
