@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'router/app_router.dart';
+import 'theme/app_theme.dart';
 
 class SosyalMedyaTakipApp extends StatelessWidget {
   const SosyalMedyaTakipApp({super.key});
@@ -11,16 +12,7 @@ class SosyalMedyaTakipApp extends StatelessWidget {
       title: 'Takip Analizi',
       debugShowCheckedModeBanner: false,
       routerConfig: appRouter,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF5356D8),
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF7F7FB),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-      ),
+      theme: AppTheme.light,
     );
   }
 }
