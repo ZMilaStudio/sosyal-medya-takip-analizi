@@ -81,6 +81,12 @@ class InstagramArchiveImporter {
       );
     }
 
+    if (!_hasZipSignature(zipBytes)) {
+      throw const InstagramArchiveImportException(
+        InstagramArchiveImportError.invalidArchive,
+      );
+    }
+
     final Archive archive;
     try {
       archive = ZipDecoder().decodeBytes(zipBytes);
@@ -172,6 +178,17 @@ class InstagramArchiveImporter {
       followerFiles: followerEntries.map((entry) => entry.name),
       followingFiles: followingEntries.map((entry) => entry.name),
     );
+  }
+
+  bool _hasZipSignature(List<int> bytes) {
+    if (bytes.length < 4) return false;
+    if (bytes[0] != 0x50 || bytes[1] != 0x4b) return false;
+
+    final third = bytes[2];
+    final fourth = bytes[3];
+    return (third == 0x03 && fourth == 0x04) ||
+        (third == 0x05 && fourth == 0x06) ||
+        (third == 0x07 && fourth == 0x08);
   }
 
   List<SocialUser> _parseEntry(ArchiveFile entry) {
