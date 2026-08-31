@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:archive/archive.dart';
 
 import '../../models/social_user.dart';
+import 'instagram_relationship_html_parser.dart';
 import 'instagram_relationship_parser.dart';
 
 enum InstagramArchiveImportError {
@@ -12,7 +13,6 @@ enum InstagramArchiveImportError {
   relationshipFileTooLarge,
   followersFileMissing,
   followingFileMissing,
-  htmlExportNotSupported,
   unsafeRelationshipPath,
   invalidRelationshipFile,
 }
@@ -57,22 +57,25 @@ class InstagramArchiveImportResult {
 
 /// Reads Meta's official Instagram export ZIP without extracting it to disk.
 ///
-/// For the first MVP this accepts an in-memory ZIP and deliberately limits the
-/// archive size. The Flutter layer should guide users to export only
-/// "Followers and following" data so the archive stays small. A streaming file
-/// implementation can replace this later without changing the analysis model.
+/// JSON and HTML relationship exports are supported. For the first MVP this
+/// accepts an in-memory ZIP and deliberately limits archive size. The Flutter
+/// layer should guide users to export only "Followers and following" data so
+/// the archive stays small. A streaming implementation can replace this later
+/// without changing the analysis model.
 class InstagramArchiveImporter {
   const InstagramArchiveImporter({
     this.maxArchiveBytes = 128 * 1024 * 1024,
     this.maxEntries = 10000,
     this.maxRelationshipFileBytes = 32 * 1024 * 1024,
     this.relationshipParser = const InstagramRelationshipParser(),
+    this.htmlRelationshipParser = const InstagramRelationshipHtmlParser(),
   });
 
   final int maxArchiveBytes;
   final int maxEntries;
   final int maxRelationshipFileBytes;
   final InstagramRelationshipParser relationshipParser;
+  final InstagramRelationshipHtmlParser htmlRelationshipParser;
 
   InstagramArchiveImportResult importBytes(List<int> zipBytes) {
     if (zipBytes.length > maxArchiveBytes) {
@@ -115,33 +118,22 @@ class InstagramArchiveImporter {
 
     final followerEntries = <ArchiveFile>[];
     final followingEntries = <ArchiveFile>[];
-    var hasFollowerHtml = false;
-    var hasFollowingHtml = false;
 
     for (final entry in archive) {
       if (!entry.isFile) continue;
 
       switch (_classify(entry.name)) {
         case _RelationshipFileKind.followersJson:
+        case _RelationshipFileKind.followersHtml:
           _validateRelationshipEntry(entry);
           followerEntries.add(entry);
         case _RelationshipFileKind.followingJson:
+        case _RelationshipFileKind.followingHtml:
           _validateRelationshipEntry(entry);
           followingEntries.add(entry);
-        case _RelationshipFileKind.followersHtml:
-          hasFollowerHtml = true;
-        case _RelationshipFileKind.followingHtml:
-          hasFollowingHtml = true;
         case null:
           break;
       }
-    }
-
-    if (followerEntries.isEmpty && followingEntries.isEmpty &&
-        (hasFollowerHtml || hasFollowingHtml)) {
-      throw const InstagramArchiveImportException(
-        InstagramArchiveImportError.htmlExportNotSupported,
-      );
     }
 
     if (followerEntries.isEmpty) {
@@ -201,8 +193,11 @@ class InstagramArchiveImporter {
     }
 
     try {
-      final jsonText = utf8.decode(bytes, allowMalformed: false);
-      return relationshipParser.parseJson(jsonText);
+      final text = utf8.decode(bytes, allowMalformed: false);
+      if (entry.name.toLowerCase().endsWith('.html')) {
+        return htmlRelationshipParser.parseHtml(text);
+      }
+      return relationshipParser.parseJson(text);
     } on FormatException catch (error) {
       throw InstagramArchiveImportException(
         InstagramArchiveImportError.invalidRelationshipFile,
