@@ -1,5 +1,6 @@
 name: Device Test APK
 
+# Trigger marker: synced with main after PR #15
 on:
   push:
     branches:
