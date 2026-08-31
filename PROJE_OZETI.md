@@ -2,6 +2,13 @@
 
 Son güncelleme: 31 Ağustos 2026
 
+## Çalışma protokolü
+
+- Her yeni sohbetin başlangıcında bu `PROJE_OZETI.md` dosyası okunarak proje buradan devralınır.
+- Bu proje sohbetinde her kullanıcı mesajından sonra yeni kararlar, tamamlanan işler, açık sorunlar ve güncel durum gerekiyorsa bu dosyaya işlenir.
+- Yeni karar eski kararı geçersiz kılar; güncelliğini yitiren veya çelişen bilgiler temizlenir.
+- Ana gerçeklik kaynağı canlı GitHub repo + bu özet dosyasıdır; eski sohbetlerdeki durum, güncel repo ile çelişirse repo esas alınır.
+
 ## Proje amacı
 
 Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması. İlk çekirdek Instagram'ın resmi Meta veri dışa aktarma ZIP/JSON/HTML dosyalarını cihaz üzerinde analiz eder. Sonraki aşamada snapshot/geçmiş karşılaştırması ve X resmi veri arşivi desteği genişletilir.
