@@ -29,8 +29,10 @@ Temel sonuçlar:
 11. Mobil uygulama Flutter 3.47.2, Riverpod, go_router ve sistem dosya seçimi için file_picker kullanır.
 12. Yerel geçmiş Drift/SQLite ile tutulur. Sosyal kullanıcı kayıtları snapshot başına tam kopyalanmaz; ortak kullanıcı tablosu ve snapshot ilişki tablosu kullanılır.
 13. Snapshot zamanları UTC olarak normalize edilir.
-14. Varsayılan retention her sosyal hesap için son 30 snapshot'tır. Veritabanı API'sinde limit parametrelidir; gelecekte Premium/sınırsız geçmiş için sınırsız mod desteklenebilir.
+14. Varsayılan retention her sosyal hesap için son 30 snapshot'tır. Veritabanı API'sinde limit parametrelidir.
 15. Instagram sonuç listelerinde kullanıcı adı/profil adına göre arama, A-Z/Z-A sıralama ve yalnız resmi `instagram.com/<username>` profil bağlantısını dış uygulamada açma kullanılır.
+16. Profil fotoğrafları scraping veya unofficial API ile çekilmez. Bunun yerine kullanıcı adına göre deterministik 8 renkli monogram avatar sistemi kullanılır; aynı kullanıcı her zaman aynı renk eşleşmesini alır.
+17. Açık tema hafif mor ana kimlik, sınırlı mint vurgu, yumuşak yüzeyler ve merkezi `AppTheme` üzerinden yönetilir. Dark mode şimdilik kapsam dışıdır.
 
 ## Önemli ürün riski
 
@@ -56,6 +58,7 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 - Riverpod
 - go_router
 - sistem ZIP dosya seçici
+- merkezi `AppTheme`
 - Instagram ana kartı
 - takipçi/takip edilen özetleri
 - Takip Etmeyenler
@@ -64,6 +67,7 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 - Takibi Bırakanlar
 - Yeni Takipçiler
 - sonuç listelerinde arama ve A-Z/Z-A sıralama
+- renkli monogram avatarlar
 - kullanıcı satırından resmi Instagram profilini açma
 - Analiz Geçmişi ekranı
 - Drift/SQLite local snapshot storage
@@ -98,9 +102,11 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Sonuç listelerinde arama.
 - [x] A-Z / Z-A sıralama.
 - [x] Resmi Instagram profilini dış uygulamada açma.
+- [x] Merkezi açık tema ve görsel polish.
+- [x] Deterministik renkli monogram avatarlar.
 - [x] Flutter 3.47.2 resmi Android platform wrapper.
 - [x] Android debug APK build doğrulaması.
-- [ ] Fiziksel Android cihazda gerçek Meta export ZIP testi.
+- [x] Fiziksel Android cihazda gerçek Meta export ZIP testi.
 
 ### MVP 2 — geçmiş ve değişim analizi
 - [x] Drift/SQLite şeması.
@@ -140,17 +146,21 @@ CI:
 - Artifact upload yok.
 - Doküman-only değişikliklerde workflow çalışmaz.
 - Android wrapper ve Drift generated code için kullanılan tek seferlik workflow'lar iş bitince kaldırıldı.
+- Fiziksel cihaz testi için debug APK GitHub prerelease asset olarak üretildi; Actions artifact kotası kullanılmadı.
 
 ## Doğrulanmış durum
 
 - Core CI başarılı.
 - Flutter App CI başarılı.
+- Tema/monogram PR #11 CI başarılı ve `main`e alındı.
 - Flutter 3.47.2 Android wrapper üretimi başarılı.
 - `flutter build apk --debug` başarılı.
 - Drift code generation başarılı.
 - Drift database/history/retention testleri başarılı.
 - Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
 - Analiz ekranı arama/sıralama widget testi başarılı.
+- Fiziksel Android cihazda gerçek Meta export ZIP seçimi, analiz ve sonuç listeleri doğrulandı.
+- Gerçek testte 75 takipçi, 53 takip edilen ve sonuç sekmeleri başarıyla görüntülendi.
 - Artifact saklanmıyor.
 
 ## Açık problemler / riskler
@@ -158,14 +168,13 @@ CI:
 1. Meta export dosya yapısı gelecekte değişebilir; parser fixture testleri büyütülmelidir.
 2. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
 3. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
-4. Fiziksel Android cihazda gerçek Meta ZIP ile uçtan uca test henüz yapılmadı.
-5. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
-6. Kullanıcının iki keyfi snapshot'ı elle seçerek karşılaştırması henüz yoktur.
+4. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
+5. Kullanıcının iki keyfi snapshot'ı elle seçerek karşılaştırması henüz yoktur.
 
 ## Sıradaki işler
 
-1. Fiziksel Android cihazda gerçek Instagram export ZIP ile import ve sonuç doğrulaması.
-2. Test sürümü dağıtımı için güvenli ve kota-dostu yöntem belirlemek.
-3. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
-4. Gerçek Meta export fixture'larıyla parser dayanıklılığını genişletmek.
+1. Güncel temalı build'i fiziksel cihazda kısa görsel regresyon testiyle kontrol etmek.
+2. Production release signing ve güvenli secret düzenini kurmak.
+3. Gerçek Meta export fixture'larıyla parser dayanıklılığını genişletmek.
+4. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
 5. Ardından X resmi arşiv importer'ına geçmek.
