@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sosyal_medya_takip_analizi/data/local/ignored_accounts_store.dart';
 
 void main() {
-  const store = IgnoredAccountsStore();
+  final store = IgnoredAccountsStore();
   const account = SocialAccount(
     platform: SocialPlatform.instagram,
     username: 'Owner.Account',
