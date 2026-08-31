@@ -22,11 +22,18 @@ class AnalysisScreen extends StatefulWidget {
 class _AnalysisScreenState extends State<AnalysisScreen> {
   final _ignoredStore = IgnoredAccountsStore();
   var _ignored = <String>{};
+  Timer? _snackBarTimer;
 
   @override
   void initState() {
     super.initState();
     _loadIgnored();
+  }
+
+  @override
+  void dispose() {
+    _snackBarTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadIgnored() async {
@@ -48,6 +55,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
+    _snackBarTimer?.cancel();
 
     final controller = messenger.showSnackBar(
       SnackBar(
@@ -56,6 +64,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         action: SnackBarAction(
           label: 'Geri al',
           onPressed: () async {
+            _snackBarTimer?.cancel();
+            _snackBarTimer = null;
             await _ignoredStore.restore(
               ownerUsername: widget.result.snapshot.account.username,
               ignoredUsername: user.username,
@@ -69,12 +79,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ),
     );
 
-    final timer = Timer(const Duration(seconds: 3), controller.close);
-    unawaited(
-      controller.closed.whenComplete(() {
-        if (timer.isActive) timer.cancel();
-      }),
-    );
+    _snackBarTimer = Timer(const Duration(seconds: 3), () {
+      controller.close();
+      _snackBarTimer = null;
+    });
   }
 
   @override
