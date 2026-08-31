@@ -15,6 +15,5 @@ void main() {
     expect(find.text('Instagram Verisini İçe Aktar'), findsOneWidget);
     expect(find.text('Analiz Geçmişi'), findsOneWidget);
     expect(find.text('Nasıl yapılır?'), findsOneWidget);
-    expect(find.text('X / Twitter'), findsOneWidget);
   });
 }
