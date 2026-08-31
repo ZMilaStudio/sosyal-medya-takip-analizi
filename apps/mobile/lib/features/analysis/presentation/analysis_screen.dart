@@ -21,13 +21,23 @@ class AnalysisScreen extends StatefulWidget {
 
 class _AnalysisScreenState extends State<AnalysisScreen> {
   final _ignoredStore = IgnoredAccountsStore();
+  final _searchController = TextEditingController();
+
   var _ignored = <String>{};
   var _activeTab = 0;
+  var _query = '';
+  var _ascending = true;
 
   @override
   void initState() {
     super.initState();
     _loadIgnored();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadIgnored() async {
@@ -40,6 +50,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         for (final user in users)
           if (!_ignored.contains(user.normalizedUsername)) user,
       };
+
+  void _selectTab(int index) {
+    if (_activeTab == index) return;
+    _searchController.clear();
+    setState(() {
+      _activeTab = index;
+      _query = '';
+      _ascending = true;
+    });
+  }
 
   Future<void> _ignoreUser(SocialUser user) async {
     await _ignoredStore.ignore(widget.result.snapshot.account, user);
@@ -99,6 +119,17 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ),
     ];
     final activeTab = tabs[_activeTab];
+    final normalizedQuery = _query.trim().toLowerCase();
+    final filteredUsers = activeTab.users.where((user) {
+      if (normalizedQuery.isEmpty) return true;
+      final displayName = user.displayName?.toLowerCase() ?? '';
+      return user.normalizedUsername.contains(normalizedQuery) ||
+          displayName.contains(normalizedQuery);
+    }).toList()
+      ..sort((a, b) {
+        final result = a.normalizedUsername.compareTo(b.normalizedUsername);
+        return _ascending ? result : -result;
+      });
 
     return DefaultTabController(
       length: tabs.length,
@@ -125,33 +156,264 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
             dividerColor: AppColors.border,
-            onTap: (index) => setState(() => _activeTab = index),
+            onTap: _selectTab,
             tabs: [
               for (final tab in tabs)
                 Tab(text: '${tab.title} (${tab.users.length})'),
             ],
           ),
         ),
-        body: Column(
-          children: [
-            _Summary(
-              result: result,
-              ignoredCount: _ignored.length,
-              onManageIgnored: () async {
-                await context.push('/ignored-accounts');
-                await _loadIgnored();
-              },
+        body: _AnalysisListBody(
+          key: ValueKey('analysis-body-${activeTab.title}'),
+          result: result,
+          activeTab: activeTab,
+          users: filteredUsers,
+          ignoredCount: _ignored.length,
+          searchController: _searchController,
+          query: _query,
+          ascending: _ascending,
+          onQueryChanged: (value) => setState(() => _query = value),
+          onClearQuery: () {
+            _searchController.clear();
+            setState(() => _query = '');
+          },
+          onToggleSort: () => setState(() => _ascending = !_ascending),
+          onIgnore: _ignoreUser,
+          onManageIgnored: () async {
+            await context.push('/ignored-accounts');
+            await _loadIgnored();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalysisListBody extends StatelessWidget {
+  const _AnalysisListBody({
+    required this.result,
+    required this.activeTab,
+    required this.users,
+    required this.ignoredCount,
+    required this.searchController,
+    required this.query,
+    required this.ascending,
+    required this.onQueryChanged,
+    required this.onClearQuery,
+    required this.onToggleSort,
+    required this.onIgnore,
+    required this.onManageIgnored,
+    super.key,
+  });
+
+  final InstagramFollowAnalysisResult result;
+  final _AnalysisTabData activeTab;
+  final List<SocialUser> users;
+  final int ignoredCount;
+  final TextEditingController searchController;
+  final String query;
+  final bool ascending;
+  final ValueChanged<String> onQueryChanged;
+  final VoidCallback onClearQuery;
+  final VoidCallback onToggleSort;
+  final Future<void> Function(SocialUser user) onIgnore;
+  final VoidCallback onManageIgnored;
+
+  @override
+  Widget build(BuildContext context) {
+    final rawListIsEmpty = activeTab.users.isEmpty;
+    final filteredListIsEmpty = !rawListIsEmpty && users.isEmpty;
+    final rowCount = rawListIsEmpty || filteredListIsEmpty ? 1 : users.length;
+
+    return ListView.builder(
+      key: const Key('analysis-scroll'),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      itemCount: rowCount + 2,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _Summary(
+            result: result,
+            ignoredCount: ignoredCount,
+            onManageIgnored: onManageIgnored,
+          );
+        }
+
+        if (index == 1) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 14, bottom: 12),
+            child: _ListControls(
+              data: activeTab,
+              searchController: searchController,
+              query: query,
+              ascending: ascending,
+              onQueryChanged: onQueryChanged,
+              onClearQuery: onClearQuery,
+              onToggleSort: onToggleSort,
             ),
+          );
+        }
+
+        if (rawListIsEmpty) {
+          return SizedBox(
+            height: 260,
+            child: _EmptyList(description: activeTab.description),
+          );
+        }
+
+        if (filteredListIsEmpty) {
+          return const SizedBox(
+            height: 180,
+            child: Center(child: Text('Aramana uyan hesap yok.')),
+          );
+        }
+
+        final user = users[index - 2];
+        return Padding(
+          key: Key('user-row-${user.normalizedUsername}'),
+          padding: const EdgeInsets.only(bottom: 7),
+          child: Material(
+            color: Colors.white,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            child: ListTile(
+              onTap: () => _openInstagramProfile(context, user),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 2,
+              ),
+              leading: MonogramAvatar(username: user.username),
+              title: Text(
+                '@${user.username}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+              subtitle: user.displayName == null ? null : Text(user.displayName!),
+              trailing: PopupMenuButton<_UserAction>(
+                tooltip: 'Hesap işlemleri',
+                onSelected: (action) async {
+                  switch (action) {
+                    case _UserAction.openProfile:
+                      await _openInstagramProfile(context, user);
+                    case _UserAction.ignore:
+                      await onIgnore(user);
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _UserAction.openProfile,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.open_in_new_rounded),
+                      title: Text('Profili aç'),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _UserAction.ignore,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.visibility_off_outlined,
+                        color: AppColors.danger,
+                      ),
+                      title: Text(
+                        'Yok say',
+                        style: TextStyle(color: AppColors.danger),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openInstagramProfile(
+    BuildContext context,
+    SocialUser user,
+  ) async {
+    final uri = Uri.https('www.instagram.com', '/${user.username}/');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Instagram profili açılamadı.')),
+      );
+    }
+  }
+}
+
+class _ListControls extends StatelessWidget {
+  const _ListControls({
+    required this.data,
+    required this.searchController,
+    required this.query,
+    required this.ascending,
+    required this.onQueryChanged,
+    required this.onClearQuery,
+    required this.onToggleSort,
+  });
+
+  final _AnalysisTabData data;
+  final TextEditingController searchController;
+  final String query;
+  final bool ascending;
+  final ValueChanged<String> onQueryChanged;
+  final VoidCallback onClearQuery;
+  final VoidCallback onToggleSort;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const Key('analysis-controls'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          data.description,
+          style: const TextStyle(color: AppColors.muted),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
             Expanded(
-              child: _UserList(
-                key: ValueKey(activeTab.title),
-                data: activeTab,
-                onIgnore: _ignoreUser,
+              child: TextField(
+                key: const Key('analysis-search'),
+                controller: searchController,
+                onChanged: onQueryChanged,
+                autocorrect: false,
+                textCapitalization: TextCapitalization.none,
+                decoration: InputDecoration(
+                  hintText: 'Kullanıcı ara',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Aramayı temizle',
+                          onPressed: onClearQuery,
+                          icon: const Icon(Icons.clear),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 54,
+              child: OutlinedButton.icon(
+                onPressed: onToggleSort,
+                icon: const Icon(Icons.sort_by_alpha, size: 20),
+                label: Text(ascending ? 'A-Z' : 'Z-A'),
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }
@@ -169,46 +431,43 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _CountCard(
-                  label: 'Takipçi',
-                  value: result.snapshot.followers.length,
-                  icon: Icons.people_alt_outlined,
-                  tint: AppColors.softPurple,
-                  accent: AppColors.primary,
-                ),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _CountCard(
+                label: 'Takipçi',
+                value: result.snapshot.followers.length,
+                icon: Icons.people_alt_outlined,
+                tint: AppColors.softPurple,
+                accent: AppColors.primary,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CountCard(
-                  label: 'Takip edilen',
-                  value: result.snapshot.following.length,
-                  icon: Icons.person_outline_rounded,
-                  tint: AppColors.softMint,
-                  accent: AppColors.mint,
-                ),
-              ),
-            ],
-          ),
-          if (ignoredCount > 0) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: onManageIgnored,
-                icon: const Icon(Icons.visibility_off_outlined, size: 18),
-                label: Text('$ignoredCount hesap yok sayılıyor'),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _CountCard(
+                label: 'Takip edilen',
+                value: result.snapshot.following.length,
+                icon: Icons.person_outline_rounded,
+                tint: AppColors.softMint,
+                accent: AppColors.mint,
               ),
             ),
           ],
+        ),
+        if (ignoredCount > 0) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onManageIgnored,
+              icon: const Icon(Icons.visibility_off_outlined, size: 18),
+              label: Text('$ignoredCount hesap yok sayılıyor'),
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -291,199 +550,6 @@ class _AnalysisTabData {
   final String title;
   final String description;
   final Set<SocialUser> users;
-}
-
-class _UserList extends StatefulWidget {
-  const _UserList({
-    required this.data,
-    required this.onIgnore,
-    super.key,
-  });
-
-  final _AnalysisTabData data;
-  final Future<void> Function(SocialUser user) onIgnore;
-
-  @override
-  State<_UserList> createState() => _UserListState();
-}
-
-class _UserListState extends State<_UserList> {
-  final _searchController = TextEditingController();
-  var _query = '';
-  var _ascending = true;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final normalizedQuery = _query.trim().toLowerCase();
-    final users = widget.data.users.where((user) {
-      if (normalizedQuery.isEmpty) return true;
-      final displayName = user.displayName?.toLowerCase() ?? '';
-      return user.normalizedUsername.contains(normalizedQuery) ||
-          displayName.contains(normalizedQuery);
-    }).toList()
-      ..sort((a, b) {
-        final result = a.normalizedUsername.compareTo(b.normalizedUsername);
-        return _ascending ? result : -result;
-      });
-
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  widget.data.description,
-                  style: const TextStyle(color: AppColors.muted),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) => setState(() => _query = value),
-                        autocorrect: false,
-                        textCapitalization: TextCapitalization.none,
-                        decoration: InputDecoration(
-                          hintText: 'Kullanıcı ara',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: _query.isEmpty
-                              ? null
-                              : IconButton(
-                                  tooltip: 'Aramayı temizle',
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _query = '');
-                                  },
-                                  icon: const Icon(Icons.clear),
-                                ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: 54,
-                      child: OutlinedButton.icon(
-                        onPressed: () =>
-                            setState(() => _ascending = !_ascending),
-                        icon: const Icon(Icons.sort_by_alpha, size: 20),
-                        label: Text(_ascending ? 'A-Z' : 'Z-A'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (widget.data.users.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: _EmptyList(description: widget.data.description),
-          )
-        else if (users.isEmpty)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(child: Text('Aramana uyan hesap yok.')),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final user = users[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 7),
-                    child: Material(
-                      color: Colors.white,
-                      clipBehavior: Clip.antiAlias,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      child: ListTile(
-                        onTap: () => _openInstagramProfile(user),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 2,
-                        ),
-                        leading: MonogramAvatar(username: user.username),
-                        title: Text(
-                          '@${user.username}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        subtitle: user.displayName == null
-                            ? null
-                            : Text(user.displayName!),
-                        trailing: PopupMenuButton<_UserAction>(
-                          tooltip: 'Hesap işlemleri',
-                          onSelected: (action) async {
-                            switch (action) {
-                              case _UserAction.openProfile:
-                                await _openInstagramProfile(user);
-                              case _UserAction.ignore:
-                                await widget.onIgnore(user);
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: _UserAction.openProfile,
-                              child: ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Icon(Icons.open_in_new_rounded),
-                                title: Text('Profili aç'),
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: _UserAction.ignore,
-                              child: ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Icon(
-                                  Icons.visibility_off_outlined,
-                                  color: AppColors.danger,
-                                ),
-                                title: Text(
-                                  'Yok say',
-                                  style: TextStyle(color: AppColors.danger),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                childCount: users.length,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Future<void> _openInstagramProfile(SocialUser user) async {
-    final uri = Uri.https('www.instagram.com', '/${user.username}/');
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Instagram profili açılamadı.')),
-      );
-    }
-  }
 }
 
 enum _UserAction { openProfile, ignore }
