@@ -77,15 +77,13 @@ Temel sonuçlar:
 - hesap başına varsayılan son 30 snapshot retention
 - eski snapshot açıldığında önceki snapshot ile değişim analizi yeniden hesaplanır
 
-## Kritik hata geçmişi
+## Kritik hata geçmişi ve son düzeltmeler
 
 ### Following parser
 Gerçek `following.json` içinde kullanıcı adı `string_list_data.value` yerine `title` alanında geldiği için 569/0 sonucu oluşuyordu. `title` fallback ile düzeltildi ve regression testi eklendi.
 
 ### Fiziksel cihazda boş analiz gövdesi
-Samsung fiziksel cihazda kategori sekmeleri ve sayaçlar doğru görünürken açıklama, arama, özet ve kullanıcı satırları görünmüyordu.
-
-PR #18'de tüm gövde tek `ListView.builder` içine alındı ancak `device-test-v2-9` fiziksel cihazda yine boş kaldı.
+Samsung fiziksel cihazda kategori sayaçları görünürken açıklama, arama, özet ve kullanıcı satırları `device-test-v2-9` sürümünde boş kalıyordu.
 
 PR #19 main'e merge edildi:
 - merge SHA: `5391b0a7e956ddbfe8d3f4305875d5679cc4c984`
@@ -93,14 +91,20 @@ PR #19 main'e merge edildi:
 - özet + arama/sıralama lazy listenin dışına alındı.
 - yalnız kullanıcı satırları `ListView.separated` içinde.
 - görünür hesap sayacı eklendi.
-- 360×800 widget testi yeni yapıyı doğrulayacak şekilde güncellendi.
+- 360×800 gerçek ölçekli test var.
 
-Bu yapı fiziksel cihazda henüz doğrulanmadı; yeni APK üretilemediği için liste bug'ı kapatılmış sayılmaz.
+31 Ağustos gecesi CI testi, `analysis-summary` ve `analysis-controls` gibi yapısal `Column` widget'larını `hitTestable()` ile kontrol ettiği için yanlış negatif verdi. Test, bu yapısal alanların gerçek viewport koordinatlarını kontrol edecek ve etkileşimli `TextField`/kullanıcı satırlarını hit-test edecek şekilde düzeltildi.
+
+Düzeltme main commit: `3f37927db83aa31381703dde1e0556a2058e6e6e`.
+
+Bu yeni ekran yapısı artık CI'da başarılıdır; fiziksel Samsung cihaz doğrulaması `device-test-v2-11` ile yapılacaktır. Liste bug'ı cihazda görülmeden kapatılmış sayılmaz.
 
 ### Launcher simgesi
 PR #18 yanlışlıkla seçilen koyu seçenek 4 PNG yerine teal kişi+büyüteç vector bağladı.
 
-PR #19 ile adaptive icon tekrar seçilmiş koyu seçenek 4 PNG kaynaklarına bağlandı ve yanlış vector override'ları kaldırıldı. Doğru simge kodda geri yüklendi; fiziksel cihaz doğrulaması yeni APK bekliyor.
+PR #19 ile adaptive icon tekrar seçilmiş koyu seçenek 4 PNG kaynaklarına bağlandı ve yanlış vector override'ları kaldırıldı.
+
+Device Test #11 `Verify selected launcher source wiring` adımı başarılıdır. Doğru simgenin fiziksel cihazdaki görünümü v2-11 kurulunca doğrulanacaktır.
 
 ## Test APK imza ve güncelleme sistemi
 Deterministic device-test v2:
@@ -110,72 +114,72 @@ Deterministic device-test v2:
 - versionCode = `300000 + GITHUB_RUN_NUMBER`
 - AAPT paket/versionCode ve apksigner sertifika kontrolü
 
-Telefondaki v2-9 temiz kurulmuş tabandır. Sonraki v2 APK aynı paket + sertifika + daha yüksek versionCode ile kaldırmadan güncellenebilmelidir; fiziksel doğrulama bekliyor.
+Telefondaki v2-9 temiz kurulmuş tabandır. v2-11 aynı paket + aynı sertifika + daha yüksek VersionCode ile üretilmiştir; **v2-9 kaldırılmadan Android'in `Güncelle` akışıyla kurulması beklenir**.
 
 ## GitHub / CI
-Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — **public** (`private=false`, `visibility=public`).
+Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — public.
 
 Branchler:
 - `main`
 - `test/device-apk`
 - `backup/device-test-v2-9`
 
-### Runner engeli kanıtları
-Aşağıdaki runlar runner tahsis edilmeden öldü:
-- App CI `33423035250`
-- Device Test `33423413075`
-- Runner Diagnostic `33423749289`
-- BilgiRotasi public cross-check `33425862577`
+Normal CI artifact upload yapmaz. Device-test APK GitHub prerelease asset olarak yayınlanır.
 
-Ortak parmak izi:
-- `runner_id=0`
-- `steps=[]`
-- runner adı boş
-- log blob yok
-- birkaç saniyede failure
+### 31 Ağustos ödeme / Actions olayı — çözüldü
+Gün içinde GitHub-hosted runnerlar hesap seviyesinde başlamayı durdurdu. Sosyal Medya Takip Analizi ve public BilgiRotasi repo joblarında ortak belirti `runner_id=0`, `steps=[]` idi.
 
-Aynı gün daha erken `Device Test #9` ve public `BilgiRotasi` workflow'ları başarıyla çalışmıştı. Sorun gün içinde sonradan hesap seviyesinde başlamış görünüyor.
+Payment History ekranında:
+- Visa sonu 5466 ile `$1.00` işlem: **Declined**
+- MasterCard sonu 3349 ile `$1.00` işlem: **Success**
 
-### 31 Ağustos 2026 Billing / ödeme teşhisi
-Kullanıcının GitHub `Billing & licensing -> Budgets` ekranında Actions için `$3.68 spent / $4.00 budget`, `%91` ve `Stop usage: Yes` görülüyor. Ancak bu bütçe tek başına sorunun sebebi değildir.
+Başarılı tahsilattan sonra Runner Diagnostic `33423749289` yeniden çalıştırıldı ve sonraki denemede runner tahsis edildi; `Set up job`, runner allocation ve complete job başarılı oldu. Böylece hesap tarafındaki Actions restriction'ın kalktığı doğrulandı.
 
-Kullanıcı GitHub'ın **ödemeyi alamadığına dair e-posta gönderdiğini** doğruladı. Bu, runner engeli için bütçe tahmininden daha güçlü ve doğrudan kanıttır.
+Device Test #10 yeniden çalıştırıldığında runner normal başladı ancak `flutter analyze`, `separatorBuilder: (_, __)` satırındaki `unnecessary_underscores` lint'inde durdu. Kaynak kod `separatorBuilder: (_, _)` olarak düzeltildi.
+- test branch lint fix commit: `2afaaeb546955b3069776801f2c3d7bfbf1556fe`
+- main lint fix commit: `6bff6e2da64e9f0404af19d7cf5f2438d9c1e482`
 
-Güncel teşhis:
-- Repo public olduğu için standard GitHub-hosted runner kullanımı normalde ücretli dakika kotasına bağlı olmamalıdır.
-- Buna rağmen hesapta başarısız ödeme / ödeme problemi oluşması GitHub'ın hesap düzeyinde Actions hosted-runner erişimini/entitlement'ını geçici olarak kilitlemiş görünüyor.
-- Aynı hesaptaki ikinci public repo BilgiRotasi'nın da aynı anda `runner_id=0`, `steps=[]` ile düşmesi bunu repo/YAML/kod sorunundan çıkarıp hesap seviyesine taşır.
+Ardından App CI gerçek viewport testindeki yanlış `Column.hitTestable()` varsayımını ortaya çıkardı; test viewport koordinatlarıyla düzeltildi.
 
-Dolayısıyla önceki “4 dolar Actions budget hard-stop ana sebep” değerlendirmesi geçersizdir. Ana sebep olarak **başarısız GitHub ödemesi ve bunun doğurduğu account-side Actions restriction** esas alınacaktır.
+Device-test workflow path filtresi de düzeltildi. Artık `test/device-apk` branch'inde `apps/mobile/**` veya `packages/follow_core/**` değişiklikleri yeni Device Test APK run'ını tetikler.
 
-### Ödeme sonrası / yeniden deneme kontrolü
-Kullanıcının “Şimdi dene” talebi üzerine minimal Runner Diagnostic run `33423749289` yeniden çalıştırıldı (attempt 2).
+## Device Test v2-11 — TAM BAŞARILI
+Run: `33427679646`
+Run number: `11`
+Branch commit: `7c00ae938a57efd7963b14a0f3e57fed0eaa6328`
 
-Attempt 2 sonucu:
-- yeni job: `99601335766`
-- zaman: 18:42:44–18:42:47 UTC
-- sonuç: `failure`
-- `runner_id=0`
-- `steps=[]`
-- runner adı boş
+Başarılı aşamalar:
+- Resolve dependencies ✅
+- Analyze ✅
+- Test — 11 test ✅
+- seçilen koyu launcher kaynak bağlantısı ✅
+- deterministic test signing key ✅
+- signed debug APK build ✅
+- package + VersionCode + signing certificate verification ✅
+- test package hazırlama ✅
+- prerelease publish ✅
 
-Yani yeniden deneme anında GitHub Actions hosted-runner erişimi **henüz açılmamıştı**. Bu; ödeme düzeltmesi yapıldıysa entitlement değişikliğinin henüz yayılmadığını, ödeme henüz kesinleşmediyse account-side kısıtın devam ettiğini gösterir. Bu aşamada device APK build'i tekrar tetiklenmedi; gereksiz Actions denemesi yapılmadı.
-
-### Ödenmemiş tutarı doğrulama yolu
-GitHub resmi billing akışında ödeme durumunu kontrol etmek için `Settings -> Billing & Licensing -> Payment history` ekranı kullanılacak. Burada son ödeme tarihi, tutarı ve ödeme yöntemi görülür; varsa başarısız/past due işlem veya ilgili döneme ait başarılı tahsilatın bulunmaması kontrol edilir. Kart/ödeme yöntemi için `Payment information` / `Update payment method` bölümü kullanılacak. GitHub'ın resmi belgelerine göre ödeme geçmişi bu ekrandan görüntülenebilir ve reddedilen ödeme nedeniyle kilitlenen ücretli özellikler ödeme yöntemi güncellendiğinde yeniden yetkilendirme tahsilatıyla açılır.
+Yeni prerelease:
+- tag: `device-test-v2-11`
+- VersionCode: `300011`
+- APK: `takip-analizi-device-test.apk`
+- APK boyutu: `180651219` byte (~172.3 MiB)
+- APK SHA-256: `abb26210bc1d19270e1c92b3533d49e38e1b0a9ea38eb4a479b555cc19bc18e8`
+- signing cert SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`
+- prerelease published: 31 Ağustos 2026 19:00:32 UTC
 
 ## Doğrulanmış son durum
 - PR #14 Meta following parser ✅
 - PR #15 tema + yok sayılanlar + seçilen koyu simge ✅
-- PR #16 render denemesi; cihazda liste yine boş ❌
+- PR #16 render denemesi; v2-9 cihazda liste boş ❌
 - PR #17 deterministic v2 signing ✅
-- PR #18 tek ListView yaklaşımı; cihazda liste yine boş ❌
+- PR #18 tek ListView yaklaşımı; v2-9 cihazda liste boş ❌
 - PR #18 yanlış launcher vector regresyonu ❌
-- PR #19 yeni sabit gövde + ayrı kullanıcı listesi ✅ main'e merge
-- PR #19 seçilen koyu seçenek 4 launcher wiring ✅ kodda
-- PR #19 sonrası fiziksel cihaz testi ⏳ yeni APK yok
-- son indirilebilir APK `device-test-v2-9`, VersionCode `300009`
-- Runner Diagnostic attempt 2 ❌ yine runner tahsis edilmeden düştü
+- PR #19 yeni sabit gövde + ayrı kullanıcı listesi ✅
+- PR #19 koyu seçenek 4 launcher wiring ✅
+- GitHub payment/runner restriction ✅ çözüldü
+- Device Test v2-11 ✅ tam başarılı ve APK yayınlandı
+- fiziksel cihaz v2-11 testi ⏳
 
 ## MVP durumu
 ### Instagram MVP
@@ -196,9 +200,10 @@ GitHub resmi billing akışında ödeme durumunu kontrol etmek için `Settings -
 - [x] deterministic v2 signing
 - [x] PR #19 liste mimarisi revizyonu
 - [x] koyu seçenek 4 simgesini kodda geri yükleme
+- [x] Device Test v2-11 CI doğrulaması
+- [ ] v2-11'i v2-9 üzerine kaldırmadan `Güncelle` olarak kurmayı doğrulama
 - [ ] PR #19 listesini fiziksel Android cihazda doğrulama
-- [ ] doğru launcher simgesini cihazda doğrulama
-- [ ] yeni v2 APK'yı kaldırmadan `Güncelle` olarak kurmayı doğrulama
+- [ ] doğru launcher simgesini fiziksel cihazda doğrulama
 - [ ] iki keyfi snapshot'ı elle seçerek karşılaştırma
 
 ### X
@@ -208,10 +213,11 @@ GitHub resmi billing akışında ödeme durumunu kontrol etmek için `Settings -
 - [ ] canlı API maliyet modeli
 - [ ] gerekirse OAuth 2.0 PKCE
 
-## Sıradaki işler
-1. `Settings -> Billing & Licensing -> Payment history` ekranında son tahsilatı kontrol et; başarısız/past due işlem veya eksik başarılı ödeme var mı bak.
-2. Gerekirse `Payment information` / `Update payment method` ile ödeme yöntemini düzelt.
-3. Ödeme başarılı/tamamlandıktan sonra minimal Runner Diagnostic'i tekrar çalıştır.
-4. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
-5. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
-6. Ödeme başarılı göründüğü halde runner birkaç denemede hâlâ açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
+## Sıradaki iş
+1. `device-test-v2-11` APK'yı indir.
+2. Telefonda mevcut v2-9 uygulamasını **kaldırmadan** APK'yı aç; Android'in `Güncelle` seçeneği gelmeli.
+3. Kurulumdan sonra üç şeyi doğrula:
+   - analiz listeleri artık görünüyor mu,
+   - onaylanan koyu seçenek 4 launcher simgesi görünüyor mu,
+   - uygulama kaldırılmadan güncellendi mi.
+4. Sonuca göre fiziksel cihaz bug'ını kapat veya bir sonraki teşhis build'ine geç.
