@@ -147,12 +147,10 @@ Normal CI:
 
 ### Güncel GitHub Actions engeli
 PR #19 App CI run #35 (`33423035250`) iki denemede de yaklaşık 2-3 saniyede başarısız oldu:
-- job runner'a hiç atanmadı (`runner_id=0`)
+- runner hiç atanmadı (`runner_id=0`)
 - `steps=[]`
 - hiçbir Flutter/analyze/test adımı başlamadı
 - log blob oluşmadı
-
-Bu nedenle run #35 bir kod/test başarısızlığı olarak değerlendirilmiyor; GitHub Actions runner provisioning/account altyapısı aşamasında durmuş durumda.
 
 PR #19 diff'i elle incelendi, PR mergeable durumdaydı ve #19 main'e merge edildi.
 
@@ -162,10 +160,14 @@ Device-test tarafında:
 - deterministic keystore ve güncel `device-test-apk.yml` yeniden eklendi.
 - Device Test run #10 (`33423413075`) oluştu.
 - run #10 da 2-3 saniyede, `steps=[]` ve runner başlamadan başarısız oldu.
-- Dolayısıyla `device-test-v2-10` prerelease/APK **üretilmedi**.
-- 300010 yalnız beklenen versionCode idi; gerçek bir APK/release yok.
+- `device-test-v2-10` prerelease/APK **üretilmedi**; 300010 yalnız beklenen versionCode idi.
 
-Bu iki bağımsız workflow'nun aynı şekilde runner başlamadan düşmesi, mevcut ana engelin koddan çok GitHub Actions runner tahsisi olduğunu gösteriyor.
+Ek teşhis için `runner-diagnostic.yml` oluşturuldu ve public repo standard runner seçeneklerinden `ubuntu-slim` ile yalnız `echo + uname` yapan iki dakikalık minimal job çalıştırılmaya çalışıldı:
+- Runner Diagnostic run #1: `33423749289`
+- job: `99592185293`
+- sonuç: yine `steps=[]`, runner başlamadan failure.
+
+Böylece sorun Flutter, Android, workflow ağırlığı veya `ubuntu-latest` imajına özgü değildir. `ubuntu-latest` ve `ubuntu-slim` dahil GitHub-hosted runner tahsisi hesap/repo seviyesinde engelleniyor. Public repolarda standart GitHub-hosted runnerlar normalde ücretsiz ve sınırsız olduğundan bu durum normal Actions dakika kotası olarak değerlendirilmemektedir. En güçlü olasılık GitHub billing/budget/account tarafındaki runner başlatma kilididir; repo içinden düzeltilebilecek YAML sorunu görünmüyor.
 
 ## Doğrulanmış son durum
 
@@ -181,6 +183,7 @@ Bu iki bağımsız workflow'nun aynı şekilde runner başlamadan düşmesi, mev
 - PR #19 sonrası fiziksel cihaz testi ⏳ yeni APK yok
 - Device Test run #9 başarılı; mevcut son indirilebilir APK `device-test-v2-9`
 - Device Test run #10 ❌ runner başlamadan kesildi, APK üretmedi
+- `ubuntu-slim` minimal diagnostic ❌ runner başlamadan kesildi
 - mevcut APK v2-9 VersionCode `300009`
 - mevcut APK SHA-256 `5b1462ec41ac150f8965c3eefc6115613d25734e1d7c3b5e873f99c3c4ddd6f8`
 
@@ -218,10 +221,11 @@ Bu iki bağımsız workflow'nun aynı şekilde runner başlamadan düşmesi, mev
 
 ## Sıradaki işler / açık riskler
 
-1. GitHub Actions'ın runner başlamadan düşmesinin nedeni teşhis edilecek; runner tahsisi/billing/Actions hesap ayarı veya servis tarafı olasılıkları kontrol edilecek.
-2. Runner tekrar çalışır çalışmaz device-test build yeniden üretilecek ve prerelease yayınlanacak.
-3. Yeni APK telefondaki v2-9 kaldırılmadan kurulacak; `Güncelle` davranışı, liste görünürlüğü ve koyu seçenek 4 simgesi aynı turda doğrulanacak.
-4. Liste hâlâ boşsa cihaz üstünde görünür marker/logcat ile render constraint'i doğrudan izole edilecek.
-5. Production signing ve Play Store release düzeni daha sonra kurulacak.
-6. 128 MiB bellek içi ZIP limiti bazı arşivlerde yetersiz olabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
-7. Username-only identity kullanıcı adı değişiminde yanlış `unfollow + new` sonucu üretebilir.
+1. GitHub hesap ayarlarında `Billing & Licensing` / `Budgets & alerts` ve ödeme durumunda Actions'ı bloklayan uyarı veya sıfır bütçe kontrol edilecek. Repo public olduğu için standart hosted runner kullanımının normal dakika kotası sebebiyle durmaması gerekir.
+2. Billing/budget normal görünüyorsa GitHub Support'a runner başlamadan düşen üç run ID ile başvurulacak: App CI `33423035250`, Device Test `33423413075`, Runner Diagnostic `33423749289`.
+3. Runner tekrar çalışır çalışmaz device-test build yeniden üretilecek ve prerelease yayınlanacak.
+4. Yeni APK telefondaki v2-9 kaldırılmadan kurulacak; `Güncelle` davranışı, liste görünürlüğü ve koyu seçenek 4 simgesi aynı turda doğrulanacak.
+5. Liste hâlâ boşsa cihaz üstünde görünür marker/logcat ile render constraint'i doğrudan izole edilecek.
+6. Production signing ve Play Store release düzeni daha sonra kurulacak.
+7. 128 MiB bellek içi ZIP limiti bazı arşivlerde yetersiz olabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
+8. Username-only identity kullanıcı adı değişiminde yanlış `unfollow + new` sonucu üretebilir.
