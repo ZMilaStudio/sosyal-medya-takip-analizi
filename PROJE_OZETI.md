@@ -136,17 +136,30 @@ Ortak parmak izi:
 
 Aynı gün daha erken `Device Test #9` ve public `BilgiRotasi` workflow'ları başarıyla çalışmıştı. Sorun gün içinde sonradan hesap seviyesinde başlamış görünüyor.
 
-### 31 Ağustos 2026 Billing / ödeme teşhisi — düzeltildi
-Kullanıcının GitHub `Billing & licensing -> Budgets` ekran görüntüsünde Actions için `$3.68 spent / $4.00 budget`, `%91` ve `Stop usage: Yes` görülüyor. Ancak bu bütçe tek başına sorunun sebebi değildir.
+### 31 Ağustos 2026 Billing / ödeme teşhisi
+Kullanıcının GitHub `Billing & licensing -> Budgets` ekranında Actions için `$3.68 spent / $4.00 budget`, `%91` ve `Stop usage: Yes` görülüyor. Ancak bu bütçe tek başına sorunun sebebi değildir.
 
-Kullanıcı ayrıca GitHub'ın **ödemeyi alamadığına dair e-posta gönderdiğini** doğruladı. Bu, runner engeli için bütçe tahmininden daha güçlü ve doğrudan kanıttır.
+Kullanıcı GitHub'ın **ödemeyi alamadığına dair e-posta gönderdiğini** doğruladı. Bu, runner engeli için bütçe tahmininden daha güçlü ve doğrudan kanıttır.
 
 Güncel teşhis:
 - Repo public olduğu için standard GitHub-hosted runner kullanımı normalde ücretli dakika kotasına bağlı olmamalıdır.
-- Buna rağmen **hesapta başarısız ödeme / ödeme problemi** oluşması GitHub'ın hesap düzeyinde Actions hosted-runner erişimini/entitlement'ını geçici olarak kilitlemiş görünüyor.
+- Buna rağmen hesapta başarısız ödeme / ödeme problemi oluşması GitHub'ın hesap düzeyinde Actions hosted-runner erişimini/entitlement'ını geçici olarak kilitlemiş görünüyor.
 - Aynı hesaptaki ikinci public repo BilgiRotasi'nın da aynı anda `runner_id=0`, `steps=[]` ile düşmesi bunu repo/YAML/kod sorunundan çıkarıp hesap seviyesine taşır.
 
 Dolayısıyla önceki “4 dolar Actions budget hard-stop ana sebep” değerlendirmesi geçersizdir. Ana sebep olarak **başarısız GitHub ödemesi ve bunun doğurduğu account-side Actions restriction** esas alınacaktır.
+
+### Ödeme sonrası / yeniden deneme kontrolü
+Kullanıcının “Şimdi dene” talebi üzerine minimal Runner Diagnostic run `33423749289` yeniden çalıştırıldı (attempt 2).
+
+Attempt 2 sonucu:
+- yeni job: `99601335766`
+- zaman: 18:42:44–18:42:47 UTC
+- sonuç: `failure`
+- `runner_id=0`
+- `steps=[]`
+- runner adı boş
+
+Yani yeniden deneme anında GitHub Actions hosted-runner erişimi **henüz açılmamıştı**. Bu; ödeme düzeltmesi yapıldıysa entitlement değişikliğinin henüz yayılmadığını, ödeme henüz kesinleşmediyse account-side kısıtın devam ettiğini gösterir. Bu aşamada device APK build'i tekrar tetiklenmedi; gereksiz Actions denemesi yapılmadı.
 
 ## Doğrulanmış son durum
 - PR #14 Meta following parser ✅
@@ -159,7 +172,7 @@ Dolayısıyla önceki “4 dolar Actions budget hard-stop ana sebep” değerlen
 - PR #19 seçilen koyu seçenek 4 launcher wiring ✅ kodda
 - PR #19 sonrası fiziksel cihaz testi ⏳ yeni APK yok
 - son indirilebilir APK `device-test-v2-9`, VersionCode `300009`
-- GitHub Actions runnerları şu an başarısız ödeme sonrası account-side restriction nedeniyle başlamıyor görünüyor
+- Runner Diagnostic attempt 2 ❌ yine runner tahsis edilmeden düştü
 
 ## MVP durumu
 ### Instagram MVP
@@ -193,9 +206,9 @@ Dolayısıyla önceki “4 dolar Actions budget hard-stop ana sebep” değerlen
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki işler
-1. GitHub'daki başarısız ödemeyi düzelt / ödeme yöntemini güncelle ve bekleyen tahsilatı tamamla.
-2. GitHub hesap erişiminin/Actions entitlement'ın yeniden açılmasını bekle.
+1. GitHub ödeme durumunun gerçekten başarılı/tamamlanmış olduğunu doğrula.
+2. Ödeme düzeltildiyse account-side Actions entitlement'ın yeniden açılması için GitHub tarafındaki yayılımı bekle.
 3. Minimal Runner Diagnostic'i tekrar çalıştır.
 4. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
 5. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
-6. Ödeme düzeltildiği halde runner hâlâ açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
+6. Ödeme başarılı göründüğü halde runner birkaç denemede hâlâ açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
