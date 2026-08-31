@@ -314,7 +314,7 @@ class _UserListState extends State<_UserList> {
                             title: Text(
                               '@${user.username}',
                               style: const TextStyle(
-                                fontWeight: FontWeight.w650,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.ink,
                               ),
                             ),
