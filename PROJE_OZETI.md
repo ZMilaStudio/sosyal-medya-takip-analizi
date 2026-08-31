@@ -33,6 +33,7 @@ Temel sonuçlar:
 15. Instagram sonuç listelerinde kullanıcı adı/profil adına göre arama, A-Z/Z-A sıralama ve yalnız resmi `instagram.com/<username>` profil bağlantısını dış uygulamada açma kullanılır.
 16. Profil fotoğrafları scraping veya unofficial API ile çekilmez. Bunun yerine kullanıcı adına göre deterministik 8 renkli monogram avatar sistemi kullanılır; aynı kullanıcı her zaman aynı renk eşleşmesini alır.
 17. Açık tema hafif mor ana kimlik, sınırlı mint vurgu, yumuşak yüzeyler ve merkezi `AppTheme` üzerinden yönetilir. Dark mode şimdilik kapsam dışıdır.
+18. Ana ekranda `Analiz Geçmişi` altında `Nasıl yapılır?` rehberi bulunur. Rehber, güncel Meta Hesaplar Merkezi akışına göre yalnız gerekli `Takipçiler ve takip edilenler` verisini seçmeyi, mümkünse `Tüm zamanlar` tarih aralığını ve tercih edilen `JSON` formatını anlatır. Kullanıcının rehber için paylaştığı kişisel ekran görüntüleri uygulamaya veya repoya eklenmez.
 
 ## Önemli ürün riski
 
@@ -60,6 +61,7 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 - sistem ZIP dosya seçici
 - merkezi `AppTheme`
 - Instagram ana kartı
+- `Nasıl yapılır?` Instagram export rehberi
 - takipçi/takip edilen özetleri
 - Takip Etmeyenler
 - Karşılıklı
@@ -98,6 +100,7 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Import -> snapshot -> analiz use-case.
 - [x] Flutter uygulama kabuğu.
 - [x] Sistem ZIP dosya seçici.
+- [x] Instagram veri indirme rehberi.
 - [x] Analiz sonuç ekranları.
 - [x] Sonuç listelerinde arama.
 - [x] A-Z / Z-A sıralama.
@@ -153,19 +156,21 @@ CI:
 - Core CI başarılı.
 - Flutter App CI başarılı.
 - Tema/monogram PR #11 CI başarılı ve `main`e alındı.
+- Instagram export rehberi PR #12 App CI başarılı ve `main`e alındı.
 - Flutter 3.47.2 Android wrapper üretimi başarılı.
 - `flutter build apk --debug` başarılı.
 - Drift code generation başarılı.
 - Drift database/history/retention testleri başarılı.
 - Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
 - Analiz ekranı arama/sıralama widget testi başarılı.
+- Instagram export rehberi widget testi başarılı.
 - Fiziksel Android cihazda gerçek Meta export ZIP seçimi, analiz ve sonuç listeleri doğrulandı.
 - Gerçek testte 75 takipçi, 53 takip edilen ve sonuç sekmeleri başarıyla görüntülendi.
 - Artifact saklanmıyor.
 
 ## Açık problemler / riskler
 
-1. Meta export dosya yapısı gelecekte değişebilir; parser fixture testleri büyütülmelidir.
+1. Meta export dosya yapısı ve menü adları gelecekte değişebilir; parser fixture testleri ve rehber metni gerektiğinde güncellenmelidir.
 2. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
 3. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
 4. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
@@ -173,7 +178,7 @@ CI:
 
 ## Sıradaki işler
 
-1. Güncel temalı build'i fiziksel cihazda kısa görsel regresyon testiyle kontrol etmek.
+1. Güncel tema + rehber içeren build'i fiziksel cihazda kısa görsel regresyon testiyle kontrol etmek.
 2. Production release signing ve güvenli secret düzenini kurmak.
 3. Gerçek Meta export fixture'larıyla parser dayanıklılığını genişletmek.
 4. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
