@@ -54,34 +54,48 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - arama / A-Z-Z-A / listeler / profil / ignored akışı fiziksel PASS ✅
 - backup `backup/device-v2-22-search-sort-working`
 
-## v2-23 — Takibi Bırakanlar + Yeni Takipçiler adayı
+## v2-23 — Takibi Bırakanlar + Yeni Takipçiler CI PASS / fiziksel test bekliyor
 Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri eklendi.
 
 Model:
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
-- previous snapshot yoksa iki sekme `(0)` gösterir.
-- previous snapshot varsa farklar gerçek iki snapshot üzerinden hesaplanır.
+- previous snapshot yoksa iki sekme `(0)` gösterir; bu normal davranıştır.
+- previous snapshot varsa farklar iki snapshot üzerinden hesaplanır.
 
 UI:
-- ilk 3 sekme ve tüm çalışan yapı korunur.
+- ilk 3 sekme ve fiziksel PASS olmuş tüm yapı korunur.
 - 4. sekme `Takibi Bırakanlar`.
 - 5. sekme `Yeni Takipçiler`.
-- yeni sekmelerde de profil açma, arama, sıralama, Yok say ve ignored filtresi aynen çalışır.
-- launcher değişmedi.
+- yeni sekmelerde profil açma, arama, A-Z/Z-A, Yok say ve ignored filtresi aynı çalışan `_UserList` üzerinden kullanılır.
+- launcher bu sürümde değiştirilmedi.
 
-Test:
-- previous yokken iki sekme `(0)`.
-- sentetik previous/current ile `@left` unfollower ve `@newcomer` new follower.
-- TabController ile 4. ve 5. sekme içerikleri doğrulanır.
-- v2-22 arama/sıralama/Yok say testleri korunur.
+Regresyon testleri:
+- previous snapshot yokken iki yeni sekme `(0)` ✅
+- sentetik previous/current ile `@left` -> Takibi Bırakanlar ✅
+- sentetik previous/current ile `@newcomer` -> Yeni Takipçiler ✅
+- mevcut liste/sekme testi ✅
+- arama ✅
+- A-Z/Z-A sıralama ✅
+- Yok say ✅
 
-Hazırlık zinciri:
-- UI commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
-- test commit `c8b69a91fdc198869487b08f128c7fdd1446d0db`
-- docs staging `ced0de60faff3f00e8ab1d5a5870158cb2d5f83c`
-- final handoff commit bu dosya commitidir; test/device branch tek ref hareketiyle buna taşınacaktır.
-- böylece yalnız tek Device Test build tetiklenecektir.
+CI / APK:
+- final kaynak commit `a0c96ecfd33b9c546c2a852aac3c2b4eee40b1d0`
+- workflow run `33449350608`
+- run number `23`
+- Analyze ✅
+- Test ✅
+- physical-device compatibility wiring ✅
+- deterministic signing ✅
+- APK build ✅
+- package / VersionCode / icon-resource / signing certificate doğrulama ✅
+- prerelease publish ✅
+- VersionCode `300023`
+- APK SHA-256 `91a7c93fa8484d92af3d50845375eab0f130f84a5a9c058c3f1185dfac39d21e`
+- prerelease `device-test-v2-23`
+- fiziksel Samsung doğrulaması ⏳
+
+Not: workflow release açıklama metni eski render/launcher denemesinden kalmadır ve v2-23 gerçek kod durumunu temsil etmez. Gerçek kaynak commit + bu proje özeti esas alınır.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -102,7 +116,8 @@ Hazırlık zinciri:
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
-- [ ] **v2-23 Takibi Bırakanlar / Yeni Takipçiler CI + fiziksel doğrulama**
+- [ ] **v2-23 5 sekmeyi fiziksel Samsung'da doğrulama**
+- [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -112,5 +127,11 @@ Hazırlık zinciri:
 - [ ] X snapshot/geçmiş
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
-## Sıradaki iş
-Final v2-23 hazırlık commit'i test/device branch'e taşınacak. CI başarılı olursa APK mevcut v2-22 üzerine kurulacak. Fiziksel cihazda 5 sekmenin görünmesi ve ilk 3 sekmenin bozulmaması doğrulanacak. Gerçek geçmiş verisi yoksa son iki sekmenin 0 görünmesi normaldir; iki snapshot olduğunda değişimler dolacaktır.
+## Sıradaki fiziksel test
+`device-test-v2-23` mevcut v2-22'nin üzerine `Güncelle` olarak kurulacak.
+1. Beş sekmenin tamamı görünmeli.
+2. İlk üç sekme, arama/sıralama, profil ve Yok say işlevleri bozulmamalı.
+3. Mevcut analiz sonucunda previous snapshot yoksa `Takibi Bırakanlar (0)` ve `Yeni Takipçiler (0)` normaldir.
+4. Previous snapshot bağlandığında iki tarihsel sekme gerçek değişimleri göstermelidir.
+
+Bu fiziksel test geçmeden launcher değişikliğine geçilmeyecek.
