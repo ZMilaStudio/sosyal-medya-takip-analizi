@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:follow_core/follow_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sosyal_medya_takip_analizi/features/analysis/presentation/analysis_screen.dart';
 
 void main() {
@@ -9,7 +10,7 @@ void main() {
         username: username,
       );
 
-  testWidgets('renders first MVP analysis rows and switches tabs', (tester) async {
+  InstagramFollowAnalysisResult result() {
     const account = SocialAccount(
       platform: SocialPlatform.instagram,
       username: 'owner',
@@ -23,14 +24,20 @@ void main() {
       sourceFormat: 'instagram-export-json',
     );
     final analysis = const FollowAnalysisEngine().analyze(current: snapshot);
-    final result = InstagramFollowAnalysisResult(
+    return InstagramFollowAnalysisResult(
       snapshot: snapshot,
       analysis: analysis,
       followerSourceFiles: const [],
       followingSourceFiles: const [],
     );
+  }
 
-    await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result)));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('renders working MVP rows and switches tabs', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result())));
     await tester.pumpAndSettle();
 
     expect(find.text('Takip Etmeyenler (2)'), findsOneWidget);
@@ -41,5 +48,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('@mutual'), findsOneWidget);
+  });
+
+  testWidgets('ignores one account and updates the category count',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result())));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Takip Etmeyenler (2)'), findsOneWidget);
+    expect(find.text('@alice'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yok say'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('@alice'), findsNothing);
+    expect(find.text('@bob'), findsOneWidget);
+    expect(find.text('Takip Etmeyenler (1)'), findsOneWidget);
+    expect(find.text('@alice yok sayıldı.'), findsOneWidget);
   });
 }
