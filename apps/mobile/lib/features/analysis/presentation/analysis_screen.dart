@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:follow_core/follow_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AnalysisScreen extends StatelessWidget {
   const AnalysisScreen({
@@ -35,7 +36,8 @@ class AnalysisScreen extends StatelessWidget {
       ),
       _AnalysisTabData(
         title: 'Yeni Takipçiler',
-        description: 'Önceki kayıtlı analizden sonra seni takip etmeye başlayanlar.',
+        description:
+            'Önceki kayıtlı analizden sonra seni takip etmeye başlayanlar.',
         users: result.analysis.newFollowers,
       ),
     ];
@@ -142,71 +144,151 @@ class _AnalysisTabData {
   final Set<SocialUser> users;
 }
 
-class _UserList extends StatelessWidget {
+class _UserList extends StatefulWidget {
   const _UserList({required this.data});
 
   final _AnalysisTabData data;
 
   @override
-  Widget build(BuildContext context) {
-    final users = data.users.toList()
-      ..sort(
-        (a, b) => a.normalizedUsername.compareTo(b.normalizedUsername),
-      );
+  State<_UserList> createState() => _UserListState();
+}
 
-    if (users.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline, size: 42),
-              const SizedBox(height: 12),
-              Text(
-                'Bu listede hesap yok.',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                data.description,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
+class _UserListState extends State<_UserList> {
+  final _searchController = TextEditingController();
+  var _query = '';
+  var _ascending = true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.data.users.isEmpty) {
+      return _EmptyList(description: widget.data.description);
     }
+
+    final normalizedQuery = _query.trim().toLowerCase();
+    final users = widget.data.users.where((user) {
+      if (normalizedQuery.isEmpty) return true;
+      final displayName = user.displayName?.toLowerCase() ?? '';
+      return user.normalizedUsername.contains(normalizedQuery) ||
+          displayName.contains(normalizedQuery);
+    }).toList()
+      ..sort((a, b) {
+        final result = a.normalizedUsername.compareTo(b.normalizedUsername);
+        return _ascending ? result : -result;
+      });
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(data.description),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(widget.data.description),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) => setState(() => _query = value),
+                      autocorrect: false,
+                      textCapitalization: TextCapitalization.none,
+                      decoration: InputDecoration(
+                        hintText: 'Kullanıcı ara',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _query.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Aramayı temizle',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _query = '');
+                                },
+                                icon: const Icon(Icons.clear),
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => _ascending = !_ascending),
+                    icon: const Icon(Icons.sort_by_alpha),
+                    label: Text(_ascending ? 'A-Z' : 'Z-A'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            itemCount: users.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final user = users[index];
-              final firstCharacter = user.username.isEmpty
-                  ? '?'
-                  : user.username.characters.first.toUpperCase();
-              return ListTile(
-                leading: CircleAvatar(child: Text(firstCharacter)),
-                title: Text('@${user.username}'),
-                subtitle: user.displayName == null
-                    ? null
-                    : Text(user.displayName!),
-              );
-            },
-          ),
+          child: users.isEmpty
+              ? const Center(child: Text('Aramana uyan hesap yok.'))
+              : ListView.separated(
+                  itemCount: users.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    final firstCharacter = user.username.isEmpty
+                        ? '?'
+                        : user.username.characters.first.toUpperCase();
+                    return ListTile(
+                      onTap: () => _openInstagramProfile(user),
+                      leading: CircleAvatar(child: Text(firstCharacter)),
+                      title: Text('@${user.username}'),
+                      subtitle: user.displayName == null
+                          ? null
+                          : Text(user.displayName!),
+                      trailing: const Icon(Icons.open_in_new, size: 20),
+                    );
+                  },
+                ),
         ),
       ],
+    );
+  }
+
+  Future<void> _openInstagramProfile(SocialUser user) async {
+    final uri = Uri.https('www.instagram.com', '/${user.username}/');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Instagram profili açılamadı.')),
+      );
+    }
+  }
+}
+
+class _EmptyList extends StatelessWidget {
+  const _EmptyList({required this.description});
+
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_outline, size: 42),
+            const SizedBox(height: 12),
+            Text(
+              'Bu listede hesap yok.',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(description, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
     );
   }
 }
