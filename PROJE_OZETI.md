@@ -19,7 +19,7 @@ Temel sonuçlar:
 1. Instagram için ana veri kaynağı resmi Instagram/Meta veri dışa aktarma arşividir.
 2. Instagram kullanıcı adı/şifre toplama, private API, scraping ve güvenlik mekanizması aşma yöntemleri kullanılmaz.
 3. Instagram resmi API'si tam follower/following kullanıcı listesini ürünün ihtiyacına uygun genel bir endpoint olarak sağlamadığından MVP buna bağlanmaz.
-4. X'in resmi API follower/following endpointleri vardır ancak 2026 pay-per-use fiyatlandırması genel tüketici uygulaması için önemli maliyet riski oluşturur. X tarafında önce resmi veri arşivi importu hedeflenir; OAuth/API daha sonra maliyet doğrulanırsa eklenir.
+4. X'in resmi API follower/following endpointleri vardır ancak 2026 pay-per-use fiyatlandırması maliyet riski oluşturur. X tarafında önce resmi veri arşivi importu hedeflenir; OAuth/API daha sonra değerlendirilir.
 5. Varsayılan yaklaşım local-first'tür. Sunucu zorunlu değilse sosyal grafik verisi cihazdan çıkmaz.
 6. Analiz motoru platform bağımsız saf Dart çekirdeğidir.
 7. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si, yoksa normalize edilmiş kullanıcı adı kimlik anahtarıdır.
@@ -28,7 +28,8 @@ Temel sonuçlar:
 10. Flutter presentation katmanı parsing veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase` import -> snapshot -> analiz akışını yürütür.
 11. Mobil uygulama Flutter 3.47.2, Riverpod, go_router ve sistem dosya seçimi için file_picker kullanır.
 12. Yerel geçmiş Drift/SQLite ile tutulur. Sosyal kullanıcı kayıtları snapshot başına tam kopyalanmaz; ortak kullanıcı tablosu ve snapshot ilişki tablosu kullanılır.
-13. Snapshot zamanları domain katmanında UTC olarak normalize edilir.
+13. Snapshot zamanları UTC olarak normalize edilir.
+14. Varsayılan retention her sosyal hesap için son 30 snapshot'tır. Veritabanı API'sinde limit parametrelidir; gelecekte Premium/sınırsız geçmiş için sınırsız mod desteklenebilir.
 
 ## Önemli ürün riski
 
@@ -51,7 +52,7 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 
 ### Mobil uygulama — `apps/mobile`
 - Flutter 3.47.2
-- Riverpod state management
+- Riverpod
 - go_router
 - sistem ZIP dosya seçici
 - Instagram ana kartı
@@ -61,24 +62,21 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 - Seni Takip Edenler
 - Takibi Bırakanlar
 - Yeni Takipçiler
-- X için pasif “Yakında” kartı
+- Analiz Geçmişi ekranı
 - Drift/SQLite local snapshot storage
+- X için pasif “Yakında” kartı
 
 ### Local geçmiş veri modeli
 
-`StoredAccounts`
-- sosyal hesabı bir kez saklar.
+`StoredAccounts`: sosyal hesabı bir kez saklar.
 
-`StoredSocialUsers`
-- sosyal kullanıcıyı `identityKey` ile bir kez saklar.
+`StoredSocialUsers`: sosyal kullanıcıyı `identityKey` ile bir kez saklar.
 
-`StoredSnapshots`
-- analiz zamanı, hesap ve kaynak formatını saklar.
+`StoredSnapshots`: analiz zamanı, hesap ve kaynak formatını saklar.
 
-`StoredSnapshotRelations`
-- bir kullanıcının ilgili snapshot'ta follower/following durumunu bitmask ile saklar.
+`StoredSnapshotRelations`: kullanıcının ilgili snapshot'taki follower/following durumunu bitmask ile saklar.
 
-Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bulur, yeni snapshot ile karşılaştırır ve ardından yeni snapshot'ı cihazda saklar.
+Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bulur, yeni snapshot ile karşılaştırır ve ardından yeni snapshot'ı cihazda saklar. Geçmiş ekranında kayıtlar tarih ve takip sayılarıyla listelenir. Eski bir snapshot açıldığında kendisinden önceki snapshot otomatik bulunur ve o dönemin değişim analizi yeniden hesaplanır.
 
 ## MVP durumu
 
@@ -93,7 +91,7 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Import -> snapshot -> analiz use-case.
 - [x] Flutter uygulama kabuğu.
 - [x] Sistem ZIP dosya seçici.
-- [x] İlk analiz ekranları.
+- [x] Analiz sonuç ekranları.
 - [x] Flutter 3.47.2 resmi Android platform wrapper.
 - [x] Android debug APK build doğrulaması.
 - [ ] Fiziksel Android cihazda gerçek Meta export ZIP testi.
@@ -104,11 +102,13 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Son snapshot'ı otomatik geri yükleme.
 - [x] Takibi bırakanlar hesaplama.
 - [x] Yeni takipçiler hesaplama.
-- [x] Aynı sosyal kullanıcıların snapshotlar arasında deduplicate edilmesi.
+- [x] Sosyal kullanıcıların snapshotlar arasında deduplicate edilmesi.
 - [x] Database unit testleri.
-- [ ] Geçmiş analizleri listeleme ekranı.
-- [ ] İki eski snapshot'ı kullanıcı seçerek karşılaştırma.
-- [ ] Retention/geçmiş temizleme politikası.
+- [x] Geçmiş analizleri listeleme ekranı.
+- [x] Eski bir snapshot'ı kendi önceki snapshot'ıyla karşılaştırarak açma.
+- [x] Varsayılan 30 snapshot retention ve otomatik temizleme.
+- [x] Orphan sosyal kullanıcı kayıtlarını temizleme.
+- [ ] Kullanıcının iki farklı snapshot'ı elle seçerek karşılaştırması.
 
 ### MVP 3 — X
 - [ ] X resmi arşiv formatını gerçek fixture ile doğrulama.
@@ -133,8 +133,7 @@ CI:
 - `cancel-in-progress` aktif.
 - Artifact upload yok.
 - Doküman-only değişikliklerde workflow çalışmaz.
-- Android wrapper tek seferlik bootstrap workflow ile resmi Flutter şablonundan üretildi; workflow daha sonra kaldırıldı.
-- Drift generated code tek seferlik codegen workflow ile üretildi; workflow daha sonra kaldırıldı.
+- Android wrapper ve Drift generated code için kullanılan tek seferlik workflow'lar iş bitince kaldırıldı.
 
 ## Doğrulanmış durum
 
@@ -143,7 +142,7 @@ CI:
 - Flutter 3.47.2 Android wrapper üretimi başarılı.
 - `flutter build apk --debug` başarılı.
 - Drift code generation başarılı.
-- Drift database testleri başarılı.
+- Drift database/history/retention testleri başarılı.
 - Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
 - Artifact saklanmıyor.
 
@@ -153,14 +152,14 @@ CI:
 2. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
 3. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
 4. Fiziksel Android cihazda gerçek Meta ZIP ile uçtan uca test henüz yapılmadı.
-5. Production release signing henüz kurulmadı; mevcut Flutter Android şablonunda release build debug signing kullanır. Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
-6. Snapshot retention/temizleme politikası henüz uygulanmadı.
+5. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
+6. Kullanıcının iki keyfi snapshot'ı elle seçerek karşılaştırması henüz yoktur.
 
 ## Sıradaki işler
 
 1. Fiziksel Android cihazda gerçek Instagram export ZIP ile import ve sonuç doğrulaması.
-2. Snapshot geçmiş ekranını eklemek.
-3. Retention/geçmiş temizleme politikasını belirlemek ve uygulamak.
-4. Kullanıcı adına dokununca resmi Instagram profilini açmak.
-5. Liste arama/sıralama UX'ini tamamlamak.
+2. Kullanıcı adına dokununca resmi Instagram profilini açmak.
+3. Liste arama ve sıralama UX'ini tamamlamak.
+4. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
+5. Test sürümü dağıtımı için güvenli ve kota-dostu yöntem belirlemek.
 6. Ardından X resmi arşiv importer'ına geçmek.

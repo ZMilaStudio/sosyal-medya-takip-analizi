@@ -4,6 +4,24 @@ import 'package:follow_core/follow_core.dart';
 
 part 'follow_history_database.g.dart';
 
+class FollowSnapshotHistoryItem {
+  const FollowSnapshotHistoryItem({
+    required this.snapshotId,
+    required this.account,
+    required this.capturedAt,
+    required this.followersCount,
+    required this.followingCount,
+    this.sourceFormat,
+  });
+
+  final int snapshotId;
+  final SocialAccount account;
+  final DateTime capturedAt;
+  final int followersCount;
+  final int followingCount;
+  final String? sourceFormat;
+}
+
 class StoredAccounts extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get platform => text()();
@@ -79,13 +97,17 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
   FollowHistoryDatabase({QueryExecutor? executor})
       : super(executor ?? driftDatabase(name: 'follow_history'));
 
+  static const int defaultSnapshotRetention = 30;
   static const _followerBit = 1;
   static const _followingBit = 2;
 
   @override
   int get schemaVersion => 1;
 
-  Future<void> saveSnapshot(FollowSnapshot snapshot) async {
+  Future<void> saveSnapshot(
+    FollowSnapshot snapshot, {
+    int? keepLatest = defaultSnapshotRetention,
+  }) async {
     await transaction(() async {
       final accountId = await _ensureAccount(snapshot.account);
       final snapshotId = await into(storedSnapshots).insert(
@@ -130,6 +152,10 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
         );
       });
     });
+
+    if (keepLatest != null) {
+      await pruneHistory(snapshot.account, keepLatest: keepLatest);
+    }
   }
 
   Future<FollowSnapshot?> latestSnapshot(SocialAccount account) async {
@@ -143,6 +169,134 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
     final snapshot = await snapshotQuery.getSingleOrNull();
     if (snapshot == null) return null;
 
+    return _restoreSnapshot(snapshot, account);
+  }
+
+  Future<FollowSnapshot?> snapshotById(int snapshotId) async {
+    final snapshotQuery = select(storedSnapshots)
+      ..where((row) => row.id.equals(snapshotId))
+      ..limit(1);
+    final snapshot = await snapshotQuery.getSingleOrNull();
+    if (snapshot == null) return null;
+
+    final accountQuery = select(storedAccounts)
+      ..where((row) => row.id.equals(snapshot.accountId))
+      ..limit(1);
+    final accountRow = await accountQuery.getSingleOrNull();
+    if (accountRow == null) return null;
+
+    return _restoreSnapshot(snapshot, _accountFromRow(accountRow));
+  }
+
+  Future<FollowSnapshot?> previousSnapshotBefore(int snapshotId) async {
+    final currentQuery = select(storedSnapshots)
+      ..where((row) => row.id.equals(snapshotId))
+      ..limit(1);
+    final current = await currentQuery.getSingleOrNull();
+    if (current == null) return null;
+
+    final previousQuery = select(storedSnapshots)
+      ..where(
+        (row) => row.accountId.equals(current.accountId) &
+            row.capturedAt.isSmallerThanValue(current.capturedAt),
+      )
+      ..orderBy([(row) => OrderingTerm.desc(row.capturedAt)])
+      ..limit(1);
+    final previous = await previousQuery.getSingleOrNull();
+    if (previous == null) return null;
+
+    final accountQuery = select(storedAccounts)
+      ..where((row) => row.id.equals(current.accountId))
+      ..limit(1);
+    final accountRow = await accountQuery.getSingleOrNull();
+    if (accountRow == null) return null;
+
+    return _restoreSnapshot(previous, _accountFromRow(accountRow));
+  }
+
+  Future<List<FollowSnapshotHistoryItem>> listHistory({
+    SocialPlatform? platform,
+  }) async {
+    final accountRows = await select(storedAccounts).get();
+    final accountsById = {
+      for (final row in accountRows) row.id: _accountFromRow(row),
+    };
+
+    final snapshotQuery = select(storedSnapshots)
+      ..orderBy([(row) => OrderingTerm.desc(row.capturedAt)]);
+    final snapshots = await snapshotQuery.get();
+    final relations = await select(storedSnapshotRelations).get();
+
+    final followerCounts = <int, int>{};
+    final followingCounts = <int, int>{};
+    for (final relation in relations) {
+      if ((relation.relation & _followerBit) != 0) {
+        followerCounts.update(
+          relation.snapshotId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+      if ((relation.relation & _followingBit) != 0) {
+        followingCounts.update(
+          relation.snapshotId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+    }
+
+    final result = <FollowSnapshotHistoryItem>[];
+    for (final snapshot in snapshots) {
+      final account = accountsById[snapshot.accountId];
+      if (account == null) continue;
+      if (platform != null && account.platform != platform) continue;
+
+      result.add(
+        FollowSnapshotHistoryItem(
+          snapshotId: snapshot.id,
+          account: account,
+          capturedAt: snapshot.capturedAt.toUtc(),
+          followersCount: followerCounts[snapshot.id] ?? 0,
+          followingCount: followingCounts[snapshot.id] ?? 0,
+          sourceFormat: snapshot.sourceFormat,
+        ),
+      );
+    }
+    return List.unmodifiable(result);
+  }
+
+  Future<void> pruneHistory(
+    SocialAccount account, {
+    required int keepLatest,
+  }) async {
+    if (keepLatest < 1) {
+      throw ArgumentError.value(keepLatest, 'keepLatest', 'Must be at least 1.');
+    }
+
+    final accountId = await _findAccountId(account);
+    if (accountId == null) return;
+
+    final query = select(storedSnapshots)
+      ..where((row) => row.accountId.equals(accountId))
+      ..orderBy([(row) => OrderingTerm.desc(row.capturedAt)]);
+    final snapshots = await query.get();
+    if (snapshots.length <= keepLatest) return;
+
+    final oldIds = snapshots.skip(keepLatest).map((row) => row.id).toList();
+    await transaction(() async {
+      await (delete(storedSnapshotRelations)
+            ..where((row) => row.snapshotId.isIn(oldIds)))
+          .go();
+      await (delete(storedSnapshots)..where((row) => row.id.isIn(oldIds))).go();
+      await _deleteOrphanUsers();
+    });
+  }
+
+  Future<FollowSnapshot> _restoreSnapshot(
+    StoredSnapshot snapshot,
+    SocialAccount account,
+  ) async {
     final relationQuery = select(storedSnapshotRelations).join([
       innerJoin(
         storedSocialUsers,
@@ -180,6 +334,21 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
       sourceType: SnapshotSourceType.values.byName(snapshot.sourceType),
       sourceFormat: snapshot.sourceFormat,
     );
+  }
+
+  Future<void> _deleteOrphanUsers() async {
+    final relations = await select(storedSnapshotRelations).get();
+    final referencedKeys = relations.map((row) => row.identityKey).toSet();
+    final users = await select(storedSocialUsers).get();
+    final orphanKeys = users
+        .map((row) => row.identityKey)
+        .where((key) => !referencedKeys.contains(key))
+        .toList();
+
+    if (orphanKeys.isEmpty) return;
+    await (delete(storedSocialUsers)
+          ..where((row) => row.identityKey.isIn(orphanKeys)))
+        .go();
   }
 
   Future<int?> _findAccountId(SocialAccount account) async {
@@ -230,6 +399,15 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
         platformAccountId: Value(account.accountId),
         displayName: Value(account.displayName),
       ),
+    );
+  }
+
+  SocialAccount _accountFromRow(StoredAccount row) {
+    return SocialAccount(
+      platform: SocialPlatform.values.byName(row.platform),
+      username: row.username,
+      accountId: row.platformAccountId,
+      displayName: row.displayName,
     );
   }
 

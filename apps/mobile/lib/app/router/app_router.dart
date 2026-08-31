@@ -2,6 +2,7 @@ import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/analysis/presentation/analysis_screen.dart';
+import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -10,6 +11,11 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       name: 'home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/history',
+      name: 'history',
+      builder: (context, state) => const HistoryScreen(),
     ),
     GoRoute(
       path: '/analysis',
