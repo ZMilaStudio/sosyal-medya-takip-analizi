@@ -223,7 +223,7 @@ class _AnalysisTabData {
   final Set<SocialUser> users;
 }
 
-class _UserList extends StatelessWidget {
+class _UserList extends StatefulWidget {
   const _UserList({
     required this.data,
     required this.onIgnore,
@@ -233,13 +233,16 @@ class _UserList extends StatelessWidget {
   final Future<void> Function(SocialUser user) onIgnore;
 
   @override
-  Widget build(BuildContext context) {
-    final users = data.users.toList()
-      ..sort(
-        (a, b) => a.normalizedUsername.compareTo(b.normalizedUsername),
-      );
+  State<_UserList> createState() => _UserListState();
+}
 
-    if (users.isEmpty) {
+class _UserListState extends State<_UserList> {
+  var _query = '';
+  var _ascending = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.data.users.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
@@ -254,7 +257,7 @@ class _UserList extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                data.description,
+                widget.data.description,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -263,61 +266,110 @@ class _UserList extends StatelessWidget {
       );
     }
 
+    final users = widget.data.users.where((user) {
+      if (_query.isEmpty) return true;
+      final displayName = user.displayName?.toLowerCase() ?? '';
+      return user.normalizedUsername.contains(_query) ||
+          displayName.contains(_query);
+    }).toList()
+      ..sort((a, b) {
+        final comparison =
+            a.normalizedUsername.compareTo(b.normalizedUsername);
+        return _ascending ? comparison : -comparison;
+      });
+
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text(data.description),
+            child: Text(widget.data.description),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const ValueKey('analysis-search'),
+                  textInputAction: TextInputAction.search,
+                  onChanged: (value) {
+                    setState(() => _query = value.trim().toLowerCase());
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Kullanıcı ara',
+                    prefixIcon: Icon(Icons.search_rounded),
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                key: const ValueKey('analysis-sort-toggle'),
+                tooltip: _ascending ? 'Z-A sırala' : 'A-Z sırala',
+                onPressed: () => setState(() => _ascending = !_ascending),
+                icon: Text(
+                  _ascending ? 'A-Z' : 'Z-A',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+            ],
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            itemCount: users.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final user = users[index];
-              final firstCharacter = user.username.isEmpty
-                  ? '?'
-                  : user.username.characters.first.toUpperCase();
-              return ListTile(
-                onTap: () => _openInstagramProfile(context, user),
-                leading: CircleAvatar(child: Text(firstCharacter)),
-                title: Text('@${user.username}'),
-                subtitle: user.displayName == null
-                    ? null
-                    : Text(user.displayName!),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.open_in_new_rounded, size: 20),
-                    PopupMenuButton<_UserAction>(
-                      tooltip: 'Hesap işlemleri',
-                      icon: const Icon(Icons.more_vert_rounded),
-                      onSelected: (action) async {
-                        if (action == _UserAction.ignore) {
-                          await onIgnore(user);
-                        }
-                      },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
-                          value: _UserAction.ignore,
-                          child: Row(
-                            children: [
-                              Icon(Icons.visibility_off_outlined),
-                              SizedBox(width: 10),
-                              Text('Yok say'),
+          child: users.isEmpty
+              ? const Center(child: Text('Aramana uygun hesap bulunamadı.'))
+              : ListView.separated(
+                  itemCount: users.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    final firstCharacter = user.username.isEmpty
+                        ? '?'
+                        : user.username.characters.first.toUpperCase();
+                    return ListTile(
+                      onTap: () => _openInstagramProfile(context, user),
+                      leading: CircleAvatar(child: Text(firstCharacter)),
+                      title: Text('@${user.username}'),
+                      subtitle: user.displayName == null
+                          ? null
+                          : Text(user.displayName!),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.open_in_new_rounded, size: 20),
+                          PopupMenuButton<_UserAction>(
+                            tooltip: 'Hesap işlemleri',
+                            icon: const Icon(Icons.more_vert_rounded),
+                            onSelected: (action) async {
+                              if (action == _UserAction.ignore) {
+                                await widget.onIgnore(user);
+                              }
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: _UserAction.ignore,
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.visibility_off_outlined),
+                                    SizedBox(width: 10),
+                                    Text('Yok say'),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

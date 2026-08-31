@@ -50,6 +50,38 @@ void main() {
     expect(find.text('@mutual'), findsOneWidget);
   });
 
+  testWidgets('search filters visible accounts', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result())));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('analysis-search')),
+      'bob',
+    );
+    await tester.pump();
+
+    expect(find.text('@alice'), findsNothing);
+    expect(find.text('@bob'), findsOneWidget);
+    expect(find.text('Takip Etmeyenler (2)'), findsOneWidget);
+  });
+
+  testWidgets('sort toggles between A-Z and Z-A', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result())));
+    await tester.pumpAndSettle();
+
+    final aliceBefore = tester.getTopLeft(find.text('@alice')).dy;
+    final bobBefore = tester.getTopLeft(find.text('@bob')).dy;
+    expect(aliceBefore, lessThan(bobBefore));
+
+    await tester.tap(find.byKey(const ValueKey('analysis-sort-toggle')));
+    await tester.pump();
+
+    final aliceAfter = tester.getTopLeft(find.text('@alice')).dy;
+    final bobAfter = tester.getTopLeft(find.text('@bob')).dy;
+    expect(bobAfter, lessThan(aliceAfter));
+    expect(find.text('Z-A'), findsOneWidget);
+  });
+
   testWidgets('ignores one account and updates the category count',
       (tester) async {
     await tester.pumpWidget(MaterialApp(home: AnalysisScreen(result: result())));
