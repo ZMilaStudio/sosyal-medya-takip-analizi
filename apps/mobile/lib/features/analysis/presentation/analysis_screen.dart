@@ -365,7 +365,7 @@ class _UserList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: users.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 7),
+      separatorBuilder: (_, _) => const SizedBox(height: 7),
       itemBuilder: (context, index) {
         final user = users[index];
         return _UserRow(
