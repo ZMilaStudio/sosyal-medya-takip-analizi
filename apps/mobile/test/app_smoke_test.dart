@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sosyal_medya_takip_analizi/app/app.dart';
 
 void main() {
-  testWidgets('shows Instagram import and history entry points', (tester) async {
+  testWidgets('shows Instagram import, history and guide entry points',
+      (tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: SosyalMedyaTakipApp()),
     );
@@ -13,6 +14,6 @@ void main() {
     expect(find.text('Instagram'), findsOneWidget);
     expect(find.text('Instagram Verisini İçe Aktar'), findsOneWidget);
     expect(find.text('Analiz Geçmişi'), findsOneWidget);
-    expect(find.text('X / Twitter'), findsOneWidget);
+    expect(find.text('Nasıl yapılır?'), findsOneWidget);
   });
 }

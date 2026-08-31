@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/analysis/presentation/analysis_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/instagram_guide/presentation/instagram_export_guide_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -16,6 +17,11 @@ final GoRouter appRouter = GoRouter(
       path: '/history',
       name: 'history',
       builder: (context, state) => const HistoryScreen(),
+    ),
+    GoRoute(
+      path: '/instagram-guide',
+      name: 'instagram-guide',
+      builder: (context, state) => const InstagramExportGuideScreen(),
     ),
     GoRoute(
       path: '/analysis',
