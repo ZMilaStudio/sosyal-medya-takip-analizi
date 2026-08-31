@@ -28,78 +28,60 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - 308 yalnız takipçi
 - Instagram UI takip edilen sayısı 967; export ile UI arasında 86 hesap farkı var.
 
-## Fiziksel Android regresyon geçmişi
-Başarısız: PR #16, PR #18, PR #19, device-test-v2-11, v2-14, v2-15.
-
-Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
-
-### v2-16 — fiziksel çalışan liste baseline
+## Fiziksel çalışan baselines
+### v2-16 — liste baseline
 - commit `90059b024cc844a101a84ac076e49a22d12b86b6`
 - VersionCode 300016
-- fiziksel Samsung: Takip Etmeyenler (792) listesi ve 569/1053 kartları görünür ✅
-- backup: `backup/device-v2-16-working-baseline`
+- fiziksel Samsung: listeler ve 569/1053 kartları görünür ✅
+- backup `backup/device-v2-16-working-baseline`
 
-### v2-17 — fiziksel çalışan liste + profil bağlantısı
+### v2-17 — profil bağlantısı PASS
 - commit `ac5cce4ac53cdc05b91a2db6b34765afc40a88e4`
-- VersionCode 300017
-- fiziksel Samsung: liste görünür ✅
-- Instagram profil bağlantısı açılır ✅
-- `Karşılıklı (261)` sekmesine geçiş ve liste görünümü doğrulandı ✅
-- `Seni Takip Edenler (308)` sayısı doğru görünür ✅
-- backup: `backup/device-v2-17-links-working`
+- profil bağlantısı fiziksel PASS ✅
+- backup `backup/device-v2-17-links-working`
 
-## v2-21 — Yok say özelliği tamamen fiziksel PASS
+### v2-21 — Yok say PASS
 - commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
-- VersionCode `300021`
-- prerelease `device-test-v2-21`
-- backup: `backup/device-v2-21-ignored-working`
+- VersionCode 300021
 - liste / profil / Yok say / Geri al / ignored yönetimi / 3 sn SnackBar kapanışı fiziksel PASS ✅
+- backup `backup/device-v2-21-ignored-working`
 
-## v2-22 — Arama + sıralama FİZİKSEL PASS
-- kaynak commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
-- VersionCode `300022`
+### v2-22 — Arama + sıralama PASS
+- commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
+- VersionCode 300022
 - APK SHA-256 `a1d442c81da5f2dc0dc57994eb577a944698cb315cd29b980a042c7d388f5d02`
 - prerelease `device-test-v2-22`
-- backup: `backup/device-v2-22-search-sort-working`
-
-Fiziksel Samsung sonucu:
-- üç mevcut liste ✅
-- profil açma ✅
-- Yok say / Geri al / ignored yönetimi ✅
-- kullanıcı arama ✅
-- A-Z / Z-A sıralama ✅
-- **v2-22 fiziksel PASS** ✅
+- arama / A-Z-Z-A / listeler / profil / ignored akışı fiziksel PASS ✅
+- backup `backup/device-v2-22-search-sort-working`
 
 ## v2-23 — Takibi Bırakanlar + Yeni Takipçiler adayı
 Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri eklendi.
 
-Model doğrulaması:
+Model:
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
-- Bu iki küme yalnız önceki snapshot varsa hesaplanır.
-- Önceki snapshot yoksa iki sekmenin de `(0)` göstermesi doğru davranıştır.
+- previous snapshot yoksa iki sekme `(0)` gösterir.
+- previous snapshot varsa farklar gerçek iki snapshot üzerinden hesaplanır.
 
 UI:
-- mevcut 3 sekme korunur.
+- ilk 3 sekme ve tüm çalışan yapı korunur.
 - 4. sekme `Takibi Bırakanlar`.
 - 5. sekme `Yeni Takipçiler`.
-- iki yeni sekmede mevcut çalışan CircleAvatar, profil açma, arama, A-Z/Z-A, Yok say ve SnackBar altyapısı aynen kullanılır.
-- ignored filtresi tarihsel sekmelere de uygulanır.
-- launcher bu sürümde değiştirilmedi.
+- yeni sekmelerde de profil açma, arama, sıralama, Yok say ve ignored filtresi aynen çalışır.
+- launcher değişmedi.
 
-Regresyon testi:
-- önceki snapshot olmadan yeni sekmelerin `(0)` görünmesi kontrol edilir.
-- sentetik previous/current snapshot ile 1 unfollower (`@left`) ve 1 new follower (`@newcomer`) üretilir.
-- TabController ile 4. ve 5. sekme gövdelerinin doğru kullanıcıyı render ettiği doğrulanır.
+Test:
+- previous yokken iki sekme `(0)`.
+- sentetik previous/current ile `@left` unfollower ve `@newcomer` new follower.
+- TabController ile 4. ve 5. sekme içerikleri doğrulanır.
 - v2-22 arama/sıralama/Yok say testleri korunur.
 
-Hazırlık:
-- analiz commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
+Hazırlık zinciri:
+- UI commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
 - test commit `c8b69a91fdc198869487b08f128c7fdd1446d0db`
-- final staging commit `5d8168d10891e2f602f8ff0999fe1404e23a2686`
-- geçici branch `tmp/restore-history-tabs`
-- test/device branch'e tek ref hareketi ile tek Actions build açılacak.
-- fiziksel cihaz doğrulaması: ⏳
+- docs staging `ced0de60faff3f00e8ab1d5a5870158cb2d5f83c`
+- final handoff commit bu dosya commitidir; test/device branch tek ref hareketiyle buna taşınacaktır.
+- böylece yalnız tek Device Test build tetiklenecektir.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -120,7 +102,7 @@ Hazırlık:
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
-- [ ] **v2-23 Takibi Bırakanlar / Yeni Takipçiler sekmelerini CI + fiziksel cihazda doğrulama**
+- [ ] **v2-23 Takibi Bırakanlar / Yeni Takipçiler CI + fiziksel doğrulama**
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -131,4 +113,4 @@ Hazırlık:
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-v2-23 test/device branch'ine tek ref hareketiyle taşınacak. CI başarılı olursa APK mevcut v2-22'nin üzerine kurulacak. Fiziksel testte 5 sekmenin görünmesi, ilk 3 sekmenin bozulmaması ve geçmiş verisi varsa son iki sekmenin doğru kullanıcıları göstermesi kontrol edilecek.
+Final v2-23 hazırlık commit'i test/device branch'e taşınacak. CI başarılı olursa APK mevcut v2-22 üzerine kurulacak. Fiziksel cihazda 5 sekmenin görünmesi ve ilk 3 sekmenin bozulmaması doğrulanacak. Gerçek geçmiş verisi yoksa son iki sekmenin 0 görünmesi normaldir; iki snapshot olduğunda değişimler dolacaktır.
