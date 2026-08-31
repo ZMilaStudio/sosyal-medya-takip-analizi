@@ -403,64 +403,67 @@ class _UserListState extends State<_UserList> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final user = users[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 7),
-                    decoration: BoxDecoration(
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 7),
+                    child: Material(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: ListTile(
-                      onTap: () => _openInstagramProfile(user),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 2,
+                      clipBehavior: Clip.antiAlias,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        side: const BorderSide(color: AppColors.border),
                       ),
-                      leading: MonogramAvatar(username: user.username),
-                      title: Text(
-                        '@${user.username}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+                      child: ListTile(
+                        onTap: () => _openInstagramProfile(user),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 2,
                         ),
-                      ),
-                      subtitle: user.displayName == null
-                          ? null
-                          : Text(user.displayName!),
-                      trailing: PopupMenuButton<_UserAction>(
-                        tooltip: 'Hesap işlemleri',
-                        onSelected: (action) async {
-                          switch (action) {
-                            case _UserAction.openProfile:
-                              await _openInstagramProfile(user);
-                            case _UserAction.ignore:
-                              await widget.onIgnore(user);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: _UserAction.openProfile,
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.open_in_new_rounded),
-                              title: Text('Profili aç'),
-                            ),
+                        leading: MonogramAvatar(username: user.username),
+                        title: Text(
+                          '@${user.username}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
                           ),
-                          PopupMenuItem(
-                            value: _UserAction.ignore,
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(
-                                Icons.visibility_off_outlined,
-                                color: AppColors.danger,
-                              ),
-                              title: Text(
-                                'Yok say',
-                                style: TextStyle(color: AppColors.danger),
+                        ),
+                        subtitle: user.displayName == null
+                            ? null
+                            : Text(user.displayName!),
+                        trailing: PopupMenuButton<_UserAction>(
+                          tooltip: 'Hesap işlemleri',
+                          onSelected: (action) async {
+                            switch (action) {
+                              case _UserAction.openProfile:
+                                await _openInstagramProfile(user);
+                              case _UserAction.ignore:
+                                await widget.onIgnore(user);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: _UserAction.openProfile,
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(Icons.open_in_new_rounded),
+                                title: Text('Profili aç'),
                               ),
                             ),
-                          ),
-                        ],
+                            PopupMenuItem(
+                              value: _UserAction.ignore,
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  Icons.visibility_off_outlined,
+                                  color: AppColors.danger,
+                                ),
+                                title: Text(
+                                  'Yok say',
+                                  style: TextStyle(color: AppColors.danger),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
