@@ -112,6 +112,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 : 'Instagram Verisini İçe Aktar',
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: isLoading ? null : () => context.push('/history'),
+                          icon: const Icon(Icons.history),
+                          label: const Text('Analiz Geçmişi'),
+                        ),
                       ],
                     ),
                   ),

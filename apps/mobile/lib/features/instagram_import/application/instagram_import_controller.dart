@@ -4,13 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:follow_core/follow_core.dart';
 
-import '../../../data/local/follow_history_database.dart';
-
-final followHistoryDatabaseProvider = Provider<FollowHistoryDatabase>((ref) {
-  final database = FollowHistoryDatabase();
-  ref.onDispose(database.close);
-  return database;
-});
+import '../../../data/local/follow_history_provider.dart';
 
 final instagramImportControllerProvider = AsyncNotifierProvider<
     InstagramImportController, InstagramFollowAnalysisResult?>(
