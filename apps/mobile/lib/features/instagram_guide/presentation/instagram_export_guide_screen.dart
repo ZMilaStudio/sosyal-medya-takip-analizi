@@ -34,7 +34,7 @@ class InstagramExportGuideScreen extends StatelessWidget {
     _GuideStepData(
       title: 'Tarih aralığı ve format',
       body:
-          'En eksiksiz sonuç için tarih aralığını mümkünse “Tüm zamanlar” yap. Format olarak “JSON” seç. HTML de desteklenir; medya kalitesi bu analiz için önemli değildir.',
+          'En eksiksiz sonuç için tarih aralığını “Her zaman” yap. Format olarak “JSON” seç. HTML de desteklenir; medya kalitesi bu analiz için önemli değildir.',
       icon: Icons.tune_rounded,
       important: true,
     ),
