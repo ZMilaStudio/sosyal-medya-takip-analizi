@@ -1,0 +1,59 @@
+name: Device Test APK
+
+# Trigger marker: synced with main after PR #15
+on:
+  push:
+    branches:
+      - test/device-apk
+    paths:
+      - '.github/workflows/device-test-apk.yml'
+      - '.github/test-signing/**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
+      - name: Install stable device-test signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          base64 --decode ../../.github/test-signing/takip-analizi-test.keystore.b64 > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+      - name: Build debug APK
+        run: flutter build apk --debug --build-number=$((200000 + GITHUB_RUN_NUMBER))
+      - name: Prepare test package
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk ../../takip-analizi-device-test.apk
+          cd ../..
+          sha256sum takip-analizi-device-test.apk > takip-analizi-device-test.sha256
+      - name: Publish prerelease
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="device-test-stable-signing-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" \
+            takip-analizi-device-test.apk \
+            takip-analizi-device-test.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Takip Analizi - Stable Device Test" \
+            --notes "Debug test APK. Sabit test imzası kullanır; bu sürüm bir kez kurulduktan sonra sonraki device-test APK'ları kaldırmadan güncellenebilir. Production sürüm değildir." \
+            --prerelease
