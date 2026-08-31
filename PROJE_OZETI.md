@@ -49,7 +49,7 @@ Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
 - backup: `backup/device-v2-17-links-working`
 
 ## v2-19 — Yok sayılan hesaplar fiziksel sonucu
-`v2-17` çalışan yapısı korunarak yalnız ignored entegrasyonu geri eklendi.
+`v2-17` çalışan yapısı korunarak ignored entegrasyonu geri eklendi.
 
 Fiziksel Samsung sonucu:
 - üç analiz listesi çalışıyor ✅
@@ -89,23 +89,23 @@ Fiziksel Samsung sonucu:
 - SnackBar yaklaşık 3 saniye sonra otomatik kapanıyor ✅
 - **v2-21 fiziksel PASS** ✅
 
-## v2-22 — Arama + sıralama adayı
+## v2-22 — Arama + sıralama FİZİKSEL PASS
 Çalışan v2-21 yapısı korunarak yalnız arama ve sıralama geri eklendi.
 
 Uygulama davranışı:
-- Her mevcut analiz sekmesinde açıklamanın altında `Kullanıcı ara` alanı bulunur.
+- Her mevcut analiz sekmesinde `Kullanıcı ara` alanı bulunur.
 - Arama kullanıcı adına ve varsa displayName'e göre filtreler.
 - Arama yalnız görünür listeyi filtreler; üst kategori toplamı değişmez.
-- `A-Z` düğmesi varsayılan artan sıralamayı gösterir.
-- Düğmeye basınca `Z-A` sırasına geçer; tekrar basınca A-Z'ye döner.
+- Varsayılan sıralama A-Z'dir.
+- Düğmeye basınca Z-A'ya geçer; tekrar basınca A-Z'ye döner.
 - Aramada sonuç yoksa `Aramana uygun hesap bulunamadı.` gösterilir.
-- çalışan `ListView.separated`, CircleAvatar, profil `onTap`, üç nokta → Yok say, sağ üst ignored yönetimi ve SnackBar mantığı değiştirilmedi.
-- son iki tarihsel sekme ve launcher bu sürüme eklenmedi.
+- çalışan `ListView.separated`, CircleAvatar, profil açma, üç nokta → Yok say, sağ üst ignored yönetimi ve SnackBar mantığı korunmuştur.
+- son iki tarihsel sekme ve launcher bu sürüme eklenmemiştir.
 
 Regresyon testleri:
 - mevcut liste + sekme testi ✅
-- arama `bob` → `@alice` gizlenir, `@bob` kalır ✅
-- A-Z → Z-A düğmesi sonrası satır konumları tersine döner ✅
+- arama filtresi ✅
+- A-Z/Z-A sıralama testi ✅
 - Yok say testi ✅
 
 CI / APK:
@@ -122,9 +122,16 @@ CI / APK:
 - VersionCode `300022`
 - APK SHA-256 `a1d442c81da5f2dc0dc57994eb577a944698cb315cd29b980a042c7d388f5d02`
 - prerelease `device-test-v2-22`
-- fiziksel Samsung doğrulaması: ⏳
+- backup: `backup/device-v2-22-search-sort-working`
 
-Not: workflow release body metni eski render deneyi açıklamasını taşıyor; v2-22'nin gerçek kaynak durumu `644549a...` commit'i ve bu proje özetidir.
+Fiziksel Samsung sonucu:
+- üç mevcut liste görünür ✅
+- profil bağlantısı çalışır ✅
+- Yok say akışı çalışır ✅
+- sağ üst Yok Sayılan Hesaplar yönetimi çalışır ✅
+- arama doğru filtreler ✅
+- A-Z/Z-A sıralama doğru çalışır ✅
+- **v2-22 fiziksel PASS** ✅
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -144,8 +151,8 @@ Not: workflow release body metni eski render deneyi açıklamasını taşıyor; 
 - [x] fiziksel kategori sekmesi geçişi
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
-- [ ] **v2-22 arama/sıralamayı fiziksel cihazda doğrulama**
-- [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
+- [x] arama/sıralama fiziksel doğrulandı
+- [ ] **Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme**
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -155,11 +162,5 @@ Not: workflow release body metni eski render deneyi açıklamasını taşıyor; 
 - [ ] X snapshot/geçmiş
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
-## Sıradaki fiziksel test
-v2-22 mevcut v2-21 uygulamasının üzerine `Güncelle` olarak kurulacak. Yalnız şu maddeler doğrulanacak:
-1. Üç mevcut liste hâlâ görünüyor mu?
-2. Profil açma, Yok say ve sağ üst ignored yönetimi hâlâ çalışıyor mu?
-3. `Kullanıcı ara` alanına yazınca liste doğru filtreleniyor mu?
-4. `A-Z / Z-A` düğmesi sıralamayı gerçekten tersine çeviriyor mu?
-
-Bu fiziksel test geçmeden son iki sekme veya launcher değişikliğine geçilmeyecek.
+## Sıradaki iş
+v2-22 fiziksel PASS. Sıradaki özellik yine tek başına geri eklenecek: **Takibi Bırakanlar** ve **Yeni Takipçiler** tarihsel sekmeleri. Bu iki sekme fiziksel doğrulanmadan launcher değişikliğine geçilmeyecek.
