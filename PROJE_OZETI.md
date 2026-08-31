@@ -4,7 +4,7 @@ Son güncelleme: 31 Ağustos 2026
 
 ## Proje amacı
 
-Android öncelikli, Flutter + Dart tabanlı, local-first sosyal medya takip analizi uygulaması.
+Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması. İlk çekirdek Instagram'ın resmi Meta veri dışa aktarma ZIP/JSON/HTML dosyalarını cihaz üzerinde analiz eder. Sonraki aşamada snapshot/geçmiş karşılaştırması ve X resmi veri arşivi desteği genişletilir.
 
 Temel sonuçlar:
 - Ben takip ediyorum, beni takip etmiyor.
@@ -14,189 +14,183 @@ Temel sonuçlar:
 - Takibi bırakanlar.
 - Önceki analizlerle karşılaştırma.
 
-## Güncel teknik ve ürün kararları
+## Sabit ürün ve güvenlik kararları
 
-1. Instagram için ana veri kaynağı resmi Instagram/Meta veri dışa aktarma arşividir.
-2. Instagram kullanıcı adı/şifre toplama, private API, scraping ve güvenlik mekanizması aşma yöntemleri kullanılmaz.
-3. Instagram resmi API'si tam follower/following kullanıcı listesini ürün ihtiyacına uygun genel bir endpoint olarak sağlamadığından MVP buna bağlanmaz.
-4. X'in resmi API follower/following endpointleri vardır ancak 2026 pay-per-use fiyatlandırması maliyet riski oluşturur. X tarafında önce resmi veri arşivi importu hedeflenir; OAuth/API daha sonra değerlendirilir.
-5. Varsayılan yaklaşım local-first'tür. Sunucu zorunlu değilse sosyal grafik verisi cihazdan çıkmaz.
-6. Analiz motoru platform bağımsız saf Dart çekirdeğidir.
-7. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si, yoksa normalize edilmiş kullanıcı adı kimlik anahtarıdır.
-8. Instagram ZIP diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır.
-9. Instagram JSON ve HTML exportları ortak modele çevrilir. Multipart followers dosyaları desteklenir.
-10. Meta'nın güncel `following.json` varyasyonunda kullanıcı adı üst seviye `title` alanında gelebilir; parser bu yapıyı destekler.
-11. Flutter presentation katmanı parsing veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase` import -> snapshot -> analiz akışını yürütür.
-12. Mobil uygulama Flutter 3.47.2, Riverpod, go_router ve sistem dosya seçimi için file_picker kullanır.
-13. Yerel geçmiş Drift/SQLite ile tutulur. Sosyal kullanıcı kayıtları snapshot başına tam kopyalanmaz.
-14. Snapshot zamanları UTC olarak normalize edilir.
-15. Varsayılan retention her sosyal hesap için son 30 snapshot'tır.
-16. Instagram sonuç listelerinde kullanıcı adı/profil adına göre arama, A-Z/Z-A sıralama ve yalnız resmi `instagram.com/<username>` profil bağlantısını dış uygulamada açma kullanılır.
-17. Profil fotoğrafları scraping veya unofficial API ile çekilmez. Kullanıcı adına göre deterministik renkli monogram avatar sistemi kullanılır.
-18. Tema mor ağırlığı azaltılmış, daha nötr slate/teal açık tema olarak güncellendi. Mor yalnız sınırlı vurgu alanlarında kullanılır. Dark mode şimdilik kapsam dışıdır.
-19. Ana ekranda `Analiz Geçmişi` altında `Nasıl yapılır?` rehberi bulunur. Rehber güncel Meta akışında `Takipçiler ve takip edilenler`, tarih aralığı `Her zaman` ve tercihen `JSON` formatını anlatır.
-20. `Yok sayılan hesaplar` cihazda ve Instagram sahibi hesap bazında saklanır. Yok sayma ham snapshot takipçi/takip edilen sayılarını değiştirmez; yalnız analiz listelerini filtreler.
-21. Test sürümleri production paketinden ayrılmış `.dev` paket kimliği kullanır. Sabit device-test imzası sayesinde ilk `.dev` kurulumundan sonraki test APK'ları kaldırmadan güncellenebilir. Production signing bundan tamamen ayrı kurulacaktır.
-22. Android launcher için seçilen koyu takip-analiz uygulama simgesi uygulanmıştır.
-23. Gerçek Android cihazda `TabBarView` içindeki analiz gövdesinin görünmez kalması nedeniyle sonuç ekranı artık `TabBarView/PageView` kullanmaz. Sekme başlığı `TabBar` ile korunur, gövdede yalnız seçili sekmenin `_UserList` bileşeni render edilir.
+1. Instagram kullanıcı adı/şifre toplama, scraping, private API, otomatik follow/unfollow veya platform güvenlik mekanizması aşma kullanılmaz.
+2. Instagram için ana veri kaynağı resmi Meta veri dışa aktarma arşividir.
+3. X tarafı önce resmi veri arşivi importu ile yapılır; canlı API/OAuth ancak maliyet ve politika açısından uygun olursa sonradan değerlendirilir.
+4. Uygulama local-first'tür; sosyal grafik verisi zorunlu olmadıkça cihazdan çıkmaz.
+5. Analiz motoru platform bağımsız saf Dart çekirdeğidir.
+6. Kimlik eşlemede platform kullanıcı ID'si varsa o, yoksa normalize edilmiş kullanıcı adı kullanılır.
+7. Instagram ZIP bellekte işlenir; hedef ilişki dosyaları dışındaki içerikler çıkarılmaz. JSON ve HTML export, multipart follower dosyaları ve güncel `following.json` üst seviye `title` varyasyonu desteklenir.
+8. Profil fotoğrafı scraping/unofficial API ile çekilmez; deterministik renkli monogram avatarlar kullanılır.
+9. Tema mor ağırlığı azaltılmış slate/teal açık temadır. Dark mode şimdilik kapsam dışıdır.
+10. `Nasıl yapılır?` rehberi Meta akışını, `Takipçiler ve takip edilenler`, tarih aralığı `Her zaman` ve tercihen JSON formatını anlatır.
+11. `Yok sayılan hesaplar` hesap bazında cihazda saklanır. Ham snapshot takipçi/takip edilen sayılarını değiştirmez; yalnız analiz listelerini filtreler.
 
-## Önemli ürün riskleri
+## Gerçek Meta export doğrulaması
 
-- Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yalnız kullanıcı adına göre eşleştirme yapılabilir. Kullanıcı adı değişen bir hesap geçmiş karşılaştırmasında yanlışlıkla “takibi bıraktı + yeni takipçi” olarak görünebilir.
-- Meta exportundaki takip edilen sayısı Instagram profilindeki görünen sayaçtan farklı olabilir. Gerçek test arşivinde profil 967 gösterirken export `following.json` 1053 benzersiz hesap içerdi. Uygulama arşivin ham verisini değiştirmez; kullanıcı gerekirse hesapları `Yok say` ile analizden çıkarabilir.
-- Meta export dosya yapısı ve menü adları gelecekte değişebilir; fixture testleri ve rehber gerektiğinde güncellenmelidir.
+Levent'in gerçek `Her zaman` Instagram arşivinde:
+- `followers_1.json`: 569 benzersiz takipçi — Instagram profilindeki 569 ile birebir.
+- `following.json`: 1053 benzersiz takip edilen — kayıtların kullanıcı adları üst seviye `title` alanında.
+- Instagram profil ekranı takip edileni 967 gösteriyor; Meta export ile UI sayaç arasında 86 hesap farkı var.
+- Uygulama ham arşiv verisini değiştirmez; gerekirse kullanıcı hesapları `Yok say` ile analizden çıkarır.
+- Bu veriyle analiz sonucu 792 takip etmeyen, 261 karşılıklı ve 308 yalnız takipçi kategorilerini üretir.
 
-## Mimari
+## Mobil mimari
 
-### Çekirdek — `packages/follow_core`
-- `SocialPlatform`
-- `SocialAccount`
-- `SocialUser`
-- `FollowSnapshot`
-- `FollowAnalysis`
-- `FollowAnalysisEngine`
-- Instagram JSON parser
-- Instagram HTML parser
-- güvenli Instagram ZIP importer
-- Instagram import + analiz use-case
-- unit testler
-
-### Mobil uygulama — `apps/mobile`
+`apps/mobile`:
 - Flutter 3.47.2
-- Riverpod
-- go_router
-- sistem ZIP dosya seçici
+- Riverpod + go_router
+- file_picker
+- Drift/SQLite yerel geçmiş
 - merkezi `AppTheme`
-- Instagram ana kartı
-- `Nasıl yapılır?` Instagram export rehberi
-- takipçi/takip edilen özetleri
-- Takip Etmeyenler
-- Karşılıklı
-- Seni Takip Edenler
-- Takibi Bırakanlar
-- Yeni Takipçiler
-- sonuç listelerinde arama ve A-Z/Z-A sıralama
-- renkli monogram avatarlar
-- kullanıcı satırından resmi Instagram profilini açma
-- kullanıcı satırında `Yok say` işlemi
-- `Yok Sayılan Hesaplar` yönetim ekranı, geri alma ve tümünü temizleme
-- Analiz Geçmişi ekranı
-- Drift/SQLite local snapshot storage
-- X için pasif “Yakında” kartı
+- Instagram import
+- analiz ekranı
+- arama ve A-Z/Z-A sıralama
+- resmi Instagram profilini dış uygulamada açma
+- monogram avatarlar
+- yok say / geri al / yönetim ekranı
+- analiz geçmişi
+- Instagram export rehberi
+- X için pasif `Yakında` alanı
 
-## Local geçmiş veri modeli
+`packages/follow_core`:
+- `SocialPlatform`, `SocialAccount`, `SocialUser`
+- `FollowSnapshot`, `FollowAnalysis`, `FollowAnalysisEngine`
+- Instagram JSON/HTML parser
+- güvenli ZIP importer
+- import -> snapshot -> analiz use-case
+- unit/regression testleri
 
-`StoredAccounts`: sosyal hesabı bir kez saklar.
+## Yerel geçmiş
 
-`StoredSocialUsers`: sosyal kullanıcıyı `identityKey` ile bir kez saklar.
+- `StoredAccounts`: sosyal hesabı bir kez saklar.
+- `StoredSocialUsers`: sosyal kullanıcıyı `identityKey` ile deduplicate eder.
+- `StoredSnapshots`: analiz zamanı, hesap ve kaynak formatı.
+- `StoredSnapshotRelations`: snapshot içindeki follower/following bitmask ilişkileri.
+- Snapshot saatleri UTC normalize edilir.
+- Varsayılan retention hesap başına son 30 snapshot'tır.
+- Eski snapshot açıldığında kendi önceki snapshot'ı bulunup değişim analizi yeniden hesaplanır.
 
-`StoredSnapshots`: analiz zamanı, hesap ve kaynak formatını saklar.
+## Güncel hata düzeltmeleri
 
-`StoredSnapshotRelations`: kullanıcının ilgili snapshot'taki follower/following durumunu bitmask ile saklar.
+### Following parser
+Meta'nın gerçek `following.json` dosyasında kullanıcı adı `string_list_data.value` yerine `title` alanında geldiği için önce 569/0 sonucu oluşuyordu. Parser `title` fallback ile düzeltildi ve regression testi eklendi.
 
-Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bulur, yeni snapshot ile karşılaştırır ve ardından yeni snapshot'ı cihazda saklar. Geçmiş ekranında kayıtlar tarih ve takip sayılarıyla listelenir. Eski bir snapshot açıldığında kendisinden önceki snapshot otomatik bulunur ve o dönemin değişim analizi yeniden hesaplanır.
+### Fiziksel cihazda boş analiz listesi
+Gerçek Samsung cihazda kategori sayıları doğru olmasına rağmen açıklama, arama ve kullanıcı satırları görünmüyordu. Önceki `SliverList` ve `TabBarView` kaldırma denemeleri fiziksel cihazda yeterli olmadı.
 
-## MVP durumu
+PR #18 ile sonuç ekranı daha kökten sadeleştirildi:
+- özet kartları,
+- açıklama,
+- arama/sıralama,
+- kullanıcı satırları
 
-### MVP 1 — Instagram temel analiz
-- [x] Ortak analiz modeli.
-- [x] Set tabanlı analiz motoru.
-- [x] Instagram JSON parser.
-- [x] Instagram HTML parser.
-- [x] Güncel `following.json` `title` varyasyonu desteği.
-- [x] ZIP doğrulama ve güvenlik limitleri.
-- [x] Export dosyalarını otomatik keşfetme.
-- [x] Multipart followers birleştirme.
-- [x] Import -> snapshot -> analiz use-case.
-- [x] Flutter uygulama kabuğu.
-- [x] Sistem ZIP dosya seçici.
-- [x] Instagram veri indirme rehberi (`Her zaman` + JSON önerisi).
-- [x] Analiz sonuç ekranları.
-- [x] Sonuç listelerinde arama.
-- [x] A-Z / Z-A sıralama.
-- [x] Resmi Instagram profilini dış uygulamada açma.
-- [x] Sadeleştirilmiş slate/teal açık tema.
-- [x] Deterministik renkli monogram avatarlar.
-- [x] `Yok sayılan hesaplar` sistemi ve yönetim ekranı.
-- [x] Koyu Android launcher simgesi.
-- [x] Flutter 3.47.2 resmi Android platform wrapper.
-- [x] Android debug APK build doğrulaması.
-- [x] Fiziksel Android cihazda gerçek Meta export ZIP testi.
-- [x] Android'de analiz gövdesinin boş kalmasına neden olan `TabBarView` kaldırıldı; seçili sekme tek gövdede render ediliyor.
-- [x] 360x800 telefon viewport regression testi; açıklama, arama alanı, kullanıcı satırları ve sekme değişimi doğrulanıyor.
+tek bir `ListView.builder` içinde render ediliyor. Ayrı/nested scroll ve `Expanded + CustomScrollView` bağımlılığı kaldırıldı.
 
-### MVP 2 — geçmiş ve değişim analizi
-- [x] Drift/SQLite şeması.
-- [x] Local snapshot kaydı.
-- [x] Son snapshot'ı otomatik geri yükleme.
-- [x] Takibi bırakanlar hesaplama.
-- [x] Yeni takipçiler hesaplama.
-- [x] Sosyal kullanıcıların snapshotlar arasında deduplicate edilmesi.
-- [x] Database unit testleri.
-- [x] Geçmiş analizleri listeleme ekranı.
-- [x] Eski bir snapshot'ı kendi önceki snapshot'ıyla karşılaştırarak açma.
-- [x] Varsayılan 30 snapshot retention ve otomatik temizleme.
-- [x] Orphan sosyal kullanıcı kayıtlarını temizleme.
-- [ ] Kullanıcının iki farklı snapshot'ı elle seçerek karşılaştırması.
+Regression testi 360×800 viewportta gerçek ölçeğe yakın 569 follower / 1053 following / 792 non-follower / 261 mutual / 308 fan veri üretir; arama alanının ve kullanıcı satırının gerçekten `hitTestable()` olduğunu doğrular. PR #18 App CI tamamen başarılıdır. Fiziksel cihaz doğrulaması henüz yapılmadığı için cihaz bug'ı kapatılmış sayılmaz.
 
-### MVP 3 — X
-- [ ] X resmi arşiv formatını gerçek fixture ile doğrulama.
-- [ ] X ZIP/JSON importer.
-- [ ] X snapshot/geçmiş desteği.
-- [ ] Canlı API için gerçek kullanıcı başına maliyet modeli.
-- [ ] Gerekliyse OAuth 2.0 PKCE + minimum izinler.
+### Android launcher simgesi
+Önceki APK Samsung'da varsayılan Flutter/Android robot simgesini gösterdi. PR #18 ile:
+- koyu lacivert/slate zemin,
+- teal takip/kişi işareti,
+- açık büyüteç halkası,
+- hafif indigo vurgu
+
+Android vector/adaptive launcher icon olarak bağlandı.
+
+`AndroidManifest.xml` hem `android:icon` hem `android:roundIcon` kullanır. Adaptive icon foreground artık eski mipmap PNG yerine `@drawable/ic_launcher_foreground` vector kaynağına bağlıdır. Legacy fallback vector kaynakları da vardır. Device-test CI launcher kaynak bağlantısını ayrıca doğrular. Fiziksel cihazda yeni simgenin görünmesi henüz doğrulanmamıştır.
+
+## Test APK imza ve güncelleme sistemi
+
+Önceki `stable-signing` yaklaşımında keystore yalnız debug konumuna bırakılmış, Gradle'a açık signing config ile bağlanmamıştı; bu yüzden APK güncellemesi garanti değildi.
+
+PR #17 ile deterministic device-test v2 sistemi kuruldu:
+- paket: `com.zmilastudio.takipanalizi.dev`
+- production paketinden ayrı
+- Gradle debug build doğrudan sabit device-test keystore'una bağlı
+- sabit sertifika SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`
+- versionCode her device-test build'de `300000 + GITHUB_RUN_NUMBER`
+- release yayınlanmadan önce AAPT ile paket/versionCode ve apksigner ile sertifika doğrulanır
+- production signing daha sonra ayrı keystore/secrets ile kurulacaktır; test anahtarı production için kullanılmayacaktır.
+
+Yeni v2 imza tabanına geçerken mevcut eski test uygulaması bir kez kaldırılıp v2 APK temiz kurulmalıdır. Bundan sonraki v2 APK'lar aynı paket + aynı sertifika + daha yüksek versionCode ile kaldırmadan güncellenebilmelidir.
 
 ## GitHub / CI
 
-Repo: `ZMilaStudio/sosyal-medya-takip-analizi` (public).
+Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — public.
 
 Branch düzeni:
-- `main`: stabil.
-- `feat/<konu>`: özellik.
-- `fix/<konu>`: hata düzeltme.
-- `test/device-apk`: güncel `main` + device-test dağıtım altyapısı.
-- özellikler PR ile `main`e alınır.
+- `main`: stabil
+- `feat/<konu>` / `fix/<konu>`: PR tabanlı geliştirme
+- `test/device-apk`: güncel main + device-test dağıtım dosyaları
 
 CI:
-- `Core CI`: yalnız `packages/follow_core/**` için `dart analyze` + `dart test`.
-- `App CI`: `apps/mobile/**` değişikliklerinde Flutter 3.47.2 ile `flutter pub get`, `flutter analyze`, `flutter test`.
-- `cancel-in-progress` aktif.
-- Normal CI'da artifact upload yok.
-- Doküman-only değişikliklerde workflow çalışmaz.
-- Fiziksel cihaz APK'ları Actions artifact yerine GitHub prerelease asset olarak yayınlanır.
-- Device-test workflow sabit test imzası ve `.dev` paket kimliği kullanır.
+- Core CI: `dart analyze` + `dart test`
+- App CI: Flutter 3.47.2 `pub get` + `analyze` + `test`
+- normal CI artifact upload yapmaz
+- docs-only değişiklikler workflow tetiklemez
+- fiziksel cihaz APK'ları GitHub prerelease asset olarak yayınlanır
 
-## Doğrulanmış durum
+## Doğrulanmış son durum
 
-- Core CI başarılı.
-- Flutter App CI başarılı.
-- PR #11 tema/monogram başarılı ve `main`e alındı.
-- PR #12 Instagram export rehberi başarılı ve `main`e alındı.
-- PR #14 güncel Meta `following.json` parser düzeltmesi başarılı ve `main`e alındı.
-- PR #15 tema sadeleştirme + ilk liste render düzeltmesi + yok sayılan hesaplar + launcher simgesi başarılı ve `main`e alındı.
-- PR #16 Android analiz gövdesi düzeltmesi başarılı ve `main`e alındı.
-- PR #16 App CI: `flutter pub get` ✅, `flutter analyze` ✅, tüm Flutter testleri ✅; 360x800 telefon viewport ve sekme değiştirme regression testi dahil.
-- Flutter 3.47.2 Android wrapper üretimi başarılı.
-- Drift code generation ve database/history/retention testleri başarılı.
-- Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
-- Gerçek `Her zaman` Meta exportunda 569 follower başarıyla okundu.
-- Aynı exportun `following.json` dosyasında 1053 benzersiz takip edilen kayıt doğrulandı ve uygulama 1053 okudu.
-- Device Test APK run #5 tamamen başarılı: dependency, analyze, test, stable test signing, debug APK build ve GitHub prerelease yayınlama adımlarının tamamı geçti.
-- Güncel prerelease etiketi: `device-test-stable-signing-5`.
-- Güncel test APK SHA-256: `84c53cba83d635ecb558dbb47ee55dd6a9b97f888c2f322af06048ac06a4ebba`.
+- Core CI ✅
+- App CI ✅
+- PR #14 güncel Meta following parser fix ✅
+- PR #15 tema + yok sayılan hesaplar + ilk render/icon çalışması ✅
+- PR #16 ikinci render düzenlemesi ✅ fakat fiziksel cihazda liste hâlâ boş kaldı
+- PR #17 deterministic test signing ✅ ve main'e merge edildi
+- PR #18 tek `ListView.builder` render düzeltmesi + gerçek ölçekli hit-test regression testi + adaptive vector launcher icon ✅ ve main'e merge edildi
+- Device Test run #9 tüm aşamalarda başarılı:
+  - dependencies ✅
+  - analyze ✅
+  - 11 Flutter testi ve büyük liste regression testi ✅
+  - launcher source wiring ✅
+  - deterministic keystore ✅
+  - Android resource/APK build ✅
+  - paket/versionCode/imza doğrulaması ✅
+  - prerelease yayınlama ✅
+- Güncel prerelease: `device-test-v2-9`
+- VersionCode: `300009`
+- APK SHA-256: `5b1462ec41ac150f8965c3eefc6115613d25734e1d7c3b5e873f99c3c4ddd6f8`
 
-## Açık problemler / riskler
+## MVP durumu
 
-1. `device-test-stable-signing-5` fiziksel cihazda gerçek 569/1053 export ile kontrol edilmelidir; kullanıcı listesi ve arama alanının görünmesi doğrulanmadan cihaz bug'ı kapatılmış sayılmayacaktır.
-2. Production release signing henüz kurulmadı; Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır. Device-test imzası production için kesinlikle kullanılmayacaktır.
-3. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
-4. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
-5. Kullanıcının iki keyfi snapshot'ı elle seçerek karşılaştırması henüz yoktur.
+### Instagram MVP
+- [x] Analiz modeli ve motoru
+- [x] JSON/HTML parser
+- [x] güvenli ZIP importer
+- [x] güncel `following.json title` desteği
+- [x] gerçek Meta export doğrulaması
+- [x] Flutter import akışı
+- [x] sonuç kategorileri
+- [x] arama / sıralama
+- [x] Instagram profilini açma
+- [x] snapshot/geçmiş
+- [x] yeni takipçiler / takibi bırakanlar
+- [x] yok sayılan hesaplar
+- [x] veri indirme rehberi
+- [x] sade tema ve monogramlar
+- [x] Android adaptive launcher icon kaynakları
+- [x] deterministic v2 test signing
+- [ ] PR #18 sonuç listesini fiziksel Android cihazda doğrulama
+- [ ] yeni launcher simgesini fiziksel cihazda doğrulama
+- [ ] v2 tabanını temiz kurduktan sonraki bir APK'nın kaldırmadan güncellendiğini doğrulama
+- [ ] iki keyfi snapshot'ı elle seçerek karşılaştırma
 
-## Sıradaki işler
+### X
+- [ ] gerçek resmi X arşiv fixture doğrulaması
+- [ ] X ZIP/JSON importer
+- [ ] X snapshot/geçmiş
+- [ ] canlı API maliyet modeli
+- [ ] gerekirse OAuth 2.0 PKCE
 
-1. `device-test-stable-signing-5` APK'yı mevcut `.dev` uygulamanın üzerine güncelleme olarak kurmak.
-2. Gerçek `Her zaman` ZIP ile kullanıcı listelerinin, arama/sıralamanın ve `Yok say` işleminin görünmesini doğrulamak.
-3. Güncellemenin uygulamayı kaldırmadan kurulduğunu doğrulamak.
-4. Production release signing ve güvenli secret düzenini kurmak.
-5. Ardından X resmi arşiv importer'ına geçmek.
+## Açık riskler / sıradaki işler
+
+1. `device-test-v2-9` eski test uygulaması kaldırılarak bir kez temiz kurulacak; gerçek `Her zaman` ZIP ile liste ve yeni icon fiziksel cihazda kontrol edilecek.
+2. Ardından küçük bir v2 test build çıkarılıp kaldırmadan `Güncelle` davranışı doğrulanacak.
+3. Fiziksel cihazda liste yine boş kalırsa widget-tree varsayımı bırakılıp runtime diagnostics/logcat veya cihaz üzerinde görünür debug marker ile gerçek render constraint'i tespit edilecek.
+4. Production release signing ve Play Store release düzeni daha sonra ayrı kurulacak.
+5. 128 MiB bellek içi ZIP limiti tüm Instagram arşivlerinde yeterli olmayabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
+6. Username-only identity kullanıcı adı değişimlerinde yanlış `unfollow + new` sonucu üretebilir.
