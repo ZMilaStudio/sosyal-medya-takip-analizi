@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 1 Eylül 2026, 00:40 (Europe/Istanbul)
+Son güncelleme: 1 Eylül 2026, 00:44 (Europe/Istanbul)
 
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu `PROJE_OZETI.md` okunarak proje devralınır.
@@ -103,8 +103,10 @@ Teknik durum:
 - deterministic signing ✅
 - APK / package / certificate doğrulama ✅
 - prerelease ✅
-- **1 Eylül 2026 00:40 fiziksel Samsung: kullanıcı satırına dokununca Instagram profil bağlantısı açıldı ✅**
+- 1 Eylül 2026 00:40 fiziksel Samsung: kullanıcı satırına dokununca Instagram profil bağlantısı açıldı ✅
 - kullanıcı listesi v2-16'daki çalışan yapıyı koruyor ✅
+- **1 Eylül 2026 00:44 fiziksel Samsung: `Karşılıklı (261)` sekmesine geçiş ve kullanıcı listesi görünümü doğrulandı ✅**
+- aynı ekran görüntüsünde `Seni Takip Edenler (308)` sekme sayısı da doğru görünüyor ✅
 
 Bu doğrulanmış nokta ayrıca yedeklendi:
 - `backup/device-v2-17-links-working` → `ac5cce4ac53cdc05b91a2db6b34765afc40a88e4`
@@ -158,8 +160,8 @@ GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçi
 - [x] snapshot/geçmiş veri katmanı
 - [x] deterministic v2 signing
 - [x] kullanıcı listesini fiziksel Samsung'da doğrulama
+- [x] kategori sekmesi geçişini fiziksel Samsung'da doğrulama
 - [x] Instagram profil bağlantısını fiziksel Samsung'da doğrulama
-- [ ] kategori sekmelerinin fiziksel geçişini ayrıca doğrulama
 - [ ] yok sayılan hesap UI'sını geri ekleme
 - [ ] arama/sıralamayı geri ekleme
 - [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
