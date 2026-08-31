@@ -110,6 +110,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         icon: const Icon(Icons.history_rounded),
                         label: const Text('Analiz Geçmişi'),
                       ),
+                      const SizedBox(height: 4),
+                      TextButton.icon(
+                        onPressed: isLoading
+                            ? null
+                            : () => context.push('/instagram-guide'),
+                        icon: const Icon(Icons.help_outline_rounded),
+                        label: const Text('Nasıl yapılır?'),
+                      ),
                     ],
                   ),
                 ),
