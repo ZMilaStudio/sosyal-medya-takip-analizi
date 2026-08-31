@@ -79,7 +79,7 @@ Fiziksel Samsung sonucu:
 - kategori sayısı azalıyor ✅
 - `Geri al` işlevi çalışıyor ✅
 - sağ üst Yok Sayılan Hesaplar ekranı çalışıyor ✅
-- **tek kalan hata:** alttaki `Geri al` SnackBar'ı otomatik kapanmıyor ❌
+- ilk sürümde SnackBar otomatik kapanmıyordu ❌
 
 ## v2-20 — SnackBar ilk düzeltme denemesi
 - commit `de992b49b92ed7f2cde165d63b12f6b3f1af5781`
@@ -88,7 +88,7 @@ Fiziksel Samsung sonucu:
 - widget test ❌: ekran dispose edilirken Timer açık kaldığı için test framework pending timer hatası verdi.
 - APK üretilmedi; kullanılmayacak.
 
-## v2-21 — SnackBar kapanış düzeltme adayı
+## v2-21 — SnackBar kapanış düzeltmesi FİZİKSEL PASS
 - commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
 - Timer state alanında tutuluyor.
 - yeni Yok say işleminde önceki Timer iptal ediliyor.
@@ -110,7 +110,13 @@ CI:
 - VersionCode `300021`
 - APK SHA-256 `fd8e1bc23884a6d04e454004f309442a19eb4bbc62ba04484f3d9cd6c7b914e5`
 - prerelease `device-test-v2-21`
-- fiziksel Samsung SnackBar otomatik kapanma doğrulaması: ⏳
+
+Fiziksel Samsung sonucu:
+- Yok say çalışıyor ✅
+- Geri al çalışıyor ✅
+- SnackBar yaklaşık 3 saniye sonra kendiliğinden kapanıyor ✅
+- **v2-21 fiziksel PASS** ✅
+- Böylece Yok sayılan hesaplar özelliği tamamen fiziksel onaylıdır.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -130,7 +136,7 @@ CI:
 - [x] fiziksel kategori sekmesi geçişi
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar ana işlevleri fiziksel doğrulandı
-- [ ] **v2-21 SnackBar'ın 3 saniye sonra kapanmasını fiziksel doğrulama**
+- [x] v2-21 SnackBar otomatik kapanışı fiziksel doğrulandı
 - [ ] arama/sıralamayı geri ekleme
 - [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
@@ -142,8 +148,5 @@ CI:
 - [ ] X snapshot/geçmiş
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
-## Sıradaki fiziksel test
-v2-21 mevcut uygulamanın üzerine kurulacak. Yalnız şu madde kontrol edilecek:
-1. Bir kullanıcıyı Yok say yaptıktan sonra alttaki `... yok sayıldı. / Geri al` çubuğu yaklaşık 3 saniye sonra kendiliğinden kapanıyor mu?
-
-Bu doğrulanırsa Yok sayılan hesaplar özelliği tamamen fiziksel onaylı kabul edilecek ve sıradaki özellik tek tek geri eklenecek.
+## Sıradaki iş
+Yok sayılan hesaplar artık tamamen PASS. Sonraki özellik yine tek başına geri eklenecek. Öncelik: **arama/sıralama**. Arama/sıralama fiziksel doğrulanmadan Takibi Bırakanlar / Yeni Takipçiler veya launcher değişikliğine geçilmeyecek.
