@@ -22,6 +22,7 @@ class AnalysisScreen extends StatefulWidget {
 class _AnalysisScreenState extends State<AnalysisScreen> {
   final _ignoredStore = IgnoredAccountsStore();
   var _ignored = <String>{};
+  var _activeTab = 0;
 
   @override
   void initState() {
@@ -97,6 +98,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         users: _visible(result.analysis.newFollowers),
       ),
     ];
+    final activeTab = tabs[_activeTab];
 
     return DefaultTabController(
       length: tabs.length,
@@ -123,6 +125,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
             dividerColor: AppColors.border,
+            onTap: (index) => setState(() => _activeTab = index),
             tabs: [
               for (final tab in tabs)
                 Tab(text: '${tab.title} (${tab.users.length})'),
@@ -140,14 +143,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               },
             ),
             Expanded(
-              child: TabBarView(
-                children: [
-                  for (final tab in tabs)
-                    _UserList(
-                      data: tab,
-                      onIgnore: _ignoreUser,
-                    ),
-                ],
+              child: _UserList(
+                key: ValueKey(activeTab.title),
+                data: activeTab,
+                onIgnore: _ignoreUser,
               ),
             ),
           ],
@@ -298,6 +297,7 @@ class _UserList extends StatefulWidget {
   const _UserList({
     required this.data,
     required this.onIgnore,
+    super.key,
   });
 
   final _AnalysisTabData data;
@@ -333,7 +333,6 @@ class _UserListState extends State<_UserList> {
       });
 
     return CustomScrollView(
-      key: PageStorageKey(widget.data.title),
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),

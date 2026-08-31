@@ -19,7 +19,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('renders, filters and sorts non-follower users', (tester) async {
+  testWidgets('renders, filters, sorts and switches tabs on phone viewport',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final snapshot = FollowSnapshot(
       account: account,
       capturedAt: DateTime.utc(2026, 8, 31),
@@ -42,11 +48,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sen takip ediyorsun, onlar seni takip etmiyor.'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
     expect(find.text('@alice'), findsOneWidget);
     expect(find.text('@bob'), findsOneWidget);
     expect(find.text('A-Z'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField).first, 'bob');
+    await tester.enterText(find.byType(TextField), 'bob');
     await tester.pump();
 
     expect(find.text('@alice'), findsNothing);
@@ -60,5 +67,16 @@ void main() {
     expect(find.text('Z-A'), findsOneWidget);
     expect(find.text('@alice'), findsOneWidget);
     expect(find.text('@bob'), findsOneWidget);
+
+    final mutualTab = find.text('Karşılıklı (1)');
+    await tester.ensureVisible(mutualTab);
+    await tester.pumpAndSettle();
+    await tester.tap(mutualTab);
+    await tester.pumpAndSettle();
+
+    expect(find.text('İki hesap birbirini takip ediyor.'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('@mutual'), findsOneWidget);
+    expect(find.text('@alice'), findsNothing);
   });
 }
