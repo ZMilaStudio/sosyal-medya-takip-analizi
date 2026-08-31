@@ -30,6 +30,7 @@ Temel sonuçlar:
 12. Yerel geçmiş Drift/SQLite ile tutulur. Sosyal kullanıcı kayıtları snapshot başına tam kopyalanmaz; ortak kullanıcı tablosu ve snapshot ilişki tablosu kullanılır.
 13. Snapshot zamanları UTC olarak normalize edilir.
 14. Varsayılan retention her sosyal hesap için son 30 snapshot'tır. Veritabanı API'sinde limit parametrelidir; gelecekte Premium/sınırsız geçmiş için sınırsız mod desteklenebilir.
+15. Instagram sonuç listelerinde kullanıcı adı/profil adına göre arama, A-Z/Z-A sıralama ve yalnız resmi `instagram.com/<username>` profil bağlantısını dış uygulamada açma kullanılır.
 
 ## Önemli ürün riski
 
@@ -62,6 +63,8 @@ Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yal
 - Seni Takip Edenler
 - Takibi Bırakanlar
 - Yeni Takipçiler
+- sonuç listelerinde arama ve A-Z/Z-A sıralama
+- kullanıcı satırından resmi Instagram profilini açma
 - Analiz Geçmişi ekranı
 - Drift/SQLite local snapshot storage
 - X için pasif “Yakında” kartı
@@ -92,6 +95,9 @@ Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bu
 - [x] Flutter uygulama kabuğu.
 - [x] Sistem ZIP dosya seçici.
 - [x] Analiz sonuç ekranları.
+- [x] Sonuç listelerinde arama.
+- [x] A-Z / Z-A sıralama.
+- [x] Resmi Instagram profilini dış uygulamada açma.
 - [x] Flutter 3.47.2 resmi Android platform wrapper.
 - [x] Android debug APK build doğrulaması.
 - [ ] Fiziksel Android cihazda gerçek Meta export ZIP testi.
@@ -144,6 +150,7 @@ CI:
 - Drift code generation başarılı.
 - Drift database/history/retention testleri başarılı.
 - Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
+- Analiz ekranı arama/sıralama widget testi başarılı.
 - Artifact saklanmıyor.
 
 ## Açık problemler / riskler
@@ -158,8 +165,7 @@ CI:
 ## Sıradaki işler
 
 1. Fiziksel Android cihazda gerçek Instagram export ZIP ile import ve sonuç doğrulaması.
-2. Kullanıcı adına dokununca resmi Instagram profilini açmak.
-3. Liste arama ve sıralama UX'ini tamamlamak.
-4. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
-5. Test sürümü dağıtımı için güvenli ve kota-dostu yöntem belirlemek.
-6. Ardından X resmi arşiv importer'ına geçmek.
+2. Test sürümü dağıtımı için güvenli ve kota-dostu yöntem belirlemek.
+3. Gerekirse iki snapshot'ı elle karşılaştırma ekranı.
+4. Gerçek Meta export fixture'larıyla parser dayanıklılığını genişletmek.
+5. Ardından X resmi arşiv importer'ına geçmek.
