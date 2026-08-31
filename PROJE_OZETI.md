@@ -136,31 +136,17 @@ Ortak parmak izi:
 
 Aynı gün daha erken `Device Test #9` ve public `BilgiRotasi` workflow'ları başarıyla çalışmıştı. Sorun gün içinde sonradan hesap seviyesinde başlamış görünüyor.
 
-### 31 Ağustos 2026 Billing ekranı — yeni kesin kanıt
-Kullanıcının GitHub `Billing & licensing -> Budgets` ekran görüntüsünde:
-- Account: `ZMilaStudio`
-- Product: **Actions**
-- **$3.68 spent / $4.00 budget**
-- kullanım göstergesi **%91**
-- **Stop usage: Yes**
-- Codespaces: `$1.13 / $3.00`, Stop usage Yes
-- Packages kartı `%100` gösteriyor; tutar ekran görüntüsünün altında kaldığı için not edilmedi.
+### 31 Ağustos 2026 Billing / ödeme teşhisi — düzeltildi
+Kullanıcının GitHub `Billing & licensing -> Budgets` ekran görüntüsünde Actions için `$3.68 spent / $4.00 budget`, `%91` ve `Stop usage: Yes` görülüyor. Ancak bu bütçe tek başına sorunun sebebi değildir.
 
-Bu ekran, hesapta Actions için aktif bir **hard-stop budget** olduğunu doğruluyor. GitHub dokümantasyonuna göre standard GitHub-hosted runner kullanımı public repolarda ücretsizdir; dolayısıyla public repodaki minimal job'ın runner tahsis edilmeden ölmesi normal public Actions dakika kotası değildir.
+Kullanıcı ayrıca GitHub'ın **ödemeyi alamadığına dair e-posta gönderdiğini** doğruladı. Bu, runner engeli için bütçe tahmininden daha güçlü ve doğrudan kanıttır.
 
-Bununla birlikte `Stop usage: Yes` açık Actions bütçesinin $4 limite çok yaklaşmış olması, GitHub'ın account-side billing/entitlement gate'inin devreye girmesi için şu an en güçlü somut tetikleyicidir. UI $3.68 gösterse de billing verisi gecikmeli/pending olabilir veya hard-stop entitlement durumu public standard runnerlara hatalı biçimde uygulanıyor olabilir.
+Güncel teşhis:
+- Repo public olduğu için standard GitHub-hosted runner kullanımı normalde ücretli dakika kotasına bağlı olmamalıdır.
+- Buna rağmen **hesapta başarısız ödeme / ödeme problemi** oluşması GitHub'ın hesap düzeyinde Actions hosted-runner erişimini/entitlement'ını geçici olarak kilitlemiş görünüyor.
+- Aynı hesaptaki ikinci public repo BilgiRotasi'nın da aynı anda `runner_id=0`, `steps=[]` ile düşmesi bunu repo/YAML/kod sorunundan çıkarıp hesap seviyesine taşır.
 
-### Şu anki teşhis
-En güçlü olasılık: **Actions budget hard-stop / billing entitlement kilidi**.
-
-Hızlı doğrulama yöntemi:
-1. Actions bütçesinde `Stop usage` geçici olarak **No** yapılacak veya bütçe $4'ten örneğin **$10**'a çıkarılacak.
-2. Değişikliğin yayılması için kısa süre beklenecek.
-3. Minimal `Runner Diagnostic` yeniden çalıştırılacak.
-4. Runner atanırsa sorun kesin olarak budget/entitlement gate kaynaklıdır.
-5. Runner yine atanmazsa GitHub Support'a hesap tarafında hosted-runner entitlement sync talebi açılacak.
-
-Not: Packages'ın %100 olması artifact/package storage açısından ayrıca incelenebilir; ancak artifact kullanmayan minimal `echo` job'ın daha runner verilmeden ölmesini tek başına açıklamaz.
+Dolayısıyla önceki “4 dolar Actions budget hard-stop ana sebep” değerlendirmesi geçersizdir. Ana sebep olarak **başarısız GitHub ödemesi ve bunun doğurduğu account-side Actions restriction** esas alınacaktır.
 
 ## Doğrulanmış son durum
 - PR #14 Meta following parser ✅
@@ -173,7 +159,7 @@ Not: Packages'ın %100 olması artifact/package storage açısından ayrıca inc
 - PR #19 seçilen koyu seçenek 4 launcher wiring ✅ kodda
 - PR #19 sonrası fiziksel cihaz testi ⏳ yeni APK yok
 - son indirilebilir APK `device-test-v2-9`, VersionCode `300009`
-- Actions runnerları şu an account-side hard-stop/entitlement nedeniyle başlamıyor gibi görünüyor
+- GitHub Actions runnerları şu an başarısız ödeme sonrası account-side restriction nedeniyle başlamıyor görünüyor
 
 ## MVP durumu
 ### Instagram MVP
@@ -207,8 +193,9 @@ Not: Packages'ın %100 olması artifact/package storage açısından ayrıca inc
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki işler
-1. Actions budget hard-stop testi: `Stop usage=No` veya bütçeyi $10'a çıkar.
-2. Minimal Runner Diagnostic'i yeniden çalıştır.
-3. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
-4. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
-5. Hard-stop değişikliğine rağmen runner açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
+1. GitHub'daki başarısız ödemeyi düzelt / ödeme yöntemini güncelle ve bekleyen tahsilatı tamamla.
+2. GitHub hesap erişiminin/Actions entitlement'ın yeniden açılmasını bekle.
+3. Minimal Runner Diagnostic'i tekrar çalıştır.
+4. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
+5. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
+6. Ödeme düzeltildiği halde runner hâlâ açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
