@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:follow_core/follow_core.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class AnalysisScreen extends StatelessWidget {
+import '../../../data/local/ignored_accounts_store.dart';
+
+class AnalysisScreen extends StatefulWidget {
   const AnalysisScreen({
     required this.result,
     super.key,
@@ -11,22 +14,74 @@ class AnalysisScreen extends StatelessWidget {
   final InstagramFollowAnalysisResult result;
 
   @override
+  State<AnalysisScreen> createState() => _AnalysisScreenState();
+}
+
+class _AnalysisScreenState extends State<AnalysisScreen> {
+  final _ignoredStore = IgnoredAccountsStore();
+  var _ignored = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadIgnored();
+  }
+
+  Future<void> _loadIgnored() async {
+    final ignored = await _ignoredStore.loadFor(widget.result.snapshot.account);
+    if (!mounted) return;
+    setState(() => _ignored = ignored);
+  }
+
+  Set<SocialUser> _visible(Set<SocialUser> users) => {
+        for (final user in users)
+          if (!_ignored.contains(user.normalizedUsername)) user,
+      };
+
+  Future<void> _ignoreUser(SocialUser user) async {
+    await _ignoredStore.ignore(widget.result.snapshot.account, user);
+    if (!mounted) return;
+
+    setState(() => _ignored = {..._ignored, user.normalizedUsername});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('@${user.username} yok sayıldı.'),
+        action: SnackBarAction(
+          label: 'Geri al',
+          onPressed: () async {
+            await _ignoredStore.restore(
+              ownerUsername: widget.result.snapshot.account.username,
+              ignoredUsername: user.username,
+            );
+            if (!mounted) return;
+            setState(() {
+              _ignored = {..._ignored}..remove(user.normalizedUsername);
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final result = widget.result;
     final tabs = [
       _AnalysisTabData(
         title: 'Takip Etmeyenler',
         description: 'Sen takip ediyorsun, onlar seni takip etmiyor.',
-        users: result.analysis.nonFollowers,
+        users: _visible(result.analysis.nonFollowers),
       ),
       _AnalysisTabData(
         title: 'Karşılıklı',
         description: 'İki hesap birbirini takip ediyor.',
-        users: result.analysis.mutual,
+        users: _visible(result.analysis.mutual),
       ),
       _AnalysisTabData(
         title: 'Seni Takip Edenler',
         description: 'Seni takip ediyorlar, sen onları takip etmiyorsun.',
-        users: result.analysis.fans,
+        users: _visible(result.analysis.fans),
       ),
     ];
 
@@ -35,6 +90,17 @@ class AnalysisScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Instagram Analizi'),
+          actions: [
+            IconButton(
+              tooltip: 'Yok sayılan hesaplar',
+              onPressed: () async {
+                await context.push('/ignored-accounts');
+                await _loadIgnored();
+              },
+              icon: const Icon(Icons.visibility_off_outlined),
+            ),
+            const SizedBox(width: 4),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabs: [
@@ -49,7 +115,11 @@ class AnalysisScreen extends StatelessWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  for (final tab in tabs) _UserList(data: tab),
+                  for (final tab in tabs)
+                    _UserList(
+                      data: tab,
+                      onIgnore: _ignoreUser,
+                    ),
                 ],
               ),
             ),
@@ -133,9 +203,13 @@ class _AnalysisTabData {
 }
 
 class _UserList extends StatelessWidget {
-  const _UserList({required this.data});
+  const _UserList({
+    required this.data,
+    required this.onIgnore,
+  });
 
   final _AnalysisTabData data;
+  final Future<void> Function(SocialUser user) onIgnore;
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +267,33 @@ class _UserList extends StatelessWidget {
                 subtitle: user.displayName == null
                     ? null
                     : Text(user.displayName!),
-                trailing: const Icon(Icons.open_in_new_rounded, size: 20),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.open_in_new_rounded, size: 20),
+                    PopupMenuButton<_UserAction>(
+                      tooltip: 'Hesap işlemleri',
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (action) async {
+                        if (action == _UserAction.ignore) {
+                          await onIgnore(user);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: _UserAction.ignore,
+                          child: Row(
+                            children: [
+                              Icon(Icons.visibility_off_outlined),
+                              SizedBox(width: 10),
+                              Text('Yok say'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -215,3 +315,5 @@ class _UserList extends StatelessWidget {
     }
   }
 }
+
+enum _UserAction { ignore }
