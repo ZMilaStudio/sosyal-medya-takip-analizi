@@ -49,7 +49,7 @@ Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
 - backup: `backup/device-v2-17-links-working`
 
 ## v2-19 — Yok sayılan hesaplar fiziksel sonucu
-`v2-17` çalışan yapısı korunarak ignored entegrasyonu geri eklendi.
+`v2-17` çalışan yapısı korunarak yalnız ignored entegrasyonu geri eklendi.
 
 Fiziksel Samsung sonucu:
 - üç analiz listesi çalışıyor ✅
@@ -90,48 +90,48 @@ Fiziksel Samsung sonucu:
 - **v2-21 fiziksel PASS** ✅
 
 ## v2-22 — Arama + sıralama FİZİKSEL PASS
-Çalışan v2-21 yapısı korunarak yalnız arama ve sıralama geri eklendi.
-
-Uygulama davranışı:
-- Her mevcut analiz sekmesinde `Kullanıcı ara` alanı bulunur.
-- Arama kullanıcı adına ve varsa displayName'e göre filtreler.
-- Arama yalnız görünür listeyi filtreler; üst kategori toplamı değişmez.
-- Varsayılan sıralama A-Z'dir.
-- Düğmeye basınca Z-A'ya geçer; tekrar basınca A-Z'ye döner.
-- Aramada sonuç yoksa `Aramana uygun hesap bulunamadı.` gösterilir.
-- çalışan `ListView.separated`, CircleAvatar, profil açma, üç nokta → Yok say, sağ üst ignored yönetimi ve SnackBar mantığı korunmuştur.
-- son iki tarihsel sekme ve launcher bu sürüme eklenmemiştir.
-
-Regresyon testleri:
-- mevcut liste + sekme testi ✅
-- arama filtresi ✅
-- A-Z/Z-A sıralama testi ✅
-- Yok say testi ✅
-
-CI / APK:
 - kaynak commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
-- workflow run `33447857481`
-- run number `22`
-- Analyze ✅
-- Test ✅
-- device compatibility wiring ✅
-- deterministic signing ✅
-- APK build ✅
-- package/version/icon-resource/certificate doğrulama ✅
-- prerelease ✅
 - VersionCode `300022`
 - APK SHA-256 `a1d442c81da5f2dc0dc57994eb577a944698cb315cd29b980a042c7d388f5d02`
 - prerelease `device-test-v2-22`
 - backup: `backup/device-v2-22-search-sort-working`
 
 Fiziksel Samsung sonucu:
-- üç mevcut liste görünür ✅
-- profil bağlantısı çalışır ✅
-- Yok say akışı çalışır ✅
-- sağ üst Yok Sayılan Hesaplar yönetimi çalışır ✅
-- arama doğru filtreler ✅
-- A-Z/Z-A sıralama doğru çalışır ✅
+- üç mevcut liste ✅
+- profil açma ✅
+- Yok say / Geri al / ignored yönetimi ✅
+- kullanıcı arama ✅
+- A-Z / Z-A sıralama ✅
 - **v2-22 fiziksel PASS** ✅
+
+## v2-23 — Takibi Bırakanlar + Yeni Takipçiler adayı
+Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri ekleniyor.
+
+Model doğrulaması:
+- `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
+- `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
+- Bu iki küme yalnız önceki snapshot varsa hesaplanır.
+- Önceki snapshot yoksa iki sekmenin de `(0)` göstermesi beklenen/doğru davranıştır.
+
+UI:
+- mevcut 3 sekme korunur.
+- 4. sekme `Takibi Bırakanlar`.
+- 5. sekme `Yeni Takipçiler`.
+- iki yeni sekmede de mevcut çalışan CircleAvatar, profil açma, arama, A-Z/Z-A, Yok say ve SnackBar altyapısı aynen kullanılır.
+- ignored filtresi tarihsel sekmelere de uygulanır.
+- launcher bu sürümde değiştirilmez.
+
+Regresyon testi:
+- önceki snapshot olmadan yeni sekmelerin `(0)` görünmesi kontrol edilir.
+- sentetik previous/current snapshot ile 1 unfollower (`@left`) ve 1 new follower (`@newcomer`) üretilir.
+- TabController ile 4. ve 5. sekme gövdelerinin doğru kullanıcıyı render ettiği doğrulanır.
+- v2-22 arama/sıralama/Yok say testleri korunur.
+
+Hazırlık commitleri:
+- analiz ekranı commit `a02a5aa40873bd7b2cf92ddf53c8cfad819dc3d6`
+- test commit `c8b69a91fdc198869487b08f128c7fdd1446d0db`
+- geçici branch `tmp/restore-history-tabs`
+- fiziksel cihaz doğrulaması: ⏳
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -152,7 +152,7 @@ Fiziksel Samsung sonucu:
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
-- [ ] **Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme**
+- [ ] **v2-23 Takibi Bırakanlar / Yeni Takipçiler sekmelerini CI + fiziksel cihazda doğrulama**
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -163,4 +163,4 @@ Fiziksel Samsung sonucu:
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-v2-22 fiziksel PASS. Sıradaki özellik yine tek başına geri eklenecek: **Takibi Bırakanlar** ve **Yeni Takipçiler** tarihsel sekmeleri. Bu iki sekme fiziksel doğrulanmadan launcher değişikliğine geçilmeyecek.
+v2-23 kod/test paketi test/device branch'ine tek final commit olarak taşınacak. CI başarılı olursa APK mevcut v2-22'nin üzerine kurulacak. Fiziksel testte 5 sekmenin görünmesi, ilk 3 sekmenin bozulmaması ve geçmiş verisi varsa son iki sekmenin doğru kullanıcıları göstermesi kontrol edilecek.
