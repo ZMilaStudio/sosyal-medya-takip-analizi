@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 1 Eylül 2026, 00:44 (Europe/Istanbul)
+Son güncelleme: 1 Eylül 2026, 00:40 (Europe/Istanbul)
 
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu `PROJE_OZETI.md` okunarak proje devralınır.
@@ -38,7 +38,6 @@ Temel sonuçlar:
 11. Sağ üst `visibility_off` simgesi gizlilik modu değil, **Yok sayılan hesaplar** yönetimidir.
 12. Onaylanan launcher yönü: **simge seçenek 4'ün koyu versiyonu**. Launcher işi fiziksel cihazda doğru görünmeden tamamlanmış sayılmaz.
 13. Kullanıcı satırına dokununca resmi `https://www.instagram.com/<kullanıcı>/` adresi harici uygulamada açılır; scraping/private API kullanılmaz.
-14. Final Instagram analiz ekranı hedefi **5 sekmedir**: `Takip Etmeyenler`, `Karşılıklı`, `Seni Takip Edenler`, `Takibi Bırakanlar`, `Yeni Takipçiler`. v2-16/v2-17'de yalnız ilk 3 sekmenin görünmesi bilinçli rollback sonucudur; son iki sekme kaybolmuş özellik değil, fiziksel baseline sağlamlandıktan sonra geri eklenecek bekleyen özelliklerdir.
 
 ## Gerçek Meta export doğrulaması
 - `followers_1.json`: 569 benzersiz takipçi.
@@ -70,8 +69,6 @@ Başarısız fiziksel denemeler:
 - MonogramAvatar yok,
 - yok sayılan UI yok,
 - unfollower/new-follower sekmeleri yok.
-
-**Önemli:** Bu 3 sekmeli yapı final ürün kararı değildir. Önceki geliştirilmiş analiz ekranında toplam 5 sekme vardı. `Takibi Bırakanlar` ve `Yeni Takipçiler` rollback sırasında çalışan liste katmanını izole etmek için geçici olarak çıkarıldı ve geri eklenecektir.
 
 ### device-test-v2-16 — FİZİKSEL ÇALIŞAN LİSTE BASELINE
 - kaynak commit: `90059b024cc844a101a84ac076e49a22d12b86b6`
@@ -108,11 +105,19 @@ Teknik durum:
 - prerelease ✅
 - **1 Eylül 2026 00:40 fiziksel Samsung: kullanıcı satırına dokununca Instagram profil bağlantısı açıldı ✅**
 - kullanıcı listesi v2-16'daki çalışan yapıyı koruyor ✅
-- **1 Eylül 2026 00:44 fiziksel ekran görüntüsü: `Karşılıklı (261)` sekmesi ve gerçek karşılıklı kullanıcı satırları görünür ✅; böylece kategori sekmesi geçişi de fiziksel olarak doğrulandı.**
-- aynı görüntüde yalnız 3 sekme bulunmasının rollback kaynaklı olduğu kullanıcıya açıklandı; final hedef 5 sekmedir.
 
 Bu doğrulanmış nokta ayrıca yedeklendi:
 - `backup/device-v2-17-links-working` → `ac5cce4ac53cdc05b91a2db6b34765afc40a88e4`
+
+## Final analiz sekmesi hedefi
+Geliştirilmiş final sürümde 5 sekme olacak:
+1. Takip Etmeyenler
+2. Karşılıklı
+3. Seni Takip Edenler
+4. Takibi Bırakanlar
+5. Yeni Takipçiler
+
+Şu an fiziksel çalışan rollback sürümünde yalnız ilk 3 sekme bulunuyor. Son iki sekme bilinçli olarak geçici çıkarılmıştır; liste baseline'ı korunduktan sonra tek özellik olarak geri eklenecektir.
 
 ## Teşhis sonucu
 Problem veri/parser katmanında değildir. Aynı gerçek export v2-16/v2-17'de 792 kullanıcıyı fiziksel cihazda çizmiştir. Regresyon ilk MVP'den sonra analiz ekranına topluca eklenen UI/render özelliklerindedir. Bundan sonra aynı anda yalnız bir özellik geri eklenecek ve fiziksel cihazda doğrulanacaktır.
@@ -154,11 +159,10 @@ GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçi
 - [x] deterministic v2 signing
 - [x] kullanıcı listesini fiziksel Samsung'da doğrulama
 - [x] Instagram profil bağlantısını fiziksel Samsung'da doğrulama
-- [x] kategori sekmesi fiziksel geçişini doğrulama (`Karşılıklı (261)`)
+- [ ] kategori sekmelerinin fiziksel geçişini ayrıca doğrulama
 - [ ] yok sayılan hesap UI'sını geri ekleme
 - [ ] arama/sıralamayı geri ekleme
-- [ ] `Takibi Bırakanlar` sekmesini geri ekleme
-- [ ] `Yeni Takipçiler` sekmesini geri ekleme
+- [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
 - [ ] koyu seçenek 4 launcher simgesini fiziksel cihazda doğrulama
 - [ ] iki keyfi snapshot'ı elle seçerek karşılaştırma
 
@@ -170,4 +174,4 @@ GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçi
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki iş
-Çalışan v2-17 baseline korunacak. Sonraki tek özellik **Yok sayılan hesaplar UI'sı** olacak. Arama/sıralama, `Takibi Bırakanlar`, `Yeni Takipçiler` ve launcher simgesi aynı build'e karıştırılmayacak. Yok sayılanlar fiziksel cihazda doğrulanırsa bir sonraki özelliğe geçilecek.
+Çalışan v2-17 baseline korunacak. Sonraki tek özellik **Yok sayılan hesaplar UI'sı** olacak. Arama/sıralama, ek geçmiş sekmeleri ve launcher simgesi aynı build'e karıştırılmayacak. Yok sayılanlar fiziksel cihazda doğrulanırsa bir sonraki özelliğe geçilecek.
