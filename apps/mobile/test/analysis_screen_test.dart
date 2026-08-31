@@ -68,7 +68,10 @@ void main() {
     expect(find.text('@alice'), findsOneWidget);
     expect(find.text('@bob'), findsOneWidget);
 
-    await tester.tap(find.text('Karşılıklı (1)'));
+    final mutualTab = find.text('Karşılıklı (1)');
+    await tester.ensureVisible(mutualTab);
+    await tester.pumpAndSettle();
+    await tester.tap(mutualTab);
     await tester.pumpAndSettle();
 
     expect(find.text('İki hesap birbirini takip ediyor.'), findsOneWidget);
