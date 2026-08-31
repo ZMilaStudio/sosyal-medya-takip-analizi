@@ -32,7 +32,7 @@ void main() {
     expect(users.map((e) => e.username).toSet(), {'alice', 'bob'});
   });
 
-  test('parses following wrapper format', () {
+  test('parses following wrapper format with value', () {
     const json = '''
 {
   "relationships_following": [
@@ -52,6 +52,68 @@ void main() {
 
     final users = parser.parseJson(json);
     expect(users.single.username, 'carol');
+  });
+
+  test('parses current following format when username is stored in title', () {
+    const json = '''
+{
+  "relationships_following": [
+    {
+      "title": "current.user",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/current.user/",
+          "timestamp": 1788174000
+        }
+      ]
+    }
+  ]
+}
+''';
+
+    final users = parser.parseJson(json);
+    expect(users.single.username, 'current.user');
+    expect(
+      users.single.profileUrl,
+      Uri.parse('https://www.instagram.com/current.user/'),
+    );
+  });
+
+  test('falls back to Instagram profile URL when value and title are empty', () {
+    const json = '''
+{
+  "relationships_following": [
+    {
+      "title": "",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/url.fallback/",
+          "timestamp": 1788174001
+        }
+      ]
+    }
+  ]
+}
+''';
+
+    final users = parser.parseJson(json);
+    expect(users.single.username, 'url.fallback');
+  });
+
+  test('does not derive usernames from non-Instagram URLs', () {
+    const json = '''
+[
+  {
+    "title": "",
+    "string_list_data": [
+      {"href": "https://example.com/not-an-instagram-user"}
+    ]
+  }
+]
+''';
+
+    final users = parser.parseJson(json);
+    expect(users, isEmpty);
   });
 
   test('deduplicates usernames case-insensitively', () {
