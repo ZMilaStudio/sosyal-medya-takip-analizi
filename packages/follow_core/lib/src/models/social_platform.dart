@@ -1,0 +1,4 @@
+enum SocialPlatform {
+  instagram,
+  x,
+}

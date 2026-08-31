@@ -1,0 +1,33 @@
+name: Core CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/follow_core/**'
+      - '.github/workflows/core-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/follow_core/**'
+      - '.github/workflows/core-ci.yml'
+
+concurrency:
+  group: core-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/follow_core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test
