@@ -105,7 +105,7 @@ Teknik durum:
 - prerelease ✅
 - 1 Eylül 2026 00:40 fiziksel Samsung: kullanıcı satırına dokununca Instagram profil bağlantısı açıldı ✅
 - kullanıcı listesi v2-16'daki çalışan yapıyı koruyor ✅
-- **1 Eylül 2026 00:44 fiziksel Samsung: `Karşılıklı (261)` sekmesine geçiş ve kullanıcı listesi görünümü doğrulandı ✅**
+- 1 Eylül 2026 00:44 fiziksel Samsung: `Karşılıklı (261)` sekmesine geçiş ve kullanıcı listesi görünümü doğrulandı ✅
 - aynı ekran görüntüsünde `Seni Takip Edenler (308)` sekme sayısı da doğru görünüyor ✅
 
 Bu doğrulanmış nokta ayrıca yedeklendi:
@@ -121,8 +121,16 @@ Geliştirilmiş final sürümde 5 sekme olacak:
 
 Şu an fiziksel çalışan rollback sürümünde yalnız ilk 3 sekme bulunuyor. Son iki sekme bilinçli olarak geçici çıkarılmıştır; liste baseline'ı korunduktan sonra tek özellik olarak geri eklenecektir.
 
-## Teşhis sonucu
-Problem veri/parser katmanında değildir. Aynı gerçek export v2-16/v2-17'de 792 kullanıcıyı fiziksel cihazda çizmiştir. Regresyon ilk MVP'den sonra analiz ekranına topluca eklenen UI/render özelliklerindedir. Bundan sonra aynı anda yalnız bir özellik geri eklenecek ve fiziksel cihazda doğrulanacaktır.
+## Sonraki tek özellik: Yok sayılan hesaplar
+Kullanıcının “Tamam devam et” kararıyla sıradaki tek geliştirme `Yok sayılan hesaplar`dır.
+- Var olan `IgnoredAccountsStore` / SharedPreferences veri katmanı kullanılacak.
+- Var olan `/ignored-accounts` yönetim route'u kullanılacak.
+- Çalışan v2-17 `ListView.separated`, CircleAvatar, profil `onTap`, üç sekme ve özet Card yapısı korunacak.
+- Ana ekrana yalnız sağ üst `visibility_off` yönetim düğmesi ve kullanıcı satırına üç nokta → `Yok say` eylemi eklenecek.
+- Yok sayılan kullanıcı ilgili kategori listesinden filtrelenecek, kategori sayısı anında azalacak ve SnackBar `Geri al` sunacak.
+- Yönetim ekranından geri dönünce ignored kayıtları yeniden yüklenecek.
+- **Arama/sıralama, MonogramAvatar, 5 sekme ve launcher değişikliği bu build'e eklenmeyecek.**
+- Bu entegrasyon için widget regresyon testi eklenecek; fiziksel cihazda geçmeden sonraki özelliğe geçilmeyecek.
 
 ## Test APK imza ve güncelleme sistemi
 - paket: `com.zmilastudio.takipanalizi.dev`
@@ -162,7 +170,7 @@ GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçi
 - [x] kullanıcı listesini fiziksel Samsung'da doğrulama
 - [x] kategori sekmesi geçişini fiziksel Samsung'da doğrulama
 - [x] Instagram profil bağlantısını fiziksel Samsung'da doğrulama
-- [ ] yok sayılan hesap UI'sını geri ekleme
+- [ ] yok sayılan hesap UI'sını geri ekleme ve fiziksel doğrulama
 - [ ] arama/sıralamayı geri ekleme
 - [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
 - [ ] koyu seçenek 4 launcher simgesini fiziksel cihazda doğrulama
@@ -176,4 +184,4 @@ GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçi
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki iş
-Çalışan v2-17 baseline korunacak. Sonraki tek özellik **Yok sayılan hesaplar UI'sı** olacak. Arama/sıralama, ek geçmiş sekmeleri ve launcher simgesi aynı build'e karıştırılmayacak. Yok sayılanlar fiziksel cihazda doğrulanırsa bir sonraki özelliğe geçilecek.
+Çalışan v2-17 baseline korunarak yalnız Yok sayılan hesaplar entegrasyonu yapılacak; ardından tek yeni test APK fiziksel cihazda doğrulanacak.
