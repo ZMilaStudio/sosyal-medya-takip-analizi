@@ -61,10 +61,20 @@ void main() {
     expect(find.text('1053'), findsOneWidget);
 
     expect(find.byKey(const Key('analysis-content')).hitTestable(), findsOneWidget);
-    expect(find.byKey(const Key('analysis-summary')).hitTestable(), findsOneWidget);
-    expect(find.byKey(const Key('analysis-controls')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('analysis-summary')), findsOneWidget);
+    expect(find.byKey(const Key('analysis-controls')), findsOneWidget);
     expect(find.byKey(const Key('analysis-search')).hitTestable(), findsOneWidget);
     expect(find.text('792 hesap'), findsOneWidget);
+
+    final viewportHeight =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final summaryRect = tester.getRect(find.byKey(const Key('analysis-summary')));
+    final controlsRect =
+        tester.getRect(find.byKey(const Key('analysis-controls')));
+    expect(summaryRect.bottom, greaterThan(0));
+    expect(summaryRect.top, lessThan(viewportHeight));
+    expect(controlsRect.bottom, greaterThan(0));
+    expect(controlsRect.top, lessThan(viewportHeight));
 
     expect(
       find.ancestor(
