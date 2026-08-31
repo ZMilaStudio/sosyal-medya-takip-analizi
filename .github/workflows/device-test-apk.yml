@@ -7,6 +7,8 @@ on:
     paths:
       - '.github/workflows/device-test-apk.yml'
       - '.github/test-signing/**'
+      - 'apps/mobile/**'
+      - 'packages/follow_core/**'
 
 permissions:
   contents: write
