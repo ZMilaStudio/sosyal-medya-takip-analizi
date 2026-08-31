@@ -51,27 +51,6 @@ Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
 ## v2-19 — Yok sayılan hesaplar fiziksel sonucu
 `v2-17` çalışan yapısı korunarak yalnız ignored entegrasyonu geri eklendi.
 
-Kod:
-- `AnalysisScreen` ignored setini `IgnoredAccountsStore` üzerinden yükler.
-- 3 mevcut kategori ignored kullanıcıları filtreler.
-- ham 569/1053 özet kartları değişmez.
-- sağ üst `visibility_off_outlined` → `/ignored-accounts` yönetim ekranı.
-- yönetim ekranından dönünce ignored set yeniden yüklenir.
-- çalışan kullanıcı satırında profil `onTap` korunur.
-- satıra üç nokta menüsü eklendi; tek eylem `Yok say`.
-- Yok say sonrası kullanıcı anında listeden çıkar ve kategori sayısı azalır.
-- SnackBar `Geri al` ile kullanıcı geri getirilebilir.
-- çalışan `ListView.separated`, CircleAvatar, 3 sekme ve özet Card yapısı korunur.
-- **arama/sıralama, MonogramAvatar, son iki sekme ve launcher değişikliği eklenmedi.**
-
-Teknik:
-- kaynak commit: `25d50a7855060577ef5cb5d3961e3d4fdba64b58`
-- workflow run: `33443944242`
-- run number: 19
-- VersionCode: `300019`
-- APK SHA-256: `fae0dda99fede5c215395cf9289dee30b77783a2daf29d1b0e3e30d3c643b984`
-- prerelease: `device-test-v2-19`
-
 Fiziksel Samsung sonucu:
 - üç analiz listesi çalışıyor ✅
 - profil bağlantısı çalışıyor ✅
@@ -81,25 +60,58 @@ Fiziksel Samsung sonucu:
 - sağ üst Yok Sayılan Hesaplar ekranı çalışıyor ✅
 - ilk sürümde SnackBar otomatik kapanmıyordu ❌
 
+Teknik:
+- commit `25d50a7855060577ef5cb5d3961e3d4fdba64b58`
+- VersionCode `300019`
+- prerelease `device-test-v2-19`
+
 ## v2-20 — SnackBar ilk düzeltme denemesi
 - commit `de992b49b92ed7f2cde165d63b12f6b3f1af5781`
-- SnackBar 3 saniye sonra zorla kapatılacak şekilde Timer eklendi.
+- Timer ile 3 saniyelik kapanış eklendi.
 - Analyze ✅
-- widget test ❌: ekran dispose edilirken Timer açık kaldığı için test framework pending timer hatası verdi.
+- widget test ❌: dispose sırasında pending timer.
 - APK üretilmedi; kullanılmayacak.
 
-## v2-21 — SnackBar kapanış düzeltmesi FİZİKSEL PASS
+## v2-21 — Yok say özelliği tamamen fiziksel PASS
 - commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
-- Timer state alanında tutuluyor.
-- yeni Yok say işleminde önceki Timer iptal ediliyor.
-- `Geri al` basılırsa Timer iptal ediliyor.
-- ekran dispose olduğunda Timer iptal ediliyor.
-- SnackBar en fazla 3 saniye sonra `controller.close()` ile kapatılıyor.
-- mevcut listeler, profil açma, ignored filtreleme ve yönetim ekranına dokunulmadı.
+- VersionCode `300021`
+- APK SHA-256 `fd8e1bc23884a6d04e454004f309442a19eb4bbc62ba04484f3d9cd6c7b914e5`
+- prerelease `device-test-v2-21`
+- backup: `backup/device-v2-21-ignored-working`
 
-CI:
-- workflow run `33446688516`
-- run number `21`
+Fiziksel Samsung sonucu:
+- liste ✅
+- profil bağlantısı ✅
+- Yok say ✅
+- kategori sayısı güncelleme ✅
+- Geri al ✅
+- Yok Sayılan Hesaplar yönetimi ✅
+- SnackBar yaklaşık 3 saniye sonra otomatik kapanıyor ✅
+- **v2-21 fiziksel PASS** ✅
+
+## v2-22 — Arama + sıralama adayı
+Çalışan v2-21 yapısı korunarak yalnız arama ve sıralama geri eklendi.
+
+Uygulama davranışı:
+- Her mevcut analiz sekmesinde açıklamanın altında `Kullanıcı ara` alanı bulunur.
+- Arama kullanıcı adına ve varsa displayName'e göre filtreler.
+- Arama yalnız görünür listeyi filtreler; üst kategori toplamı değişmez.
+- `A-Z` düğmesi varsayılan artan sıralamayı gösterir.
+- Düğmeye basınca `Z-A` sırasına geçer; tekrar basınca A-Z'ye döner.
+- Aramada sonuç yoksa `Aramana uygun hesap bulunamadı.` gösterilir.
+- çalışan `ListView.separated`, CircleAvatar, profil `onTap`, üç nokta → Yok say, sağ üst ignored yönetimi ve SnackBar mantığı değiştirilmedi.
+- son iki tarihsel sekme ve launcher bu sürüme eklenmedi.
+
+Regresyon testleri:
+- mevcut liste + sekme testi ✅
+- arama `bob` → `@alice` gizlenir, `@bob` kalır ✅
+- A-Z → Z-A düğmesi sonrası satır konumları tersine döner ✅
+- Yok say testi ✅
+
+CI / APK:
+- kaynak commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
+- workflow run `33447857481`
+- run number `22`
 - Analyze ✅
 - Test ✅
 - device compatibility wiring ✅
@@ -107,16 +119,12 @@ CI:
 - APK build ✅
 - package/version/icon-resource/certificate doğrulama ✅
 - prerelease ✅
-- VersionCode `300021`
-- APK SHA-256 `fd8e1bc23884a6d04e454004f309442a19eb4bbc62ba04484f3d9cd6c7b914e5`
-- prerelease `device-test-v2-21`
+- VersionCode `300022`
+- APK SHA-256 `a1d442c81da5f2dc0dc57994eb577a944698cb315cd29b980a042c7d388f5d02`
+- prerelease `device-test-v2-22`
+- fiziksel Samsung doğrulaması: ⏳
 
-Fiziksel Samsung sonucu:
-- Yok say çalışıyor ✅
-- Geri al çalışıyor ✅
-- SnackBar yaklaşık 3 saniye sonra kendiliğinden kapanıyor ✅
-- **v2-21 fiziksel PASS** ✅
-- Böylece Yok sayılan hesaplar özelliği tamamen fiziksel onaylıdır.
+Not: workflow release body metni eski render deneyi açıklamasını taşıyor; v2-22'nin gerçek kaynak durumu `644549a...` commit'i ve bu proje özetidir.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -135,9 +143,8 @@ Fiziksel Samsung sonucu:
 - [x] fiziksel kullanıcı listesi
 - [x] fiziksel kategori sekmesi geçişi
 - [x] fiziksel Instagram profil bağlantısı
-- [x] Yok sayılan hesaplar ana işlevleri fiziksel doğrulandı
-- [x] v2-21 SnackBar otomatik kapanışı fiziksel doğrulandı
-- [ ] arama/sıralamayı geri ekleme
+- [x] Yok sayılan hesaplar fiziksel doğrulandı
+- [ ] **v2-22 arama/sıralamayı fiziksel cihazda doğrulama**
 - [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
@@ -148,5 +155,11 @@ Fiziksel Samsung sonucu:
 - [ ] X snapshot/geçmiş
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
-## Sıradaki iş
-Yok sayılan hesaplar artık tamamen PASS. Sonraki özellik yine tek başına geri eklenecek. Öncelik: **arama/sıralama**. Arama/sıralama fiziksel doğrulanmadan Takibi Bırakanlar / Yeni Takipçiler veya launcher değişikliğine geçilmeyecek.
+## Sıradaki fiziksel test
+v2-22 mevcut v2-21 uygulamasının üzerine `Güncelle` olarak kurulacak. Yalnız şu maddeler doğrulanacak:
+1. Üç mevcut liste hâlâ görünüyor mu?
+2. Profil açma, Yok say ve sağ üst ignored yönetimi hâlâ çalışıyor mu?
+3. `Kullanıcı ara` alanına yazınca liste doğru filtreleniyor mu?
+4. `A-Z / Z-A` düğmesi sıralamayı gerçekten tersine çeviriyor mu?
+
+Bu fiziksel test geçmeden son iki sekme veya launcher değişikliğine geçilmeyecek.
