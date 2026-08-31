@@ -161,6 +161,9 @@ Attempt 2 sonucu:
 
 Yani yeniden deneme anında GitHub Actions hosted-runner erişimi **henüz açılmamıştı**. Bu; ödeme düzeltmesi yapıldıysa entitlement değişikliğinin henüz yayılmadığını, ödeme henüz kesinleşmediyse account-side kısıtın devam ettiğini gösterir. Bu aşamada device APK build'i tekrar tetiklenmedi; gereksiz Actions denemesi yapılmadı.
 
+### Ödenmemiş tutarı doğrulama yolu
+GitHub resmi billing akışında ödeme durumunu kontrol etmek için `Settings -> Billing & Licensing -> Payment history` ekranı kullanılacak. Burada son ödeme tarihi, tutarı ve ödeme yöntemi görülür; varsa başarısız/past due işlem veya ilgili döneme ait başarılı tahsilatın bulunmaması kontrol edilir. Kart/ödeme yöntemi için `Payment information` / `Update payment method` bölümü kullanılacak. GitHub'ın resmi belgelerine göre ödeme geçmişi bu ekrandan görüntülenebilir ve reddedilen ödeme nedeniyle kilitlenen ücretli özellikler ödeme yöntemi güncellendiğinde yeniden yetkilendirme tahsilatıyla açılır.
+
 ## Doğrulanmış son durum
 - PR #14 Meta following parser ✅
 - PR #15 tema + yok sayılanlar + seçilen koyu simge ✅
@@ -206,9 +209,9 @@ Yani yeniden deneme anında GitHub Actions hosted-runner erişimi **henüz açı
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki işler
-1. GitHub ödeme durumunun gerçekten başarılı/tamamlanmış olduğunu doğrula.
-2. Ödeme düzeltildiyse account-side Actions entitlement'ın yeniden açılması için GitHub tarafındaki yayılımı bekle.
-3. Minimal Runner Diagnostic'i tekrar çalıştır.
+1. `Settings -> Billing & Licensing -> Payment history` ekranında son tahsilatı kontrol et; başarısız/past due işlem veya eksik başarılı ödeme var mı bak.
+2. Gerekirse `Payment information` / `Update payment method` ile ödeme yöntemini düzelt.
+3. Ödeme başarılı/tamamlandıktan sonra minimal Runner Diagnostic'i tekrar çalıştır.
 4. Runner açılırsa yeni device-test APK üret ve prerelease yayınla.
 5. APK'yı v2-9 üzerine kaldırmadan `Güncelle`; liste + doğru simge + update davranışını birlikte doğrula.
 6. Ödeme başarılı göründüğü halde runner birkaç denemede hâlâ açılmazsa GitHub Support'a dört run ID ve `runner_id=0 / steps=[]` kanıtıyla başvur.
