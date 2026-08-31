@@ -131,7 +131,7 @@ Mevcut telefondaki v2-9 temiz kurulmuş tabandır. Sonraki v2 APK aynı paket + 
 
 ## GitHub / CI
 
-Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — public.
+Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — **public** (`private=false`, `visibility=public`).
 
 Branch düzeni:
 - `main`: stabil
@@ -162,12 +162,42 @@ Device-test tarafında:
 - run #10 da 2-3 saniyede, `steps=[]` ve runner başlamadan başarısız oldu.
 - `device-test-v2-10` prerelease/APK **üretilmedi**; 300010 yalnız beklenen versionCode idi.
 
-Ek teşhis için `runner-diagnostic.yml` oluşturuldu ve public repo standard runner seçeneklerinden `ubuntu-slim` ile yalnız `echo + uname` yapan iki dakikalık minimal job çalıştırılmaya çalışıldı:
+Ek teşhis için `runner-diagnostic.yml` oluşturuldu ve public repo standard runner seçeneklerinden `ubuntu-slim` ile yalnız `echo + uname` yapan minimal job çalıştırılmaya çalışıldı:
 - Runner Diagnostic run #1: `33423749289`
 - job: `99592185293`
-- sonuç: yine `steps=[]`, runner başlamadan failure.
+- sonuç: 4 saniyede failure, `steps=[]`, `runner_id=0`, runner adı boş; log blob oluşmadı.
 
-Böylece sorun Flutter, Android, workflow ağırlığı veya `ubuntu-latest` imajına özgü değildir. `ubuntu-latest` ve `ubuntu-slim` dahil GitHub-hosted runner tahsisi hesap/repo seviyesinde engelleniyor. Public repolarda standart GitHub-hosted runnerlar normalde ücretsiz ve sınırsız olduğundan bu durum normal Actions dakika kotası olarak değerlendirilmemektedir. En güçlü olasılık GitHub billing/budget/account tarafındaki runner başlatma kilididir; repo içinden düzeltilebilecek YAML sorunu görünmüyor.
+Aynı repo Device Test run #9 aynı gün 14:51–14:57 UTC arasında başarıyla tamamlanmıştı. Aynı kullanıcı hesabındaki diğer public repo `ZMilaStudio/BilgiRotasi` da 14:47–14:58 UTC arasında standard GitHub-hosted runner ile başarılı workflow çalıştırdı. Sorun gün içinde daha sonra başlamış görünüyor.
+
+### 31 Ağustos 2026 Actions araştırma sonucu
+
+Resmi GitHub dokümantasyonuna göre:
+- public repolarda **standard GitHub-hosted runners ücretsiz ve sınırsızdır**; private repo aylık dakika kotası bu public repo için uygulanmaz.
+- artifact/storage kotası Actions dakikasından ayrı bir limit türüdür; minimal `echo` job'ın runner başlamadan ölmesini açıklamaz.
+- normal Free plan standard hosted runner concurrency limiti 20'dir; concurrency dolduğunda işin beklemesi/queue davranışı beklenir, 4 saniyede `runner_id=0`, `steps=[]` ile bitmesi bu modele uymuyor.
+
+GitHub Status 31 Ağustos'ta Actions'ı genel olarak operational gösteriyor. Ancak çok yakın geçmişte:
+- 24 Ağustos'ta runner-assignment bileşeni arızası nedeniyle bazı Actions runları başlayamadı,
+- 26 Ağustos'ta Actions jobları doğrudan başlayamadı,
+- 26–27 Ağustos'ta Actions/PR gecikmeleri yaşandı,
+- 27 Ağustos'ta ayrıca ayrı bir **GitHub Billing disruption** olayı kaydedildi.
+
+GitHub Community'de 2026 içinde bizim parmak izimizle çok yakın raporlar var: GitHub-hosted job runner atanmadan, sıfır step ile düşüyor; bazı vakalarda UI `recent account payments have failed or your spending limit needs to be increased` mesajını gösteriyor. Bunun public repolarda da görüldüğü rapor edilmiş. Başka raporlarda billing ekranı sağlıklı görünmesine rağmen backend hosted-runner entitlement kilidi/desync ancak GitHub Support müdahalesiyle çözülebiliyor.
+
+Bu nedenle olasılık sırası:
+1. **En güçlü:** GitHub hesap tarafında hosted-runner entitlement/billing/budget kilidi veya backend senkronizasyon hatası.
+2. **İkinci:** GitHub'ın yakın tarihli Actions/Billing incident'larından kalan hesap/runner-routing kaynaklı servis tarafı problem.
+3. **Daha düşük:** hesap düzeyinde Actions/anti-abuse kısıtı.
+
+Aşağıdakiler mevcut kanıtla elenmiş veya çok zayıf:
+- repo private / aylık dakika kotası,
+- Flutter/Android kod hatası,
+- ağır workflow,
+- `ubuntu-latest` imajına özgü hata,
+- artifact upload/storage kotasının job başlatmayı kesmesi,
+- normal concurrency limiti.
+
+Kesin ayrım için GitHub UI'daki başarısız job banner/annotation metni görülmeli. API job kaydı bu üst seviye billing/entitlement açıklamasını vermiyor; yalnız pre-run failure parmak izini gösteriyor. Eğer UI payment/spending-limit mesajı gösteriyorsa sorun doğrudan account entitlement/billing kilididir. UI böyle bir mesaj göstermiyor ve Billing/Budgets normal ise üç run ID ile GitHub Support'a account-side hosted-runner entitlement/routing kontrolü istenmelidir.
 
 ## Doğrulanmış son durum
 
@@ -221,11 +251,12 @@ Böylece sorun Flutter, Android, workflow ağırlığı veya `ubuntu-latest` ima
 
 ## Sıradaki işler / açık riskler
 
-1. GitHub hesap ayarlarında `Billing & Licensing` / `Budgets & alerts` ve ödeme durumunda Actions'ı bloklayan uyarı veya sıfır bütçe kontrol edilecek. Repo public olduğu için standart hosted runner kullanımının normal dakika kotası sebebiyle durmaması gerekir.
-2. Billing/budget normal görünüyorsa GitHub Support'a runner başlamadan düşen üç run ID ile başvurulacak: App CI `33423035250`, Device Test `33423413075`, Runner Diagnostic `33423749289`.
-3. Runner tekrar çalışır çalışmaz device-test build yeniden üretilecek ve prerelease yayınlanacak.
-4. Yeni APK telefondaki v2-9 kaldırılmadan kurulacak; `Güncelle` davranışı, liste görünürlüğü ve koyu seçenek 4 simgesi aynı turda doğrulanacak.
-5. Liste hâlâ boşsa cihaz üstünde görünür marker/logcat ile render constraint'i doğrudan izole edilecek.
-6. Production signing ve Play Store release düzeni daha sonra kurulacak.
-7. 128 MiB bellek içi ZIP limiti bazı arşivlerde yetersiz olabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
-8. Username-only identity kullanıcı adı değişiminde yanlış `unfollow + new` sonucu üretebilir.
+1. Başarısız GitHub Actions job ekranında üstteki banner/annotation metni kontrol edilecek. Özellikle payment/spending-limit/account locked mesajı aranacak.
+2. GitHub `Settings -> Billing & licensing -> Budgets and alerts` ve ödeme durumunda Actions için hard stop/uyarı olup olmadığı kontrol edilecek; public repo için ücret ödemek gerekmemeli, amaç yanlış account entitlement kilidini tespit etmektir.
+3. UI billing mesajı yok ve ayarlar normalse GitHub Support'a şu üç run ID ile başvurulacak: App CI `33423035250`, Device Test `33423413075`, Runner Diagnostic `33423749289`; `runner_id=0`, `steps=[]`, no log blob ve public standard runner bilgisi özellikle verilecek.
+4. Runner tekrar çalışır çalışmaz device-test build yeniden üretilecek ve prerelease yayınlanacak.
+5. Yeni APK telefondaki v2-9 kaldırılmadan kurulacak; `Güncelle` davranışı, liste görünürlüğü ve koyu seçenek 4 simgesi aynı turda doğrulanacak.
+6. Liste hâlâ boşsa cihaz üstünde görünür marker/logcat ile render constraint'i doğrudan izole edilecek.
+7. Production signing ve Play Store release düzeni daha sonra kurulacak.
+8. 128 MiB bellek içi ZIP limiti bazı arşivlerde yetersiz olabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
+9. Username-only identity kullanıcı adı değişiminde yanlış `unfollow + new` sonucu üretebilir.
