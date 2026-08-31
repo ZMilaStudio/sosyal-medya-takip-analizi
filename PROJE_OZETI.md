@@ -48,7 +48,7 @@ Sorunu izole etmek için ilk MVP analiz ekranına rollback yapıldı.
 - `Seni Takip Edenler (308)` sayısı doğru görünür ✅
 - backup: `backup/device-v2-17-links-working`
 
-## v2-19 — Yok sayılan hesaplar adayı
+## v2-19 — Yok sayılan hesaplar fiziksel sonucu
 `v2-17` çalışan yapısı korunarak yalnız ignored entegrasyonu geri eklendi.
 
 Kod:
@@ -64,10 +64,42 @@ Kod:
 - çalışan `ListView.separated`, CircleAvatar, 3 sekme ve özet Card yapısı korunur.
 - **arama/sıralama, MonogramAvatar, son iki sekme ve launcher değişikliği eklenmedi.**
 
-Test:
-- SharedPreferences test ortamı sıfırlanır.
-- mevcut liste + sekme testi korunur.
-- yeni test: ilk kullanıcı üç nokta → Yok say sonrası listeden kaybolur ve `Takip Etmeyenler (2)` → `(1)` olur.
+Teknik:
+- kaynak commit: `25d50a7855060577ef5cb5d3961e3d4fdba64b58`
+- workflow run: `33443944242`
+- run number: 19
+- VersionCode: `300019`
+- APK SHA-256: `fae0dda99fede5c215395cf9289dee30b77783a2daf29d1b0e3e30d3c643b984`
+- prerelease: `device-test-v2-19`
+
+Fiziksel Samsung sonucu:
+- üç analiz listesi çalışıyor ✅
+- profil bağlantısı çalışıyor ✅
+- üç nokta → Yok say çalışıyor ✅
+- kategori sayısı azalıyor ✅
+- `Geri al` işlevi çalışıyor ✅
+- sağ üst Yok Sayılan Hesaplar ekranı çalışıyor ✅
+- **tek kalan hata:** alttaki `Geri al` SnackBar'ı otomatik kapanmıyor ❌
+
+## v2-20 — SnackBar ilk düzeltme denemesi
+- commit `de992b49b92ed7f2cde165d63b12f6b3f1af5781`
+- SnackBar 3 saniye sonra zorla kapatılacak şekilde Timer eklendi.
+- Analyze ✅
+- widget test ❌: ekran dispose edilirken Timer açık kaldığı için test framework pending timer hatası verdi.
+- APK üretilmedi; kullanılmayacak.
+
+## v2-21 — SnackBar kapanış düzeltme adayı
+- commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
+- Timer state alanında tutuluyor.
+- yeni Yok say işleminde önceki Timer iptal ediliyor.
+- `Geri al` basılırsa Timer iptal ediliyor.
+- ekran dispose olduğunda Timer iptal ediliyor.
+- SnackBar en fazla 3 saniye sonra `controller.close()` ile kapatılıyor.
+- mevcut listeler, profil açma, ignored filtreleme ve yönetim ekranına dokunulmadı.
+
+CI:
+- workflow run `33446688516`
+- run number `21`
 - Analyze ✅
 - Test ✅
 - device compatibility wiring ✅
@@ -75,19 +107,10 @@ Test:
 - APK build ✅
 - package/version/icon-resource/certificate doğrulama ✅
 - prerelease ✅
-
-Teknik bilgiler:
-- kaynak commit: `25d50a7855060577ef5cb5d3961e3d4fdba64b58`
-- workflow run: `33443944242`
-- run number: 19
-- VersionCode: `300019`
-- APK SHA-256: `fae0dda99fede5c215395cf9289dee30b77783a2daf29d1b0e3e30d3c643b984`
-- prerelease: `device-test-v2-19`
-- fiziksel Samsung doğrulaması: ⏳
-
-Not: workflow release body metni eski v2-14 açıklamasını taşımaktadır; v2-19'un gerçek kaynak durumu yukarıdaki commit ve bu özet dosyasıdır.
-
-Ayrı analysis/test commitleri nedeniyle run #18 ve #19 oluştu. **Yetkili test sürümü yalnız #19'dur** çünkü yeni ignored regression testini de içerir. Sonraki değişikliklerde mümkün olduğunca tek kod commit/build kuralına dönülecek.
+- VersionCode `300021`
+- APK SHA-256 `fd8e1bc23884a6d04e454004f309442a19eb4bbc62ba04484f3d9cd6c7b914e5`
+- prerelease `device-test-v2-21`
+- fiziksel Samsung SnackBar otomatik kapanma doğrulaması: ⏳
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -106,7 +129,8 @@ Ayrı analysis/test commitleri nedeniyle run #18 ve #19 oluştu. **Yetkili test 
 - [x] fiziksel kullanıcı listesi
 - [x] fiziksel kategori sekmesi geçişi
 - [x] fiziksel Instagram profil bağlantısı
-- [ ] **v2-19 Yok sayılan hesapları fiziksel cihazda doğrulama**
+- [x] Yok sayılan hesaplar ana işlevleri fiziksel doğrulandı
+- [ ] **v2-21 SnackBar'ın 3 saniye sonra kapanmasını fiziksel doğrulama**
 - [ ] arama/sıralamayı geri ekleme
 - [ ] Takibi Bırakanlar / Yeni Takipçiler sekmelerini geri ekleme
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
@@ -119,11 +143,7 @@ Ayrı analysis/test commitleri nedeniyle run #18 ve #19 oluştu. **Yetkili test 
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki fiziksel test
-v2-19 mevcut uygulamanın üzerine kurulacak. Yalnız şu maddeler kontrol edilecek:
-1. Üç liste hâlâ görünüyor mu?
-2. Instagram profil bağlantısı hâlâ açılıyor mu?
-3. Üç nokta → Yok say, kullanıcıyı listeden çıkarıp sayıyı 1 azaltıyor mu?
-4. `Geri al` kullanıcıyı geri getiriyor mu?
-5. Sağ üst göz simgesi Yok Sayılan Hesaplar ekranını açıyor mu ve oradan geri alma sonrası analiz güncelleniyor mu?
+v2-21 mevcut uygulamanın üzerine kurulacak. Yalnız şu madde kontrol edilecek:
+1. Bir kullanıcıyı Yok say yaptıktan sonra alttaki `... yok sayıldı. / Geri al` çubuğu yaklaşık 3 saniye sonra kendiliğinden kapanıyor mu?
 
-Bu fiziksel test geçmeden sonraki özellik eklenmeyecek.
+Bu doğrulanırsa Yok sayılan hesaplar özelliği tamamen fiziksel onaylı kabul edilecek ve sıradaki özellik tek tek geri eklenecek.
