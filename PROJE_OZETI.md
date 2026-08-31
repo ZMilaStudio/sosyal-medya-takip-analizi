@@ -34,6 +34,7 @@ Temel sonuçlar:
 9. Tema mor ağırlığı azaltılmış slate/teal açık temadır. Dark mode şimdilik kapsam dışıdır.
 10. `Nasıl yapılır?` rehberi Meta akışını, `Takipçiler ve takip edilenler`, tarih aralığı `Her zaman` ve tercihen JSON formatını anlatır.
 11. `Yok sayılan hesaplar` hesap bazında cihazda saklanır. Ham snapshot takipçi/takip edilen sayılarını değiştirmez; yalnız analiz listelerini filtreler.
+12. Analiz ekranının sağ üstündeki `visibility_off` simgesi bir gizlilik/göster-gizle modu değildir; kullanıcının isteğiyle eklenen **Yok sayılan hesaplar** yönetim ekranına gider. Bu ikon liste render bug'ının nedeni olarak değerlendirilmemelidir.
 
 ## Gerçek Meta export doğrulaması
 
@@ -80,7 +81,7 @@ Levent'in gerçek `Her zaman` Instagram arşivinde:
 - Varsayılan retention hesap başına son 30 snapshot'tır.
 - Eski snapshot açıldığında kendi önceki snapshot'ı bulunup değişim analizi yeniden hesaplanır.
 
-## Güncel hata düzeltmeleri
+## Güncel hata düzeltmeleri / regresyonlar
 
 ### Following parser
 Meta'nın gerçek `following.json` dosyasında kullanıcı adı `string_list_data.value` yerine `title` alanında geldiği için önce 569/0 sonucu oluşuyordu. Parser `title` fallback ile düzeltildi ve regression testi eklendi.
@@ -96,18 +97,16 @@ PR #18 ile sonuç ekranı daha kökten sadeleştirildi:
 
 tek bir `ListView.builder` içinde render ediliyor. Ayrı/nested scroll ve `Expanded + CustomScrollView` bağımlılığı kaldırıldı.
 
-Regression testi 360×800 viewportta gerçek ölçeğe yakın 569 follower / 1053 following / 792 non-follower / 261 mutual / 308 fan veri üretir; arama alanının ve kullanıcı satırının gerçekten `hitTestable()` olduğunu doğrular. PR #18 App CI tamamen başarılıdır. Fiziksel cihaz doğrulaması henüz yapılmadığı için cihaz bug'ı kapatılmış sayılmaz.
+Regression testi 360×800 viewportta gerçek ölçeğe yakın 569 follower / 1053 following / 792 non-follower / 261 mutual / 308 fan veri üretir; arama alanının ve kullanıcı satırının gerçekten `hitTestable()` olduğunu doğrular. PR #18 App CI tamamen başarılıdır.
 
-### Android launcher simgesi
-Önceki APK Samsung'da varsayılan Flutter/Android robot simgesini gösterdi. PR #18 ile:
-- koyu lacivert/slate zemin,
-- teal takip/kişi işareti,
-- açık büyüteç halkası,
-- hafif indigo vurgu
+31 Ağustos 2026 fiziksel Samsung doğrulamasında `device-test-v2-9` ile sekmeler ve kategori sayaçları görünmüş, fakat sonuç içeriği tamamen boş kalmıştır. Dolayısıyla PR #18 fiziksel cihazdaki liste sorununu çözmemiştir. Sağ üstteki üzeri çizili göz simgesi bu sorunun nedeni değildir; bu simge yalnızca `Yok sayılan hesaplar` ekranına gider.
 
-Android vector/adaptive launcher icon olarak bağlandı.
+### Android launcher simgesi — PR #18 regresyonu
+Kullanıcının onayladığı launcher tasarımı **simge seçenek 4'ün koyu versiyonudur**. PR #15 açıklamasında da seçilen koyu takip-analiz launcher simgesinin uygulandığı kayıtlıdır.
 
-`AndroidManifest.xml` hem `android:icon` hem `android:roundIcon` kullanır. Adaptive icon foreground artık eski mipmap PNG yerine `@drawable/ic_launcher_foreground` vector kaynağına bağlıdır. Legacy fallback vector kaynakları da vardır. Device-test CI launcher kaynak bağlantısını ayrıca doğrular. Fiziksel cihazda yeni simgenin görünmesi henüz doğrulanmamıştır.
+PR #15 adaptive icon foreground olarak `@mipmap/ic_launcher_foreground` PNG varlığını kullanıyordu. PR #18 bunu `@drawable/ic_launcher_foreground` olarak değiştirdi ve yeni teal kişi + açık büyüteç + indigo sap vektörünü ekledi. Bu vektör, kullanıcının seçtiği tasarım değildir.
+
+31 Ağustos 2026 fiziksel cihaz ekran görüntüsünde launcher simgesi teknik olarak özel bir simge olarak görünse de **yanlış tasarım görünmektedir**. Bu yüzden ikon işi tamamlanmış sayılmaz. Doğru çözüm, PR #15'teki kullanıcı tarafından seçilmiş koyu seçenek 4 tasarımını yeniden adaptive/legacy launcher kaynaklarına bağlamak ve PR #18'de eklenen yanlış vektör tasarımı devreden çıkarmaktır.
 
 ## Test APK imza ve güncelleme sistemi
 
@@ -145,22 +144,20 @@ CI:
 - Core CI ✅
 - App CI ✅
 - PR #14 güncel Meta following parser fix ✅
-- PR #15 tema + yok sayılan hesaplar + ilk render/icon çalışması ✅
+- PR #15 tema + yok sayılan hesaplar + seçilen koyu launcher simgesi + ilk render çalışması ✅
 - PR #16 ikinci render düzenlemesi ✅ fakat fiziksel cihazda liste hâlâ boş kaldı
 - PR #17 deterministic test signing ✅ ve main'e merge edildi
-- PR #18 tek `ListView.builder` render düzeltmesi + gerçek ölçekli hit-test regression testi + adaptive vector launcher icon ✅ ve main'e merge edildi
-- Device Test run #9 tüm aşamalarda başarılı:
-  - dependencies ✅
-  - analyze ✅
-  - 11 Flutter testi ve büyük liste regression testi ✅
-  - launcher source wiring ✅
-  - deterministic keystore ✅
-  - Android resource/APK build ✅
-  - paket/versionCode/imza doğrulaması ✅
-  - prerelease yayınlama ✅
+- PR #18 tek `ListView.builder` render düzenlemesi + büyük liste testi ✅ fakat fiziksel cihazda liste yine boş kaldı
+- PR #18 launcher değişikliği ❌ seçilen koyu seçenek 4 yerine farklı bir vector tasarım bağladı
+- Device Test run #9 tüm CI aşamalarında başarılı
 - Güncel prerelease: `device-test-v2-9`
 - VersionCode: `300009`
 - APK SHA-256: `5b1462ec41ac150f8965c3eefc6115613d25734e1d7c3b5e873f99c3c4ddd6f8`
+- 31 Ağustos 2026 fiziksel cihaz:
+  - kategori sekmeleri ve sayaçlar görünüyor ✅
+  - sonuç listesi/arama/açıklama görünmüyor ❌
+  - launcher özel simge gösteriyor ancak tasarım yanlış ❌
+  - sağ üst `visibility_off` = Yok sayılan hesaplar yönetimi ✅
 
 ## MVP durumu
 
@@ -179,10 +176,9 @@ CI:
 - [x] yok sayılan hesaplar
 - [x] veri indirme rehberi
 - [x] sade tema ve monogramlar
-- [x] Android adaptive launcher icon kaynakları
 - [x] deterministic v2 test signing
-- [ ] PR #18 sonuç listesini fiziksel Android cihazda doğrulama
-- [ ] yeni launcher simgesini fiziksel cihazda doğrulama
+- [ ] fiziksel Android cihazdaki boş liste bug'ını çözme
+- [ ] seçilen koyu seçenek 4 launcher simgesini geri yükleme ve cihazda doğrulama
 - [ ] v2 tabanını temiz kurduktan sonraki bir APK'nın kaldırmadan güncellendiğini doğrulama
 - [ ] iki keyfi snapshot'ı elle seçerek karşılaştırma
 
@@ -195,9 +191,9 @@ CI:
 
 ## Açık riskler / sıradaki işler
 
-1. `device-test-v2-9` eski test uygulaması kaldırılarak bir kez temiz kurulacak; gerçek `Her zaman` ZIP ile liste ve yeni icon fiziksel cihazda kontrol edilecek.
-2. Ardından küçük bir v2 test build çıkarılıp kaldırmadan `Güncelle` davranışı doğrulanacak.
-3. Fiziksel cihazda liste yine boş kalırsa widget-tree varsayımı bırakılıp runtime diagnostics/logcat veya cihaz üzerinde görünür debug marker ile gerçek render constraint'i tespit edilecek.
+1. Launcher için PR #18'deki yanlış vector wiring geri alınacak; PR #15'teki seçilmiş koyu seçenek 4 foreground/launcher kaynakları tekrar kullanılacak.
+2. Fiziksel cihazda liste yine boş olduğu için artık `Yok sayılan hesaplar` ikonundan şüphe edilmeyecek. Runtime/layout teşhisi yapılacak; görünür debug marker/placeholder ve gerekirse logcat ile gerçek render constraint'i tespit edilecek.
+3. Sonraki v2 build aynı paket + aynı sertifika + daha yüksek versionCode ile çıkarılıp kaldırmadan `Güncelle` davranışı da aynı turda doğrulanacak.
 4. Production release signing ve Play Store release düzeni daha sonra ayrı kurulacak.
 5. 128 MiB bellek içi ZIP limiti tüm Instagram arşivlerinde yeterli olmayabilir; gerekirse streaming/target-entry yaklaşımı genişletilecek.
 6. Username-only identity kullanıcı adı değişimlerinde yanlış `unfollow + new` sonucu üretebilir.
