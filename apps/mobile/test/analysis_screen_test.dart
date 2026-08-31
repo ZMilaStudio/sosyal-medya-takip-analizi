@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:follow_core/follow_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sosyal_medya_takip_analizi/features/analysis/presentation/analysis_screen.dart';
 
 void main() {
@@ -14,7 +15,11 @@ void main() {
         username: username,
       );
 
-  testWidgets('filters users and toggles alphabetical sorting', (tester) async {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('renders, filters and sorts non-follower users', (tester) async {
     final snapshot = FollowSnapshot(
       account: account,
       capturedAt: DateTime.utc(2026, 8, 31),
@@ -36,6 +41,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Sen takip ediyorsun, onlar seni takip etmiyor.'), findsOneWidget);
     expect(find.text('@alice'), findsOneWidget);
     expect(find.text('@bob'), findsOneWidget);
     expect(find.text('A-Z'), findsOneWidget);

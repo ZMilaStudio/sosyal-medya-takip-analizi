@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const primary = Color(0xFF6C43F3);
-  static const primaryDark = Color(0xFF4E2CCB);
-  static const background = Color(0xFFF8F7FC);
+  static const primary = Color(0xFF5F6B7A);
+  static const primaryDark = Color(0xFF414B59);
+  static const background = Color(0xFFF7F8FA);
   static const surface = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF171525);
-  static const muted = Color(0xFF68657A);
-  static const border = Color(0xFFE6E2EE);
-  static const softPurple = Color(0xFFF0ECFF);
-  static const mint = Color(0xFF1FAE98);
-  static const softMint = Color(0xFFE5F7F3);
+  static const ink = Color(0xFF171A20);
+  static const muted = Color(0xFF69717D);
+  static const border = Color(0xFFE1E5EA);
+  static const softPurple = Color(0xFFEEF1F4);
+  static const mint = Color(0xFF4F8F88);
+  static const softMint = Color(0xFFEAF4F2);
+  static const danger = Color(0xFFB24D57);
 }
 
 abstract final class AppTheme {
@@ -24,6 +25,7 @@ abstract final class AppTheme {
       surface: AppColors.surface,
       onSurface: AppColors.ink,
       outline: AppColors.border,
+      error: AppColors.danger,
     );
 
     final base = ThemeData(
@@ -85,7 +87,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.primary,
-            width: 1.6,
+            width: 1.4,
           ),
         ),
       ),
@@ -107,7 +109,7 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           foregroundColor: AppColors.primaryDark,
-          side: const BorderSide(color: AppColors.primary),
+          side: const BorderSide(color: AppColors.border),
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),

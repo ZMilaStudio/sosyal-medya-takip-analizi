@@ -19,6 +19,7 @@ dependencies:
   follow_core:
     path: ../../packages/follow_core
   go_router: ^18.0.0
+  shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
 
 dev_dependencies:
