@@ -10,11 +10,12 @@ void main() {
         username: username,
       );
 
+  const account = SocialAccount(
+    platform: SocialPlatform.instagram,
+    username: 'owner',
+  );
+
   InstagramFollowAnalysisResult result() {
-    const account = SocialAccount(
-      platform: SocialPlatform.instagram,
-      username: 'owner',
-    );
     final snapshot = FollowSnapshot(
       account: account,
       capturedAt: DateTime.utc(2026, 8, 31),
@@ -26,6 +27,35 @@ void main() {
     final analysis = const FollowAnalysisEngine().analyze(current: snapshot);
     return InstagramFollowAnalysisResult(
       snapshot: snapshot,
+      analysis: analysis,
+      followerSourceFiles: const [],
+      followingSourceFiles: const [],
+    );
+  }
+
+  InstagramFollowAnalysisResult resultWithHistory() {
+    final previous = FollowSnapshot(
+      account: account,
+      capturedAt: DateTime.utc(2026, 8, 30),
+      followers: [user('mutual'), user('fan'), user('left')],
+      following: [user('mutual'), user('alice')],
+      sourceType: SnapshotSourceType.archive,
+      sourceFormat: 'instagram-export-json',
+    );
+    final current = FollowSnapshot(
+      account: account,
+      capturedAt: DateTime.utc(2026, 8, 31),
+      followers: [user('mutual'), user('fan'), user('newcomer')],
+      following: [user('mutual'), user('alice'), user('bob')],
+      sourceType: SnapshotSourceType.archive,
+      sourceFormat: 'instagram-export-json',
+    );
+    final analysis = const FollowAnalysisEngine().analyze(
+      current: current,
+      previous: previous,
+    );
+    return InstagramFollowAnalysisResult(
+      snapshot: current,
       analysis: analysis,
       followerSourceFiles: const [],
       followingSourceFiles: const [],
@@ -48,6 +78,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('@mutual'), findsOneWidget);
+    expect(find.text('Takibi Bırakanlar (0)'), findsOneWidget);
+    expect(find.text('Yeni Takipçiler (0)'), findsOneWidget);
+  });
+
+  testWidgets('renders unfollowers and new followers from previous snapshot',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: AnalysisScreen(result: resultWithHistory())),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Takibi Bırakanlar (1)'), findsOneWidget);
+    expect(find.text('Yeni Takipçiler (1)'), findsOneWidget);
+
+    final controller =
+        DefaultTabController.of(tester.element(find.byType(TabBar)));
+
+    controller.animateTo(3);
+    await tester.pumpAndSettle();
+    expect(find.text('@left'), findsOneWidget);
+
+    controller.animateTo(4);
+    await tester.pumpAndSettle();
+    expect(find.text('@newcomer'), findsOneWidget);
   });
 
   testWidgets('search filters visible accounts', (tester) async {
