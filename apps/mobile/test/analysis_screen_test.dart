@@ -19,7 +19,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('renders real-size result lists visibly on phone viewport',
+  testWidgets('renders real-size result content and rows on phone viewport',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -29,7 +29,8 @@ void main() {
     final mutual = [for (var i = 0; i < 261; i++) user('mutual$i')];
     final fans = [for (var i = 0; i < 308; i++) user('fan$i')];
     final nonFollowers = [
-      for (var i = 0; i < 792; i++) user('nonfollower${i.toString().padLeft(3, '0')}'),
+      for (var i = 0; i < 792; i++)
+        user('nonfollower${i.toString().padLeft(3, '0')}'),
     ];
 
     final snapshot = FollowSnapshot(
@@ -59,14 +60,19 @@ void main() {
     expect(find.text('569'), findsOneWidget);
     expect(find.text('1053'), findsOneWidget);
 
-    expect(find.byKey(const Key('analysis-controls')), findsOneWidget);
+    expect(find.byKey(const Key('analysis-content')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('analysis-summary')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('analysis-controls')).hitTestable(), findsOneWidget);
     expect(find.byKey(const Key('analysis-search')).hitTestable(), findsOneWidget);
+    expect(find.text('792 hesap'), findsOneWidget);
 
-    await tester.drag(
-      find.byKey(const Key('analysis-scroll')),
-      const Offset(0, -170),
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('analysis-summary')),
+        matching: find.byKey(const Key('analysis-scroll')),
+      ),
+      findsNothing,
     );
-    await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('user-row-nonfollower000')).hitTestable(),
@@ -82,14 +88,17 @@ void main() {
 
     expect(find.text('@nonfollower791'), findsOneWidget);
     expect(find.text('@nonfollower000'), findsNothing);
+    expect(find.text('1 hesap'), findsOneWidget);
 
-    final mutualTab = find.text('Karşılıklı (261)');
+    final mutualTab = find.byKey(const Key('analysis-tab-Karşılıklı'));
     await tester.ensureVisible(mutualTab);
     await tester.pumpAndSettle();
     await tester.tap(mutualTab);
     await tester.pumpAndSettle();
 
     expect(find.text('İki hesap birbirini takip ediyor.'), findsOneWidget);
+    expect(find.text('261 hesap'), findsOneWidget);
     expect(find.byKey(const Key('analysis-search')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('user-row-mutual0')).hitTestable(), findsOneWidget);
   });
 }
