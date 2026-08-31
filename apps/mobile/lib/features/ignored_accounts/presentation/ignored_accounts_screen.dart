@@ -159,7 +159,7 @@ class _EmptyIgnoredState extends StatelessWidget {
               style: TextStyle(color: AppColors.muted),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
