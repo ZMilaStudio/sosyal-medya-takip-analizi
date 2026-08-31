@@ -20,6 +20,8 @@ class AnalysisScreen extends StatefulWidget {
 }
 
 class _AnalysisScreenState extends State<AnalysisScreen> {
+  static const _pageSize = 100;
+
   final _ignoredStore = IgnoredAccountsStore();
   final _searchController = TextEditingController();
 
@@ -27,11 +29,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   var _activeTab = 0;
   var _query = '';
   var _ascending = true;
+  var _visibleLimit = _pageSize;
 
   @override
   void initState() {
     super.initState();
-    _loadIgnored();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIgnored();
+    });
   }
 
   @override
@@ -41,9 +46,15 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   Future<void> _loadIgnored() async {
-    final ignored = await _ignoredStore.loadFor(widget.result.snapshot.account);
-    if (!mounted) return;
-    setState(() => _ignored = ignored);
+    try {
+      final ignored =
+          await _ignoredStore.loadFor(widget.result.snapshot.account);
+      if (!mounted) return;
+      setState(() => _ignored = ignored);
+    } catch (_) {
+      // Ignored-account storage must never prevent the analysis UI from
+      // rendering or receiving taps on a physical device.
+    }
   }
 
   Set<SocialUser> _visible(Set<SocialUser> users) => {
@@ -53,11 +64,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   void _selectTab(int index) {
     if (_activeTab == index) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     _searchController.clear();
     setState(() {
       _activeTab = index;
       _query = '';
       _ascending = true;
+      _visibleLimit = _pageSize;
     });
   }
 
@@ -138,6 +151,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         return _ascending ? comparison : -comparison;
       });
 
+    final shownUsers = filteredUsers.take(_visibleLimit).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Instagram Analizi'),
@@ -149,32 +164,95 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ),
           const SizedBox(width: 4),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(58),
-          child: _CategoryStrip(
-            tabs: tabs,
-            activeIndex: _activeTab,
-            onSelected: _selectTab,
+      ),
+      body: ColoredBox(
+        key: const Key('analysis-content'),
+        color: AppColors.background,
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            key: const Key('analysis-scroll'),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _CategoryStrip(
+                  tabs: tabs,
+                  activeIndex: _activeTab,
+                  onSelected: _selectTab,
+                ),
+                const SizedBox(height: 14),
+                _Summary(
+                  result: result,
+                  ignoredCount: _ignored.length,
+                  onManageIgnored: _openIgnoredAccounts,
+                ),
+                const SizedBox(height: 14),
+                _ListControls(
+                  data: activeTab,
+                  visibleCount: filteredUsers.length,
+                  searchController: _searchController,
+                  query: _query,
+                  ascending: _ascending,
+                  onQueryChanged: (value) {
+                    setState(() {
+                      _query = value;
+                      _visibleLimit = _pageSize;
+                    });
+                  },
+                  onClearQuery: () {
+                    _searchController.clear();
+                    setState(() {
+                      _query = '';
+                      _visibleLimit = _pageSize;
+                    });
+                  },
+                  onToggleSort: () {
+                    setState(() {
+                      _ascending = !_ascending;
+                      _visibleLimit = _pageSize;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                if (activeTab.users.isEmpty)
+                  _EmptyList(description: activeTab.description)
+                else if (filteredUsers.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 36),
+                    child: Center(child: Text('Aramana uyan hesap yok.')),
+                  )
+                else ...[
+                  for (final user in shownUsers) ...[
+                    _UserRow(
+                      key: Key('user-row-${user.normalizedUsername}'),
+                      user: user,
+                      onIgnore: _ignoreUser,
+                    ),
+                    const SizedBox(height: 7),
+                  ],
+                  if (shownUsers.length < filteredUsers.length) ...[
+                    const SizedBox(height: 6),
+                    OutlinedButton.icon(
+                      key: const Key('analysis-load-more'),
+                      onPressed: () {
+                        setState(() => _visibleLimit += _pageSize);
+                      },
+                      icon: const Icon(Icons.expand_more_rounded),
+                      label: Text(
+                        'Daha fazla göster '
+                        '(${filteredUsers.length - shownUsers.length} kaldı)',
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
           ),
         ),
-      ),
-      body: _AnalysisBody(
-        key: ValueKey('analysis-body-${activeTab.title}'),
-        result: result,
-        activeTab: activeTab,
-        users: filteredUsers,
-        ignoredCount: _ignored.length,
-        searchController: _searchController,
-        query: _query,
-        ascending: _ascending,
-        onQueryChanged: (value) => setState(() => _query = value),
-        onClearQuery: () {
-          _searchController.clear();
-          setState(() => _query = '');
-        },
-        onToggleSort: () => setState(() => _ascending = !_ascending),
-        onIgnore: _ignoreUser,
-        onManageIgnored: _openIgnoredAccounts,
       ),
     );
   }
@@ -193,30 +271,20 @@ class _CategoryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SingleChildScrollView(
       key: const Key('analysis-category-strip'),
-      height: 58,
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            for (var index = 0; index < tabs.length; index++) ...[
-              _CategoryButton(
-                data: tabs[index],
-                selected: index == activeIndex,
-                onTap: () => onSelected(index),
-              ),
-              if (index != tabs.length - 1) const SizedBox(width: 6),
-            ],
-            const SizedBox(width: 12),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var index = 0; index < tabs.length; index++) ...[
+            _CategoryButton(
+              data: tabs[index],
+              selected: index == activeIndex,
+              onTap: () => onSelected(index),
+            ),
+            if (index != tabs.length - 1) const SizedBox(width: 8),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -235,145 +303,35 @@ class _CategoryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('analysis-tab-${data.title}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          height: 58,
-          alignment: Alignment.center,
+    final label = Text(
+      '${data.title} (${data.users.length})',
+      style: const TextStyle(fontWeight: FontWeight.w700),
+    );
+    final key = Key('analysis-tab-${data.title}');
+
+    if (selected) {
+      return FilledButton.tonal(
+        key: key,
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          foregroundColor: AppColors.primaryDark,
+          backgroundColor: AppColors.softPurple,
+          minimumSize: const Size(0, 46),
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? AppColors.primary : Colors.transparent,
-                width: 3,
-              ),
-            ),
-          ),
-          child: Text(
-            '${data.title} (${data.users.length})',
-            style: TextStyle(
-              color: selected ? AppColors.primaryDark : AppColors.muted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
         ),
-      ),
-    );
-  }
-}
-
-class _AnalysisBody extends StatelessWidget {
-  const _AnalysisBody({
-    required this.result,
-    required this.activeTab,
-    required this.users,
-    required this.ignoredCount,
-    required this.searchController,
-    required this.query,
-    required this.ascending,
-    required this.onQueryChanged,
-    required this.onClearQuery,
-    required this.onToggleSort,
-    required this.onIgnore,
-    required this.onManageIgnored,
-    super.key,
-  });
-
-  final InstagramFollowAnalysisResult result;
-  final _AnalysisTabData activeTab;
-  final List<SocialUser> users;
-  final int ignoredCount;
-  final TextEditingController searchController;
-  final String query;
-  final bool ascending;
-  final ValueChanged<String> onQueryChanged;
-  final VoidCallback onClearQuery;
-  final VoidCallback onToggleSort;
-  final Future<void> Function(SocialUser user) onIgnore;
-  final VoidCallback onManageIgnored;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      key: const Key('analysis-content'),
-      color: AppColors.background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: _Summary(
-              result: result,
-              ignoredCount: ignoredCount,
-              onManageIgnored: onManageIgnored,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            child: _ListControls(
-              data: activeTab,
-              visibleCount: users.length,
-              searchController: searchController,
-              query: query,
-              ascending: ascending,
-              onQueryChanged: onQueryChanged,
-              onClearQuery: onClearQuery,
-              onToggleSort: onToggleSort,
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: _UserList(
-              users: users,
-              activeTab: activeTab,
-              onIgnore: onIgnore,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UserList extends StatelessWidget {
-  const _UserList({
-    required this.users,
-    required this.activeTab,
-    required this.onIgnore,
-  });
-
-  final List<SocialUser> users;
-  final _AnalysisTabData activeTab;
-  final Future<void> Function(SocialUser user) onIgnore;
-
-  @override
-  Widget build(BuildContext context) {
-    if (activeTab.users.isEmpty) {
-      return _EmptyList(description: activeTab.description);
+        child: label,
+      );
     }
 
-    if (users.isEmpty) {
-      return const Center(child: Text('Aramana uyan hesap yok.'));
-    }
-
-    return ListView.separated(
-      key: const Key('analysis-scroll'),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      itemCount: users.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 7),
-      itemBuilder: (context, index) {
-        final user = users[index];
-        return _UserRow(
-          key: Key('user-row-${user.normalizedUsername}'),
-          user: user,
-          onIgnore: onIgnore,
-        );
-      },
+    return OutlinedButton(
+      key: key,
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.muted,
+        minimumSize: const Size(0, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+      ),
+      child: label,
     );
   }
 }
@@ -524,6 +482,7 @@ class _ListControls extends StatelessWidget {
             SizedBox(
               height: 54,
               child: OutlinedButton.icon(
+                key: const Key('analysis-sort'),
                 onPressed: onToggleSort,
                 icon: const Icon(Icons.sort_by_alpha, size: 20),
                 label: Text(ascending ? 'A-Z' : 'Z-A'),
@@ -680,40 +639,38 @@ class _EmptyList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: const BoxDecoration(
-                color: AppColors.softPurple,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: AppColors.primary,
-                size: 30,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: const BoxDecoration(
+              color: AppColors.softPurple,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 14),
-            Text(
-              'Bu listede hesap yok.',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: AppColors.primary,
+              size: 30,
             ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Bu listede hesap yok.',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.muted),
+          ),
+        ],
       ),
     );
   }

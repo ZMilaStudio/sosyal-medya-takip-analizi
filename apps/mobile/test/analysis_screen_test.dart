@@ -19,7 +19,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('renders real-size result content and rows on phone viewport',
+  testWidgets('renders and interacts with flat analysis body on phone viewport',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -60,36 +60,17 @@ void main() {
     expect(find.text('569'), findsOneWidget);
     expect(find.text('1053'), findsOneWidget);
 
-    expect(find.byKey(const Key('analysis-content')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('analysis-content')), findsOneWidget);
+    expect(find.byKey(const Key('analysis-scroll')), findsOneWidget);
     expect(find.byKey(const Key('analysis-summary')), findsOneWidget);
     expect(find.byKey(const Key('analysis-controls')), findsOneWidget);
-    expect(find.byKey(const Key('analysis-search')).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('analysis-search')), findsOneWidget);
+    expect(find.byKey(const Key('analysis-sort')), findsOneWidget);
     expect(find.text('792 hesap'), findsOneWidget);
-
-    final viewportHeight =
-        tester.view.physicalSize.height / tester.view.devicePixelRatio;
-    final summaryRect = tester.getRect(find.byKey(const Key('analysis-summary')));
-    final controlsRect =
-        tester.getRect(find.byKey(const Key('analysis-controls')));
-    expect(summaryRect.bottom, greaterThan(0));
-    expect(summaryRect.top, lessThan(viewportHeight));
-    expect(controlsRect.bottom, greaterThan(0));
-    expect(controlsRect.top, lessThan(viewportHeight));
-
-    expect(
-      find.ancestor(
-        of: find.byKey(const Key('analysis-summary')),
-        matching: find.byKey(const Key('analysis-scroll')),
-      ),
-      findsNothing,
-    );
-
-    expect(
-      find.byKey(const Key('user-row-nonfollower000')).hitTestable(),
-      findsOneWidget,
-    );
     expect(find.text('@nonfollower000'), findsOneWidget);
+    expect(find.byKey(const Key('analysis-load-more')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('analysis-search')));
     await tester.enterText(
       find.byKey(const Key('analysis-search')),
       'nonfollower791',
@@ -100,15 +81,21 @@ void main() {
     expect(find.text('@nonfollower000'), findsNothing);
     expect(find.text('1 hesap'), findsOneWidget);
 
+    await tester.enterText(find.byKey(const Key('analysis-search')), '');
+    await tester.pumpAndSettle();
+
     final mutualTab = find.byKey(const Key('analysis-tab-Karşılıklı'));
     await tester.ensureVisible(mutualTab);
-    await tester.pumpAndSettle();
     await tester.tap(mutualTab);
     await tester.pumpAndSettle();
 
     expect(find.text('İki hesap birbirini takip ediyor.'), findsOneWidget);
     expect(find.text('261 hesap'), findsOneWidget);
-    expect(find.byKey(const Key('analysis-search')).hitTestable(), findsOneWidget);
-    expect(find.byKey(const Key('user-row-mutual0')).hitTestable(), findsOneWidget);
+    expect(find.text('@mutual0'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('analysis-sort')));
+    await tester.tap(find.byKey(const Key('analysis-sort')));
+    await tester.pumpAndSettle();
+    expect(find.text('Z-A'), findsOneWidget);
   });
 }

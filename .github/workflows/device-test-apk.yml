@@ -45,18 +45,21 @@ jobs:
       - name: Test
         run: flutter test --reporter expanded
 
-      - name: Verify selected launcher source wiring
+      - name: Verify physical-device compatibility wiring
         run: |
-          grep -F 'android:icon="@mipmap/ic_launcher"' android/app/src/main/AndroidManifest.xml
-          if grep -F 'android:roundIcon=' android/app/src/main/AndroidManifest.xml; then
-            echo 'Unexpected roundIcon override remains in manifest.'
-            exit 1
-          fi
-          grep -F '@mipmap/ic_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          test -f android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
-          test -f android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          test ! -f android/app/src/main/res/drawable/ic_launcher_foreground.xml
-          test ! -f android/app/src/main/res/mipmap-anydpi/ic_launcher.xml
+          grep -F 'android:icon="@drawable/takip_launcher"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:roundIcon="@drawable/takip_launcher"' android/app/src/main/AndroidManifest.xml
+          grep -F 'io.flutter.embedding.android.EnableImpeller' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:value="false"' android/app/src/main/AndroidManifest.xml
+
+          ICON="android/app/src/main/res/drawable/takip_launcher.xml"
+          test -f "$ICON"
+          grep -F '#07152F' "$ICON"
+          grep -F '#2DD4BF' "$ICON"
+          grep -F '#8B5CF6' "$ICON"
+          grep -F '#A78BFA' "$ICON"
+
+          test ! -f lib/features/analysis/presentation/analysis_screen.dart.tmp
 
       - name: Install deterministic device-test signing key
         run: |
@@ -72,16 +75,18 @@ jobs:
           echo "DEVICE_TEST_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           flutter build apk --debug --build-number="$VERSION_CODE"
 
-      - name: Verify package, version and signing certificate
+      - name: Verify package, version, icon resource and signing certificate
         run: |
           APK="build/app/outputs/flutter-apk/app-debug.apk"
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
 
-          BADGING="$($AAPT dump badging "$APK" | head -1)"
+          BADGING="$($AAPT dump badging "$APK" | head -30)"
           echo "$BADGING"
           echo "$BADGING" | grep -F "name='$EXPECTED_PACKAGE_ID'"
           echo "$BADGING" | grep -F "versionCode='$DEVICE_TEST_VERSION_CODE'"
+
+          unzip -l "$APK" | grep -F 'res/drawable/takip_launcher'
 
           CERT_OUTPUT="$($APKSIGNER verify --print-certs "$APK" 2>&1)"
           echo "$CERT_OUTPUT"
@@ -112,6 +117,6 @@ jobs:
             takip-analizi-device-test.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Takip Analizi - Deterministic Device Test" \
-            --notes "Device-test APK. Paket: $EXPECTED_PACKAGE_ID. VersionCode: $DEVICE_TEST_VERSION_CODE. Sabit signing sertifikası SHA-256: $EXPECTED_CERT_SHA256. Sonuç ekranında sabit özet/kontrol gövdesi + ayrı lazy kullanıcı listesi vardır ve seçilen koyu seçenek 4 launcher tasarımı geri yüklenmiştir. Mevcut v2 uygulamanın üzerine kaldırmadan güncellenebilmelidir. Production sürümü değildir." \
+            --title "Takip Analizi - Physical Device Fix Test" \
+            --notes "Device-test APK. Paket: $EXPECTED_PACKAGE_ID. VersionCode: $DEVICE_TEST_VERSION_CODE. Sabit signing sertifikası SHA-256: $EXPECTED_CERT_SHA256. Analiz ekranı fiziksel Android için nested/lazy dikey listelerden çıkarıldı; ilk 100 hesap düz Column gövdesinde çizilir ve Daha fazla göster ile sayfalanır. Samsung/Android 16 renderer farkını izole etmek için Impeller bu test APK'sında kapalıdır. Launcher artık eski Android robot PNG'lerine değil, koyu lacivert zeminli teal/mor kişi+büyüteç @drawable/takip_launcher kaynağına doğrudan bağlıdır. Mevcut v2 uygulamanın üzerine kaldırmadan güncellenmelidir. Production sürümü değildir." \
             --prerelease
