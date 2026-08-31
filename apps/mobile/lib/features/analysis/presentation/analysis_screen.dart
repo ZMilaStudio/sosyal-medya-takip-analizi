@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
@@ -44,8 +46,12 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     setState(() => _ignored = {..._ignored, user.normalizedUsername});
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+
+    final controller = messenger.showSnackBar(
       SnackBar(
+        duration: const Duration(seconds: 3),
         content: Text('@${user.username} yok sayıldı.'),
         action: SnackBarAction(
           label: 'Geri al',
@@ -61,6 +67,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           },
         ),
       ),
+    );
+
+    final timer = Timer(const Duration(seconds: 3), controller.close);
+    unawaited(
+      controller.closed.whenComplete(() {
+        if (timer.isActive) timer.cancel();
+      }),
     );
   }
 
