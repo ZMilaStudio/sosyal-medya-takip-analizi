@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 31 Ağustos 2026, 23:08 (Europe/Istanbul)
+Son güncelleme: 31 Ağustos 2026, 23:20 (Europe/Istanbul)
 
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu `PROJE_OZETI.md` okunarak proje devralınır.
@@ -8,6 +8,7 @@ Son güncelleme: 31 Ağustos 2026, 23:08 (Europe/Istanbul)
 - Bu dosya + canlı GitHub repo proje gerçeklik kaynağıdır.
 - Yeni karar eski kararı geçersiz kılar.
 - Kullanıcı istemedikçe görsel mockup gönderilmez; uygulanmış APK üzerinden ilerlenir.
+- Fiziksel cihazda doğrulanmayan bir düzeltme “çözüldü” sayılmaz.
 
 ## Proje amacı
 Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması.
@@ -30,10 +31,11 @@ Temel sonuçlar:
 5. Analiz motoru saf Dart ve platform bağımsızdır.
 6. Kimlik eşlemede platform ID varsa o, yoksa normalize kullanıcı adı kullanılır.
 7. JSON/HTML ve multipart follower dosyaları ile güncel `following.json` üst seviye `title` varyasyonu desteklenir.
-8. Profil fotoğrafı scraping ile çekilmez; deterministik monogram avatar kullanılır.
+8. Profil fotoğrafı scraping ile çekilmez.
 9. Tema mor ağırlığı azaltılmış slate/teal açık temadır. Dark mode şimdilik kapsam dışıdır.
 10. `Yok sayılan hesaplar` hesap bazında cihazda saklanır; ham snapshot sayılarını değiştirmez, yalnız analiz sonuçlarını filtreler.
-11. Onaylanan launcher yönü: koyu seçenek 4.
+11. Sağ üst `visibility_off` simgesi gizlilik modu değil, **Yok sayılan hesaplar** yönetimidir.
+12. Onaylanan launcher yönü: **simge seçenek 4'ün koyu versiyonu**. Launcher işi fiziksel cihazda doğru görünmeden tamamlanmış sayılmaz.
 
 ## Gerçek Meta export doğrulaması
 - `followers_1.json`: 569 benzersiz takipçi.
@@ -41,52 +43,53 @@ Temel sonuçlar:
 - Instagram UI takip edilen sayısı 967; export ile UI arasında 86 hesap farkı var.
 - Sonuç: 792 takip etmeyen, 261 karşılıklı, 308 yalnız takipçi.
 
-## Kritik hata geçmişi
+## Following parser
+Gerçek `following.json` içinde kullanıcı adı `string_list_data.value` yerine `title` alanında geldiği için ilk sürümlerde 569/0 sonucu oluşuyordu. `title` fallback ile düzeltildi ve regression testi eklendi. Bu veri/parser düzeltmesi korunacaktır.
 
-### Following parser
-Gerçek `following.json` içinde kullanıcı adı `string_list_data.value` yerine `title` alanında geldiği için ilk sürümlerde 569/0 sonucu oluşuyordu. `title` fallback ile düzeltildi ve regression testi eklendi.
-
-### Fiziksel Samsung cihazında analiz ekranı regresyonu
-CI/widget testlerinde başarılı görünmesine rağmen fiziksel Samsung/Android 16 cihazında analiz ekranı adım adım bozuldu.
+## Fiziksel Samsung / Android 16 analiz ekranı sorunu
+CI ve widget testleri geçmesine rağmen fiziksel Samsung cihazında kullanıcı listesi uzun süredir görünmüyor. Sonraki render denemeleri problemi çözmek yerine bazı sürümlerde üst UI ve etkileşimi de bozdu.
 
 Başarısız fiziksel denemeler:
-- PR #16 render düzenlemesi ❌
-- PR #18 tek ListView yaklaşımı ❌
-- PR #19 sabit özet + ayrı lazy liste yaklaşımı ❌
-- `device-test-v2-11` ❌: kategori başlıkları görünürken gövde boş, bazı düğmeler cevapsız.
-- `device-test-v2-14` ❌: kullanıcı doğrulamasında analiz ekranında artık AppBar dışında hiçbir içerik görünmedi. Bu sürüm önceki durumu daha da kötüleştirdi ve fiziksel cihaz düzeltmesi olarak kabul edilmedi.
+- PR #16 ❌
+- PR #18 ❌
+- PR #19 ❌
+- `device-test-v2-11` ❌: sekme/sayılar var, liste yok; bazı düğmeler cevap vermiyor.
+- `device-test-v2-14` ❌: AppBar dışında içerik tamamen kayboldu.
+- `device-test-v2-15` ❌: `fa9ef4a` analiz ekranına rollback sonrası sekmeler ve 569/1053 özet kartları geri geldi, fakat açıklama/arama/kullanıcı listesi yine görünmedi. Bu nedenle `fa9ef4a` fiziksel çalışan son baseline değildir.
 
-Kullanıcının 31 Ağustos 2026 22:58 fiziksel ekran görüntüsü v2-14 yaklaşımının başarısız olduğunu kesinleştirdi. Bu nedenle yeni render yamaları ekleme yaklaşımı durduruldu.
+### Yeni teşhis yöntemi: ilk MVP'ye dön
+Commit geçmişi tarandı. İlk Flutter MVP UI commit'i:
+- `570961731b613ce7f2bc2fdaa790499b341adc17` — `feat: add Flutter Instagram MVP UI`
+- Android platform wrapper daha sonra `ba3341d21c4c6f782f8e2592e00fc3e002fe68af` ile eklendi.
 
-### Baseline rollback kararı
-Yeni karar: önce çalışan temel analiz ekranına dönülecek; ardından özellikler tek tek ve fiziksel cihazda doğrulanarak eklenecek.
+İlk MVP analiz ekranı sonraki sürümlerden belirgin biçimde daha sadedir:
+- yalnız 3 sekme: Takip Etmeyenler / Karşılıklı / Seni Takip Edenler,
+- basit iki özet `Card`,
+- `_UserList` stateless,
+- açıklama + `Expanded(ListView.separated)`,
+- kullanıcı satırı yalnız `CircleAvatar + @kullanıcıadı + opsiyonel displayName`,
+- arama/sıralama yok,
+- `MonogramAvatar` yok,
+- profile `url_launcher` ile açma yok,
+- yok sayılan hesap UI'sı yok,
+- unfollower/new-follower sekmeleri yok.
 
-Referans baseline: commit `fa9ef4a45588734227ba5404bf7b52085838328e` sonrasındaki orijinal `analysis_screen.dart`.
+Bu sade kod `device-test-v2-16` için **birebir** geri getirildi. Amaç final tasarım üretmek değil, fiziksel cihazda çalışan en temel liste katmanını yeniden yakalamaktır. Parser, veri okuma, history veri katmanı, deterministic signing, paket/version sistemi korunuyor. Launcher bu turda değiştirilmedi.
 
-`test/device-apk` üzerinde commit `7fd5bf5e559cafc5811585e22fca0ed5b811f545` ile:
-- `analysis_screen.dart` birebir eski Git blob'una (`89bd2167887b7eb632e76c2b3fd4083f9c76de9b`) döndürüldü.
-- `analysis_screen_test.dart` aynı baseline'ın orijinal testine (`b3ed750e25884b6cb1881448fbc293539a546611`) döndürüldü.
-- Sonradan eklenen pagination, özel kategori butonları ve analiz ekranı render yamaları çıkarıldı.
-- Parser düzeltmesi, veri katmanı, deterministic signing, paket/version sistemi ve mevcut launcher wiring korunuyor.
-- v2-14 bozuk branch durumu `backup/device-v2-14-broken` altında yedeklendi.
-
-### device-test-v2-15 — BASELINE ROLLBACK ADAYI
-- commit: `7fd5bf5e559cafc5811585e22fca0ed5b811f545`
-- workflow run: `33433757649`
-- VersionCode: `300015`
-- APK SHA-256: `9e818d53c168bda784d05ae24a3dbb8de3f5336b00ff8e58e1e88aff5ebbb819`
+### device-test-v2-16 — İLK MVP LİSTE BASELINE ADAYI
+- kaynak commit: `90059b024cc844a101a84ac076e49a22d12b86b6`
+- workflow run: `33435015331`
+- VersionCode: `300016`
+- APK SHA-256: `afeb7b72a7aa24aec4c5e106e424d1d8a4b1d63e7c4c6893b3cae8b5a8b920f5`
 - Analyze ✅
-- baseline'ın orijinal widget testi ✅
-- signing/wiring kontrolleri ✅
+- ilk MVP liste görünürlük/tab testi ✅
+- deterministic signing ✅
 - APK build ✅
 - package/version/icon-resource/certificate doğrulama ✅
 - prerelease ✅
 - fiziksel Samsung doğrulaması ⏳
 
-Not: workflow release açıklaması v2-14 metninden kaldığı için release body'deki “ilk 100 hesap / düz Column” açıklaması v2-15 kodunu temsil etmiyor. Gerçek kaynak commit `7fd5bf5...`; analiz ekranı baseline'a dönmüştür.
-
-## Launcher simgesi
-Önceki fiziksel testte launcher Android robot/varsayılan simge görünmüştü. v2-14 ile manifest doğrudan `@drawable/takip_launcher` kaynağına bağlandı ve APK içindeki resource doğrulandı. Ancak seçilen koyu seçenek 4 tasarımının fiziksel cihazda doğru göründüğü henüz kesinleşmedi. Launcher işi fiziksel doğrulama olmadan tamamlanmış sayılmaz.
+Not: Device Test workflow release açıklamasında hâlâ v2-14'e ait “ilk 100 hesap / düz Column” metni kalmıştır; **v2-16 gerçek kodunu temsil etmez**. Gerçek v2-16 kaynak commit'i `90059b...` ve analiz ekranı ilk MVP kodudur.
 
 ## Test APK imza ve güncelleme sistemi
 Deterministic device-test v2:
@@ -98,23 +101,24 @@ Deterministic device-test v2:
 
 v2 tabanı kurulduktan sonraki APK'lar aynı paket + sertifika + daha yüksek versionCode ile kaldırmadan güncellenebilmelidir.
 
+## Launcher simgesi
+Launcher konusu analiz listesi teşhisinden ayrı tutulacak.
+- Önceki fiziksel sürümlerde Android robot/yanlış tasarım görüldü.
+- v2-14 sonrası manifest özel drawable'a bağlanmış durumda ancak bu kullanıcı tarafından seçilmiş koyu seçenek 4 tasarımının fiziksel olarak doğru göründüğünü kanıtlamıyor.
+- v2-16 turunda launcher üzerinde yeni değişiklik yapılmadı.
+- Liste baseline'ı sağlamlandıktan sonra ikon ayrı ve kontrollü ele alınacak.
+
 ## GitHub / CI
 Repo: `ZMilaStudio/sosyal-medya-takip-analizi` — public.
 
 Branchler:
-- `main`: stabil hedef; fiziksel doğrulanmamış yeni render denemeleri merge edilmeyecek.
-- `test/device-apk`: cihaz doğrulama branch'i.
+- `main`: stabil hedef; fiziksel doğrulanmamış render denemeleri merge edilmeyecek.
+- `test/device-apk`: fiziksel cihaz doğrulama branch'i.
 - `backup/device-test-v2-9`: eski test tabanı.
-- `backup/device-v2-14-broken`: v2-14 başarısız durumunun yedeği.
+- `backup/device-v2-14-broken`: v2-14 başarısız durum yedeği.
+- `backup/device-v2-15-partial`: v2-15 kısmi rollback durum yedeği.
 
-CI:
-- Core CI: Dart analyze + test.
-- App CI: Flutter analyze + test.
-- Device Test: test + sabit imza + APK paket/version/icon/certificate doğrulama + prerelease.
-- normal CI artifact upload kullanmaz.
-
-### GitHub Actions ödeme olayı
-GitHub hosted runner erişimi başarısız ödeme nedeniyle geçici olarak kilitlenmişti. Payment History'de Visa $1 `Declined`, MasterCard $1 `Success` oldu. Başarılı tahsilattan sonra runner erişimi açıldı. Bu sorun kapalıdır.
+GitHub hosted runner erişimi 31 Ağustos'ta başarısız ödeme nedeniyle geçici kilitlenmişti. Payment History'de Visa $1 `Declined`, ardından MasterCard $1 `Success` oldu; runner erişimi açıldı. Bu sorun kapalıdır.
 
 ## MVP durumu
 ### Instagram MVP
@@ -124,18 +128,15 @@ GitHub hosted runner erişimi başarısız ödeme nedeniyle geçici olarak kilit
 - [x] `following.json title` desteği
 - [x] gerçek Meta export doğrulaması
 - [x] Flutter import
-- [x] sonuç kategorileri
-- [x] arama / sıralama
-- [x] Instagram profilini açma
-- [x] snapshot/geçmiş
-- [x] yeni takipçiler / takibi bırakanlar
-- [x] yok sayılan hesaplar veri katmanı
-- [x] veri indirme rehberi
+- [x] snapshot/geçmiş veri katmanı
 - [x] deterministic v2 signing
-- [ ] v2-15 baseline analiz ekranını fiziksel Samsung cihazında doğrulama
-- [ ] baseline sağlamlandıktan sonra `Yok sayılanlar` UI'sını tek başına geri ekleme ve fiziksel doğrulama
-- [ ] seçilen koyu launcher simgesini fiziksel cihazda doğrulama
-- [ ] v2 APK'nın kaldırmadan `Güncelle` olarak kurulduğunu doğrulama
+- [ ] v2-16 ilk MVP kullanıcı listesini fiziksel Samsung'da doğrulama
+- [ ] baseline çalışırsa özellikleri **tek tek** geri ekleyip her adımda fiziksel doğrulama
+- [ ] yok sayılan hesap UI'sını geri ekleme
+- [ ] arama/sıralamayı geri ekleme
+- [ ] profil açmayı geri ekleme
+- [ ] unfollower/new-follower sekmelerini geri ekleme
+- [ ] koyu seçenek 4 launcher simgesini fiziksel cihazda doğrulama
 - [ ] iki keyfi snapshot'ı elle seçerek karşılaştırma
 
 ### X
@@ -146,10 +147,8 @@ GitHub hosted runner erişimi başarısız ödeme nedeniyle geçici olarak kilit
 - [ ] gerekirse OAuth 2.0 PKCE
 
 ## Sıradaki iş
-`device-test-v2-15` mevcut uygulama kaldırılmadan kurulacak. Bu sürümde amaç yalnız baseline'ın geri geldiğini doğrulamaktır:
-1. Özet kartları görünüyor mu?
-2. Sekmeler görünüyor ve değişiyor mu?
-3. Açıklama + arama + A-Z düğmesi görünüyor mu?
-4. Kullanıcı listesi görünüyor mu?
+`device-test-v2-16` mevcut v2 uygulama kaldırılmadan `Güncelle` olarak kurulacak. Bu tur yalnız iki şey kontrol edilecek:
+1. `Takip Etmeyenler` altında `CircleAvatar + @kullanıcıadı` satırları görünüyor mu?
+2. `Karşılıklı` ve `Seni Takip Edenler` sekmelerine geçildiğinde satırlar değişiyor mu?
 
-Baseline fiziksel cihazda sağlamlanmadan yeni analiz ekranı özelliği eklenmeyecek ve `main`e merge yapılmayacak.
+Bu iki temel davranış fiziksel cihazda çalışmadan yeni özellik eklenmeyecek ve `main`e merge yapılmayacak.
