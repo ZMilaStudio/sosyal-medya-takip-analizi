@@ -27,6 +27,17 @@ class AnalysisScreen extends StatelessWidget {
         description: 'Seni takip ediyorlar, sen onları takip etmiyorsun.',
         users: result.analysis.fans,
       ),
+      _AnalysisTabData(
+        title: 'Takibi Bırakanlar',
+        description:
+            'Önceki kayıtlı analizde seni takip edip artık takip etmeyenler.',
+        users: result.analysis.unfollowers,
+      ),
+      _AnalysisTabData(
+        title: 'Yeni Takipçiler',
+        description: 'Önceki kayıtlı analizden sonra seni takip etmeye başlayanlar.',
+        users: result.analysis.newFollowers,
+      ),
     ];
 
     return DefaultTabController(

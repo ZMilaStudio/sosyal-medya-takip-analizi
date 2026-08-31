@@ -12,133 +12,155 @@ Temel sonuçlar:
 - Beni takip ediyor, ben takip etmiyorum.
 - Yeni takipçiler.
 - Takibi bırakanlar.
-- Snapshot/geçmiş karşılaştırması.
+- Önceki analizlerle karşılaştırma.
 
 ## Güncel teknik kararlar
 
 1. Instagram için ana veri kaynağı resmi Instagram/Meta veri dışa aktarma arşividir.
 2. Instagram kullanıcı adı/şifre toplama, private API, scraping ve güvenlik mekanizması aşma yöntemleri kullanılmaz.
-3. Instagram resmi API'sinde follower sayısı gibi alanlar bulunabilse de tam follower/following kullanıcı listesi bu ürünün ihtiyacını karşılayacak genel bir resmi endpoint olarak sunulmadığından MVP buna bağlanmaz.
-4. X için resmi API follower/following endpointleri mevcuttur; ancak 2026 pay-per-use fiyatlandırması genel tüketici uygulaması için önemli maliyet riski oluşturur.
-5. X'in resmi veri arşivi follower ve following listelerini içerdiği için X entegrasyonunda öncelikli düşük maliyetli yol arşiv importudur. OAuth/API entegrasyonu daha sonra maliyet hesabı ve ürün gereksinimi doğrulanırsa eklenir.
-6. Varsayılan veri yaklaşımı local-first'tür. Sunucu zorunlu değilse sosyal grafik verisi sunucuya gönderilmez.
-7. Analiz motoru platform bağımsız saf Dart çekirdeği olarak ayrılır.
-8. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si kimlik anahtarıdır; ID yoksa normalize edilmiş kullanıcı adı kullanılır.
-9. Instagram ZIP ilk MVP'de diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır. Kullanıcıya Meta'dan yalnız “Followers and following” verisini dışa aktarması önerilir. Daha büyük arşiv ihtiyacı doğrulanırsa streaming importer'a geçilir.
-10. Instagram JSON ve HTML ilişki exportları aynı ortak modele çevrilir; HTML parser CSS sınıflarına değil profil URL'lerine dayanır.
-11. Flutter sunum katmanı import veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase`, ZIP importundan snapshot ve analiz sonucuna kadar tüm akışı tek noktada yürütür.
-12. İlk Flutter uygulama katmanı Flutter 3.47.2 hedefiyle geliştirilir. State management Riverpod, routing go_router, Android sistem dosya seçimi file_picker üzerinden yapılır.
+3. Instagram resmi API'si tam follower/following kullanıcı listesini ürünün ihtiyacına uygun genel bir endpoint olarak sağlamadığından MVP buna bağlanmaz.
+4. X'in resmi API follower/following endpointleri vardır ancak 2026 pay-per-use fiyatlandırması genel tüketici uygulaması için önemli maliyet riski oluşturur. X tarafında önce resmi veri arşivi importu hedeflenir; OAuth/API daha sonra maliyet doğrulanırsa eklenir.
+5. Varsayılan yaklaşım local-first'tür. Sunucu zorunlu değilse sosyal grafik verisi cihazdan çıkmaz.
+6. Analiz motoru platform bağımsız saf Dart çekirdeğidir.
+7. Snapshot karşılaştırmasında mümkün olduğunda platform kullanıcı ID'si, yoksa normalize edilmiş kullanıcı adı kimlik anahtarıdır.
+8. Instagram ZIP diske çıkarılmadan bellekte işlenir ve 128 MiB arşiv limiti uygulanır. Daha büyük gerçek kullanım ihtiyacı doğrulanırsa streaming importer değerlendirilecektir.
+9. Instagram JSON ve HTML exportları ortak modele çevrilir. Multipart followers dosyaları desteklenir.
+10. Flutter presentation katmanı parsing veya set karşılaştırma mantığı içermez. `InstagramFollowAnalysisUseCase` import -> snapshot -> analiz akışını yürütür.
+11. Mobil uygulama Flutter 3.47.2, Riverpod, go_router ve sistem dosya seçimi için file_picker kullanır.
+12. Yerel geçmiş Drift/SQLite ile tutulur. Sosyal kullanıcı kayıtları snapshot başına tam kopyalanmaz; ortak kullanıcı tablosu ve snapshot ilişki tablosu kullanılır.
+13. Snapshot zamanları domain katmanında UTC olarak normalize edilir.
 
 ## Önemli ürün riski
 
-Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yalnız kullanıcı adına göre eşleştirme yapılabilir. Bir kişi kullanıcı adını değiştirirse geçmiş karşılaştırmasında yanlışlıkla “takibi bıraktı + yeni takipçi” olarak görünebilir. Bu sınırlama kullanıcıya açıkça belirtilmelidir.
-
-## X maliyet riski
-
-X API 2026 fiyatlandırmasında Following/Followers okumaları genel olarak kaynak başına ücretlidir. Resmi fiyat sayfasında standart Following/Followers okuması 0,010 USD/resource olarak listelenmektedir. “Owned Reads” 0,001 USD/resource indirimlidir ancak resmi açıklamada authenticated user'ın developer app owner olması şartı yer alır; bu nedenle genel son kullanıcı ürünü için bu indirime güvenilmez.
-
-Sonuç: Canlı X senkronizasyonu MVP şartı değildir. Önce resmi X arşiv importu yapılacaktır.
+Instagram arşivinde sabit platform kullanıcı ID'si bulunmayan kayıtlarda yalnız kullanıcı adına göre eşleştirme yapılabilir. Kullanıcı adı değişen bir hesap geçmiş karşılaştırmasında yanlışlıkla “takibi bıraktı + yeni takipçi” olarak görünebilir. Bu sınırlama kullanıcıya açıkça belirtilmelidir.
 
 ## Mimari
 
-### Katmanlar
-- presentation: Flutter ekranları, routing, state.
-- application: use-case/provider katmanı.
-- domain: SocialAccount, SocialUser, FollowSnapshot, FollowAnalysis ve analiz kuralları.
-- data: Instagram/X importer, local database, secure storage, opsiyonel API servisleri.
-
-### Çekirdek
-`packages/follow_core`
-- saf Dart
-- platform bağımsız analiz motoru
-- Instagram JSON ilişki parser'ı
-- Instagram HTML ilişki parser'ı
-- Instagram ZIP keşif/doğrulama importer'ı
-- Instagram ZIP -> snapshot -> analiz use-case'i
+### Çekirdek — `packages/follow_core`
+- `SocialPlatform`
+- `SocialAccount`
+- `SocialUser`
+- `FollowSnapshot`
+- `FollowAnalysis`
+- `FollowAnalysisEngine`
+- Instagram JSON parser
+- Instagram HTML parser
+- güvenli Instagram ZIP importer
+- Instagram import + analiz use-case
 - unit testler
 
-### Mobil uygulama
-`apps/mobile`
-- Flutter sunum katmanı
-- Riverpod import state'i
-- go_router navigasyonu
+### Mobil uygulama — `apps/mobile`
+- Flutter 3.47.2
+- Riverpod state management
+- go_router
 - sistem ZIP dosya seçici
 - Instagram ana kartı
-- Takip Etmeyenler / Karşılıklı / Seni Takip Edenler sonuç ekranı
+- takipçi/takip edilen özetleri
+- Takip Etmeyenler
+- Karşılıklı
+- Seni Takip Edenler
+- Takibi Bırakanlar
+- Yeni Takipçiler
 - X için pasif “Yakında” kartı
+- Drift/SQLite local snapshot storage
 
-Not: Flutter/Dart kaynak uygulama kabuğu repodadır. Android'in Flutter tarafından üretilen `android/` platform wrapper dosyaları ayrı adımda Flutter 3.47.2 ile oluşturulacaktır; eski Gradle şablonları elle kopyalanmayacaktır.
+### Local geçmiş veri modeli
 
-## MVP sırası
+`StoredAccounts`
+- sosyal hesabı bir kez saklar.
 
-### MVP 1 — Instagram
-- [x] Ortak analiz modeli tasarımı.
+`StoredSocialUsers`
+- sosyal kullanıcıyı `identityKey` ile bir kez saklar.
+
+`StoredSnapshots`
+- analiz zamanı, hesap ve kaynak formatını saklar.
+
+`StoredSnapshotRelations`
+- bir kullanıcının ilgili snapshot'ta follower/following durumunu bitmask ile saklar.
+
+Yeni Instagram importunda uygulama aynı hesap için son snapshot'ı otomatik bulur, yeni snapshot ile karşılaştırır ve ardından yeni snapshot'ı cihazda saklar.
+
+## MVP durumu
+
+### MVP 1 — Instagram temel analiz
+- [x] Ortak analiz modeli.
 - [x] Set tabanlı analiz motoru.
-- [x] Instagram JSON ilişki parser'ı.
-- [x] ZIP doğrulama ve güvenli bellek limitleri.
-- [x] Export dosya yollarını otomatik keşfetme.
-- [x] Çok parçalı followers dosyalarını birleştirme.
-- [x] HTML export desteği.
-- [x] Temel ve güvenlik unit testleri.
-- [x] Import -> `FollowSnapshot` -> `FollowAnalysisEngine` use-case'i.
-- [x] Flutter uygulama kaynak kabuğu.
-- [x] Sistem ZIP dosya seçici entegrasyon kodu.
-- [x] İlk üç analiz sonuç listesi.
-- [ ] Android platform wrapper (`flutter create --platforms=android`).
-- [ ] Gerçek cihazda dosya seçme ve analiz testi.
-- [ ] Local snapshot kaydı.
+- [x] Instagram JSON parser.
+- [x] Instagram HTML parser.
+- [x] ZIP doğrulama ve güvenlik limitleri.
+- [x] Export dosyalarını otomatik keşfetme.
+- [x] Multipart followers birleştirme.
+- [x] Import -> snapshot -> analiz use-case.
+- [x] Flutter uygulama kabuğu.
+- [x] Sistem ZIP dosya seçici.
+- [x] İlk analiz ekranları.
+- [x] Flutter 3.47.2 resmi Android platform wrapper.
+- [x] Android debug APK build doğrulaması.
+- [ ] Fiziksel Android cihazda gerçek Meta export ZIP testi.
 
-### MVP 2 — geçmiş
-- [ ] Drift/SQLite şeması.
-- [ ] Snapshot geçmişi.
-- [ ] Takibi bırakanlar/yeni takipçiler.
-- [ ] Geçmiş temizleme ve saklama politikası.
+### MVP 2 — geçmiş ve değişim analizi
+- [x] Drift/SQLite şeması.
+- [x] Local snapshot kaydı.
+- [x] Son snapshot'ı otomatik geri yükleme.
+- [x] Takibi bırakanlar hesaplama.
+- [x] Yeni takipçiler hesaplama.
+- [x] Aynı sosyal kullanıcıların snapshotlar arasında deduplicate edilmesi.
+- [x] Database unit testleri.
+- [ ] Geçmiş analizleri listeleme ekranı.
+- [ ] İki eski snapshot'ı kullanıcı seçerek karşılaştırma.
+- [ ] Retention/geçmiş temizleme politikası.
 
 ### MVP 3 — X
-- [ ] X resmi arşiv formatının fixture'larla doğrulanması.
+- [ ] X resmi arşiv formatını gerçek fixture ile doğrulama.
 - [ ] X ZIP/JSON importer.
+- [ ] X snapshot/geçmiş desteği.
 - [ ] Canlı API için gerçek kullanıcı başına maliyet modeli.
-- [ ] Gerekliyse OAuth 2.0 PKCE + follows.read.
-- [ ] Harcama limiti ve cache politikası.
+- [ ] Gerekliyse OAuth 2.0 PKCE + minimum izinler.
 
-## GitHub stratejisi
+## GitHub / CI
 
 Repo: `ZMilaStudio/sosyal-medya-takip-analizi` (public).
 
 Branch düzeni:
-- `main`: her zaman stabil.
-- `feat/<konu>`: özellik geliştirme.
+- `main`: stabil.
+- `feat/<konu>`: özellik.
 - `fix/<konu>`: hata düzeltme.
-- PR olmadan main'e özellik kodu taşınmaz.
+- özellikler PR ile `main`e alınır.
 
 CI:
-- `Core CI`: yalnız `packages/follow_core/**` değişikliklerinde `dart analyze` + `dart test`.
-- `App CI`: yalnız `apps/mobile/**` değişikliklerinde Flutter 3.47.2 ile `flutter analyze` + `flutter test`.
-- İki workflow da aynı branch'teki eski run'ı iptal eder.
+- `Core CI`: yalnız `packages/follow_core/**` için `dart analyze` + `dart test`.
+- `App CI`: yalnız `apps/mobile/**` için Flutter 3.47.2 ile `flutter pub get`, `flutter analyze`, `flutter test`.
+- `cancel-in-progress` aktif.
 - Artifact upload yok.
 - Doküman-only değişikliklerde workflow çalışmaz.
-- Release APK/AAB ayrı, manuel veya tag tabanlı workflow olacaktır.
+- Android wrapper tek seferlik bootstrap workflow ile resmi Flutter şablonundan üretildi; workflow daha sonra kaldırıldı.
+- Drift generated code tek seferlik codegen workflow ile üretildi; workflow daha sonra kaldırıldı.
 
-## Açık problemler
+## Doğrulanmış durum
 
-1. Meta export dosya yapısı zamanla değişebilir. Parser'lar gerçek ve anonimleştirilmiş export fixture'larıyla korunmalıdır.
-2. Kullanıcı adı değişiklikleri archive-only kimlik eşlemesini bozabilir.
-3. 128 MiB bellek içi ZIP limiti, kullanıcının tüm Instagram arşivini seçmesi durumunda yetersiz olabilir. MVP kullanıcıyı yalnız takip verisini export etmeye yönlendirecek; ihtiyaç oluşursa streaming dosya okuma eklenecek.
-4. Flutter kaynak kabuğu hazır olsa da Android platform wrapper oluşturulmadan APK üretilemez.
+- Core CI başarılı.
+- Flutter App CI başarılı.
+- Flutter 3.47.2 Android wrapper üretimi başarılı.
+- `flutter build apk --debug` başarılı.
+- Drift code generation başarılı.
+- Drift database testleri başarılı.
+- Instagram JSON/HTML/ZIP ve snapshot karşılaştırma testleri başarılı.
+- Artifact saklanmıyor.
 
-## Son durum
+## Açık problemler / riskler
 
-- Instagram analiz çekirdeği `main` üzerinde stabil ve testli.
-- JSON + HTML resmi export ZIP desteği mevcut.
-- ZIP -> snapshot -> analiz uçtan uca use-case'i mevcut.
-- Flutter ana ekranı, ZIP seçme akışı ve ilk sonuç ekranı kaynak kod olarak eklendi.
-- App CI Flutter 3.47.2'ye sabitlendi; artifact üretmez.
-- Instagram tarafında sunucu, API anahtarı, şifre veya scraping yoktur.
+1. Meta export dosya yapısı gelecekte değişebilir; parser fixture testleri büyütülmelidir.
+2. Username-only identity eşlemesi kullanıcı adı değişikliklerinde hatalı değişim sonucu üretebilir.
+3. 128 MiB bellek içi ZIP limiti tüm Instagram arşivi seçilirse yetersiz olabilir.
+4. Fiziksel Android cihazda gerçek Meta ZIP ile uçtan uca test henüz yapılmadı.
+5. Production release signing henüz kurulmadı; mevcut Flutter Android şablonunda release build debug signing kullanır. Play Store sürümünden önce ayrı release keystore/secrets düzeni kurulmalıdır.
+6. Snapshot retention/temizleme politikası henüz uygulanmadı.
 
 ## Sıradaki işler
 
-1. App CI sonucunu doğrulamak ve Flutter kaynak kabuğunu `main`e almak.
-2. Flutter 3.47.2 ile Android platform wrapper oluşturmak.
-3. Gerçek Android cihazda Meta ZIP seçme ve sonuç doğrulaması yapmak.
-4. Drift tabanlı local snapshot kaydını eklemek.
-5. Snapshot geçmiş ekranlarını eklemek.
+1. Fiziksel Android cihazda gerçek Instagram export ZIP ile import ve sonuç doğrulaması.
+2. Snapshot geçmiş ekranını eklemek.
+3. Retention/geçmiş temizleme politikasını belirlemek ve uygulamak.
+4. Kullanıcı adına dokununca resmi Instagram profilini açmak.
+5. Liste arama/sıralama UX'ini tamamlamak.
+6. Ardından X resmi arşiv importer'ına geçmek.

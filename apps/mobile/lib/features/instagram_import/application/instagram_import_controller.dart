@@ -4,6 +4,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:follow_core/follow_core.dart';
 
+import '../../../data/local/follow_history_database.dart';
+
+final followHistoryDatabaseProvider = Provider<FollowHistoryDatabase>((ref) {
+  final database = FollowHistoryDatabase();
+  ref.onDispose(database.close);
+  return database;
+});
+
 final instagramImportControllerProvider = AsyncNotifierProvider<
     InstagramImportController, InstagramFollowAnalysisResult?>(
   InstagramImportController.new,
@@ -24,6 +32,10 @@ class InstagramImportController
 
     try {
       final username = _normalizeUsername(rawUsername);
+      final account = SocialAccount(
+        platform: SocialPlatform.instagram,
+        username: username,
+      );
       final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: const ['zip'],
@@ -42,15 +54,16 @@ class InstagramImportController
       }
 
       final bytes = await file.readAsBytes();
+      final database = ref.read(followHistoryDatabaseProvider);
+      final previous = await database.latestSnapshot(account);
       final result = _useCase.execute(
         zipBytes: bytes,
-        account: SocialAccount(
-          platform: SocialPlatform.instagram,
-          username: username,
-        ),
+        account: account,
         capturedAt: DateTime.now().toUtc(),
+        previous: previous,
       );
 
+      await database.saveSnapshot(result.snapshot);
       state = AsyncData(result);
       return result;
     } catch (error, stackTrace) {
@@ -96,5 +109,5 @@ String instagramImportErrorMessage(Object error) {
     };
   }
 
-  return 'Dosya analiz edilemedi. Lütfen Instagram’dan yeni bir veri arşivi indirip tekrar dene.';
+  return 'Analiz tamamlanamadı veya cihaz geçmişine kaydedilemedi. Lütfen tekrar dene.';
 }
