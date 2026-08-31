@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:follow_core/follow_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AnalysisScreen extends StatelessWidget {
   const AnalysisScreen({
@@ -186,16 +187,31 @@ class _UserList extends StatelessWidget {
                   ? '?'
                   : user.username.characters.first.toUpperCase();
               return ListTile(
+                onTap: () => _openInstagramProfile(context, user),
                 leading: CircleAvatar(child: Text(firstCharacter)),
                 title: Text('@${user.username}'),
                 subtitle: user.displayName == null
                     ? null
                     : Text(user.displayName!),
+                trailing: const Icon(Icons.open_in_new_rounded, size: 20),
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _openInstagramProfile(
+    BuildContext context,
+    SocialUser user,
+  ) async {
+    final uri = Uri.https('www.instagram.com', '/${user.username}/');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Instagram profili açılamadı.')),
+      );
+    }
   }
 }
