@@ -42,6 +42,8 @@ Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen 
 
 Production kaynak manifesti analiz için `INTERNET` izni istemeyecek şekilde yapılandırılmıştır. Flutter’ın debug/profile geliştirme build’leri; hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir. Google Play’e gönderilecek production AAB, release merged manifestinde bu iznin bulunmaması için otomatik kontrol edilecektir.
 
+Production Android yapılandırması ayrıca uygulama verileri için `android:allowBackup="false"` kullanır ve eski/yeni Android backup kurallarında yerel uygulama verilerini cloud backup ile cihazlar arası veri aktarımından hariç tutar. Bu yapılandırma, analiz geçmişi ve uygulama tercihlerini Android’in otomatik yedekleme altyapısına dahil etmemeyi amaçlar. Bazı cihaz üreticilerinin sistem seviyesindeki doğrudan cihaz taşıma davranışları Android tarafından kontrol edilebilir ve uygulamanın tam denetimi dışında olabilir.
+
 Analiz, geçmiş ve kullanıcı tercihleri cihazın yerel depolamasında tutulur.
 
 Kullanıcı bir profil bağlantısını açmayı seçerse bağlantı cihazdaki harici tarayıcıya veya ilgili sosyal medya uygulamasına yönlendirilir. Bu işlem kullanıcı tarafından açıkça başlatılır. Bu noktadan sonraki veri işleme ilgili üçüncü taraf hizmetin kendi gizlilik politikasına tabidir.
@@ -74,7 +76,7 @@ Takip Analizi çocuklara yönelik olarak tasarlanmamıştır ve bilerek çocukla
 
 ## 7. Güvenlik
 
-Uygulamanın temel güvenlik yaklaşımı, sosyal medya kimlik bilgilerini hiç toplamamak ve analizi cihaz üzerinde tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
+Uygulamanın temel güvenlik yaklaşımı; sosyal medya kimlik bilgilerini hiç toplamamak, analizi cihaz üzerinde tutmak, production build’de geliştirici sunucusuna analiz verisi gönderecek ağ izni kullanmamak ve uygulama tarafından yönetilen yerel analiz verisini Android otomatik backup kapsamının dışında tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
 
 ## 8. Üçüncü taraf hizmetler ve dış bağlantılar
 
@@ -139,6 +141,8 @@ Under the current architecture, analysis data is not sent to a server operated b
 
 The production source manifest is configured so that analysis does not request the `INTERNET` permission. Flutter debug/profile development builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling. The production AAB workflow will automatically verify that the merged release manifest does not contain this permission before the package is accepted as a release candidate.
 
+The production Android configuration also sets `android:allowBackup="false"` and defines legacy/current Android backup rules that exclude app-managed local data from cloud backup and device-transfer extraction. This is intended to keep analysis history and app preferences out of Android automatic backup infrastructure. Some system-level direct device migration behavior can be controlled by Android or the device manufacturer and may be outside the app’s complete control.
+
 Analysis results, history, and user preferences are stored locally on the device.
 
 If the user chooses to open a social profile, the link is handed off to an external browser or social-media application as an explicit user-initiated action. Any subsequent processing is governed by that third party’s privacy policy.
@@ -165,7 +169,7 @@ Takip Analizi is not designed for children and does not intentionally seek to co
 
 ## 7. Security
 
-The app’s primary security approach is to avoid collecting social-media credentials and to keep analysis on the device. No device or software environment can provide an absolute security guarantee.
+The app’s security approach is to avoid collecting social-media credentials, keep analysis on the device, avoid a production network permission for developer-operated analysis transfer, and exclude app-managed local analysis data from Android automatic backup rules. No device or software environment can provide an absolute security guarantee.
 
 ## 8. Third-party services and external links
 
