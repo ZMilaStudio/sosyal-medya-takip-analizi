@@ -60,7 +60,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final controller = messenger.showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
-        content: Text('@${user.username} yok sayıldı.'),
+        content: Text('${_userLabel(user, widget.result.snapshot.account.platform)} yok sayıldı.'),
         action: SnackBarAction(
           label: 'Geri al',
           onPressed: () async {
@@ -286,8 +286,10 @@ class _UserListState extends State<_UserList> {
     final users = widget.data.users.where((user) {
       if (_query.isEmpty) return true;
       final displayName = user.displayName?.toLowerCase() ?? '';
+      final accountId = user.platformUserId?.toLowerCase() ?? '';
       return user.normalizedUsername.contains(_query) ||
-          displayName.contains(_query);
+          displayName.contains(_query) ||
+          accountId.contains(_query);
     }).toList()
       ..sort((a, b) {
         final comparison =
@@ -316,7 +318,7 @@ class _UserListState extends State<_UserList> {
                     setState(() => _query = value.trim().toLowerCase());
                   },
                   decoration: const InputDecoration(
-                    hintText: 'Kullanıcı ara',
+                    hintText: 'Kullanıcı veya hesap ID ara',
                     prefixIcon: Icon(Icons.search_rounded),
                     isDense: true,
                     border: OutlineInputBorder(),
@@ -347,16 +349,20 @@ class _UserListState extends State<_UserList> {
                       const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final user = users[index];
-                    final firstCharacter = user.username.isEmpty
+                    final label = _userLabel(user, widget.platform);
+                    final firstCharacter = label.isEmpty
                         ? '?'
-                        : user.username.characters.first.toUpperCase();
+                        : label.characters.first.toUpperCase();
+                    final idOnly = _isXIdOnlyUser(user, widget.platform);
                     return ListTile(
                       onTap: () => _openProfile(context, user),
                       leading: CircleAvatar(child: Text(firstCharacter)),
-                      title: Text('@${user.username}'),
-                      subtitle: user.displayName == null
-                          ? null
-                          : Text(user.displayName!),
+                      title: Text(label),
+                      subtitle: idOnly
+                          ? const Text('Arşiv kullanıcı adını vermedi • Profile dokun')
+                          : user.displayName == null
+                              ? null
+                              : Text(user.displayName!),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -396,12 +402,21 @@ class _UserListState extends State<_UserList> {
     BuildContext context,
     SocialUser user,
   ) async {
-    final uri = user.profileUrl ??
-        switch (widget.platform) {
-          SocialPlatform.instagram =>
-            Uri.https('www.instagram.com', '/${user.username}/'),
-          SocialPlatform.x => Uri.https('x.com', '/${user.username}'),
-        };
+    Uri? uri = user.profileUrl;
+    if (uri == null) {
+      if (_isXIdOnlyUser(user, widget.platform)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bu X hesabının profil bağlantısı arşivde yok.')),
+        );
+        return;
+      }
+      uri = switch (widget.platform) {
+        SocialPlatform.instagram =>
+          Uri.https('www.instagram.com', '/${user.username}/'),
+        SocialPlatform.x => Uri.https('x.com', '/${user.username}'),
+      };
+    }
+
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       final platformName =
@@ -411,6 +426,18 @@ class _UserListState extends State<_UserList> {
       );
     }
   }
+}
+
+bool _isXIdOnlyUser(SocialUser user, SocialPlatform platform) =>
+    platform == SocialPlatform.x &&
+    user.platformUserId != null &&
+    user.username == 'id_${user.platformUserId}';
+
+String _userLabel(SocialUser user, SocialPlatform platform) {
+  if (_isXIdOnlyUser(user, platform)) {
+    return 'X hesabı • ID ${user.platformUserId}';
+  }
+  return '@${user.username}';
 }
 
 enum _UserAction { ignore }
