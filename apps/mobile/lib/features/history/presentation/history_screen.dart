@@ -10,7 +10,7 @@ import '../../../data/local/follow_history_provider.dart';
 
 final snapshotHistoryProvider = FutureProvider.autoDispose((ref) async {
   final database = ref.watch(followHistoryDatabaseProvider);
-  return database.listHistory(platform: SocialPlatform.instagram);
+  return database.listHistory();
 });
 
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -129,7 +129,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       if (!_sameAccount(first.account, item.account)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Karşılaştırmak için aynı hesaba ait iki analiz seç.'),
+            content: Text(
+              'Karşılaştırmak için aynı platformdaki aynı hesaba ait iki analiz seç.',
+            ),
           ),
         );
         return;
@@ -145,7 +147,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     if (current == null || !mounted) return;
 
     final previous = await database.previousSnapshotBefore(item.snapshotId);
-    _openAnalysis(current: current, previous: previous);
+    await _openAnalysis(current: current, previous: previous);
   }
 
   Future<void> _compareSelected(List<FollowSnapshotHistoryItem> items) async {
@@ -183,12 +185,20 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       current: current,
       previous: previous,
     );
-    final result = InstagramFollowAnalysisResult(
-      snapshot: current,
-      analysis: analysis,
-      followerSourceFiles: const [],
-      followingSourceFiles: const [],
-    );
+    final FollowAnalysisResult result = switch (current.account.platform) {
+      SocialPlatform.instagram => InstagramFollowAnalysisResult(
+          snapshot: current,
+          analysis: analysis,
+          followerSourceFiles: const [],
+          followingSourceFiles: const [],
+        ),
+      SocialPlatform.x => XFollowAnalysisResult(
+          snapshot: current,
+          analysis: analysis,
+          followerSourceFiles: const [],
+          followingSourceFiles: const [],
+        ),
+    };
 
     if (mounted) {
       await context.push('/analysis', extra: result);
@@ -240,7 +250,7 @@ class _HistoryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '@${item.account.username}',
+                      '${_platformLabel(item.account.platform)} • @${item.account.username}',
                       style: const TextStyle(
                         color: AppColors.ink,
                         fontWeight: FontWeight.w700,
@@ -297,7 +307,7 @@ class _CompareInfo extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Aynı hesaba ait iki analiz seç. Uygulama eski ve yeni kaydı tarihe göre sıralayıp aradaki takip değişimlerini gösterecek.',
+              'Aynı platformdaki aynı hesaba ait iki analiz seç. Uygulama eski ve yeni kaydı tarihe göre sıralayıp aradaki takip değişimlerini gösterecek.',
               style: TextStyle(color: AppColors.primaryDark),
             ),
           ),
@@ -370,7 +380,7 @@ class _EmptyHistory extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'İlk Instagram ZIP analizinden sonra geçmiş burada görünür.',
+              'İlk Instagram veya X arşiv analizinden sonra geçmiş burada görünür.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.muted),
             ),
@@ -408,6 +418,11 @@ class _HistoryError extends StatelessWidget {
     );
   }
 }
+
+String _platformLabel(SocialPlatform platform) => switch (platform) {
+      SocialPlatform.instagram => 'Instagram',
+      SocialPlatform.x => 'X',
+    };
 
 String _formatDate(DateTime value) {
   final local = value.toLocal();
