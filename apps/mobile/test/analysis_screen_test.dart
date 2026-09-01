@@ -57,6 +57,7 @@ void main() {
     return InstagramFollowAnalysisResult(
       snapshot: current,
       analysis: analysis,
+      comparedToPrevious: true,
       followerSourceFiles: const [],
       followingSourceFiles: const [],
     );
@@ -113,8 +114,7 @@ void main() {
     expect(find.text('Yeni Takipçiler (0)'), findsOneWidget);
   });
 
-  testWidgets('renders unfollowers and new followers from previous snapshot',
-      (tester) async {
+  testWidgets('renders follower changes and comparison summary', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: AnalysisScreen(result: resultWithHistory())),
     );
@@ -122,6 +122,12 @@ void main() {
 
     expect(find.text('Takibi Bırakanlar (1)'), findsOneWidget);
     expect(find.text('Yeni Takipçiler (1)'), findsOneWidget);
+    expect(find.text('Yeni'), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
+    expect(find.text('Bırakan'), findsOneWidget);
+    expect(find.text('-1'), findsOneWidget);
+    expect(find.text('Net'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
 
     final controller =
         DefaultTabController.of(tester.element(find.byType(TabBar)));
