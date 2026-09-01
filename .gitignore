@@ -5,3 +5,14 @@ build/
 .idea/
 .vscode/
 .DS_Store
+
+# Private signing material — never commit production/upload keys.
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+key.properties
+android/key.properties
+.env
+.env.*
