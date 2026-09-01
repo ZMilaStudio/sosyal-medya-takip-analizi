@@ -1,19 +1,46 @@
 # Sosyal Medya Takip Analizi
 
-Android öncelikli, local-first sosyal medya takip ilişkisi analiz uygulaması.
+Android öncelikli, local-first Instagram ve X / Twitter takip ilişkisi analiz uygulaması.
 
-## İlk hedef
+## Mevcut özellikler
 
-İlk çekirdek Instagram'ın resmi veri dışa aktarma dosyalarından takipçi/takip edilen listelerini okuyup ortak analiz motorunda karşılaştırır.
+- Resmi Instagram veri dışa aktarma ZIP/JSON/HTML dosyalarını cihaz üzerinde analiz etme.
+- Resmi X veri arşivi ZIP veya `follower.js` + `following.js` dosyalarını cihaz üzerinde analiz etme.
+- Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar ve Yeni Takipçiler kategorileri.
+- Yerel snapshot geçmişi ve otomatik değişim karşılaştırması.
+- İki snapshot’ı manuel karşılaştırma.
+- Kullanıcı arama ve A-Z / Z-A sıralama.
+- Profil bağlantılarını harici Instagram/X uygulaması veya tarayıcıda açma.
+- “Yok say” listesi ve geri yükleme.
+- Analiz geçmişi ve yerel veri yönetimi.
+- Analiz raporunu kopyalama veya TXT olarak kaydetme.
+- Instagram ve X arşivi alma rehberleri.
 
-## Temel ilkeler
+## Gizlilik yaklaşımı
 
-- Kullanıcı adı/şifre toplama yok.
-- Instagram private API veya scraping yok.
-- Instagram verisi varsayılan olarak cihazdan çıkmaz.
-- Analiz motoru platform bağımsızdır.
-- X entegrasyonunda önce resmi veri arşivi; canlı API yalnızca maliyet/politika açısından uygunsa değerlendirilir.
+- Sosyal medya kullanıcı adı/şifresi toplanmaz.
+- Instagram private API veya scraping kullanılmaz.
+- Kullanıcının seçtiği arşivler cihaz üzerinde işlenir.
+- Mevcut Android build’i `INTERNET` izni istemez.
+- Reklam, analytics veya bulut senkronizasyon SDK’sı yoktur.
+- Yerel geçmiş ve “Yok say” verileri uygulama içinden silinebilir.
+
+Ayrıntılar: [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md)
+
+## Google Play hazırlığı
+
+- Veri Güvenliği teknik taslağı: [`PLAY_STORE_DATA_SAFETY.md`](PLAY_STORE_DATA_SAFETY.md)
+- Production yayın kapıları: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
+## Android kimlikleri
+
+- Production package: `com.zmilastudio.takipanalizi`
+- Device-test package: `com.zmilastudio.takipanalizi.dev`
+
+Device-test build’leri production imzasından tamamen ayrıdır.
 
 ## Geliştirme düzeni
 
-`main` stabil tutulur. Özellik geliştirmeleri `feat/*`, hata düzeltmeleri `fix/*` branch'lerinde yapılır ve PR ile `main`e alınır.
+Çalışan CI/fiziksel baseline’lar backup branch’lerde korunur. Özellikler dev branch’lerinde toplu hazırlanır; GitHub Actions kotasını korumak için `test/device-apk` yalnız kritik doğrulama noktalarında güncellenir.
+
+Canlı proje durumu ve rollback noktaları için `PROJE_OZETI.md` esas alınır.
