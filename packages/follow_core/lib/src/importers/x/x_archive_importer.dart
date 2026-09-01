@@ -54,10 +54,12 @@ class XArchiveImportResult {
   final List<String> followingFiles;
 }
 
-/// Reads relationship data from X's official account archive ZIP.
+/// Reads relationship data from X's official account archive.
 ///
-/// The archive is inspected in-memory and only `follower.js` / `following.js`
-/// relationship files are parsed. Media and post history are ignored.
+/// Small/medium archives can be imported as a ZIP. For very large X archives,
+/// callers can extract the archive and pass only `follower.js` and
+/// `following.js` through [importRelationshipFiles], avoiding media-heavy ZIP
+/// loading on mobile devices.
 class XArchiveImporter {
   const XArchiveImporter({
     this.maxArchiveBytes = 512 * 1024 * 1024,
@@ -103,47 +105,67 @@ class XArchiveImporter {
       throw const XArchiveImportException(XArchiveImportError.tooManyEntries);
     }
 
-    final followerEntries = <ArchiveFile>[];
-    final followingEntries = <ArchiveFile>[];
-
+    final relationshipFiles = <String, List<int>>{};
     for (final entry in archive) {
-      if (!entry.isFile) continue;
-      switch (_classify(entry.name)) {
+      if (!entry.isFile || _classify(entry.name) == null) continue;
+      _validatePathAndSize(entry.name, entry.size);
+
+      final bytes = entry.readBytes();
+      if (bytes == null) {
+        throw XArchiveImportException(
+          XArchiveImportError.invalidRelationshipFile,
+          path: entry.name,
+          message: 'Dosya arşivden okunamadı.',
+        );
+      }
+      relationshipFiles[entry.name] = bytes;
+    }
+
+    return importRelationshipFiles(relationshipFiles);
+  }
+
+  XArchiveImportResult importRelationshipFiles(
+    Map<String, List<int>> files,
+  ) {
+    final followerFiles = <String, List<int>>{};
+    final followingFiles = <String, List<int>>{};
+
+    for (final entry in files.entries) {
+      final kind = _classify(entry.key);
+      if (kind == null) continue;
+      _validatePathAndSize(entry.key, entry.value.length);
+
+      switch (kind) {
         case _XRelationshipFileKind.followers:
-          _validateRelationshipEntry(entry);
-          followerEntries.add(entry);
+          followerFiles[entry.key] = entry.value;
         case _XRelationshipFileKind.following:
-          _validateRelationshipEntry(entry);
-          followingEntries.add(entry);
-        case null:
-          break;
+          followingFiles[entry.key] = entry.value;
       }
     }
 
-    if (followerEntries.isEmpty) {
+    if (followerFiles.isEmpty) {
       throw const XArchiveImportException(
         XArchiveImportError.followersFileMissing,
       );
     }
-    if (followingEntries.isEmpty) {
+    if (followingFiles.isEmpty) {
       throw const XArchiveImportException(
         XArchiveImportError.followingFileMissing,
       );
     }
 
-    followerEntries.sort((a, b) => a.name.compareTo(b.name));
-    followingEntries.sort((a, b) => a.name.compareTo(b.name));
-
+    final followerNames = followerFiles.keys.toList()..sort();
+    final followingNames = followingFiles.keys.toList()..sort();
     final followers = <String, SocialUser>{};
     final following = <String, SocialUser>{};
 
-    for (final entry in followerEntries) {
-      for (final user in _parseEntry(entry)) {
+    for (final name in followerNames) {
+      for (final user in _parseBytes(name, followerFiles[name]!)) {
         followers[user.identityKey] = user;
       }
     }
-    for (final entry in followingEntries) {
-      for (final user in _parseEntry(entry)) {
+    for (final name in followingNames) {
+      for (final user in _parseBytes(name, followingFiles[name]!)) {
         following[user.identityKey] = user;
       }
     }
@@ -151,17 +173,16 @@ class XArchiveImporter {
     return XArchiveImportResult(
       followers: followers.values,
       following: following.values,
-      followerFiles: followerEntries.map((entry) => entry.name),
-      followingFiles: followingEntries.map((entry) => entry.name),
+      followerFiles: followerNames,
+      followingFiles: followingNames,
     );
   }
 
-  List<SocialUser> _parseEntry(ArchiveFile entry) {
-    final bytes = entry.readBytes();
-    if (bytes == null || bytes.length > maxRelationshipFileBytes) {
+  List<SocialUser> _parseBytes(String name, List<int> bytes) {
+    if (bytes.length > maxRelationshipFileBytes) {
       throw XArchiveImportException(
         XArchiveImportError.relationshipFileTooLarge,
-        path: entry.name,
+        path: name,
       );
     }
 
@@ -171,23 +192,23 @@ class XArchiveImporter {
     } on FormatException catch (error) {
       throw XArchiveImportException(
         XArchiveImportError.invalidRelationshipFile,
-        path: entry.name,
+        path: name,
         message: error.message,
       );
     }
   }
 
-  void _validateRelationshipEntry(ArchiveFile entry) {
-    if (_hasUnsafePath(entry.name)) {
+  void _validatePathAndSize(String path, int size) {
+    if (_hasUnsafePath(path)) {
       throw XArchiveImportException(
         XArchiveImportError.unsafeRelationshipPath,
-        path: entry.name,
+        path: path,
       );
     }
-    if (entry.size > maxRelationshipFileBytes) {
+    if (size > maxRelationshipFileBytes) {
       throw XArchiveImportException(
         XArchiveImportError.relationshipFileTooLarge,
-        path: entry.name,
+        path: path,
       );
     }
   }
