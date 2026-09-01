@@ -33,15 +33,38 @@ class XFollowAnalysisUseCase {
     required DateTime capturedAt,
     FollowSnapshot? previous,
   }) {
-    if (account.platform != SocialPlatform.x) {
-      throw ArgumentError.value(
-        account.platform,
-        'account.platform',
-        'XFollowAnalysisUseCase requires an X account.',
-      );
-    }
-
+    _validateAccount(account);
     final imported = archiveImporter.importBytes(zipBytes);
+    return _buildResult(
+      imported: imported,
+      account: account,
+      capturedAt: capturedAt,
+      previous: previous,
+    );
+  }
+
+  XFollowAnalysisResult executeRelationshipFiles({
+    required Map<String, List<int>> files,
+    required SocialAccount account,
+    required DateTime capturedAt,
+    FollowSnapshot? previous,
+  }) {
+    _validateAccount(account);
+    final imported = archiveImporter.importRelationshipFiles(files);
+    return _buildResult(
+      imported: imported,
+      account: account,
+      capturedAt: capturedAt,
+      previous: previous,
+    );
+  }
+
+  XFollowAnalysisResult _buildResult({
+    required XArchiveImportResult imported,
+    required SocialAccount account,
+    required DateTime capturedAt,
+    required FollowSnapshot? previous,
+  }) {
     final snapshot = FollowSnapshot(
       account: account,
       capturedAt: capturedAt,
@@ -62,5 +85,15 @@ class XFollowAnalysisUseCase {
       followerSourceFiles: imported.followerFiles,
       followingSourceFiles: imported.followingFiles,
     );
+  }
+
+  void _validateAccount(SocialAccount account) {
+    if (account.platform != SocialPlatform.x) {
+      throw ArgumentError.value(
+        account.platform,
+        'account.platform',
+        'XFollowAnalysisUseCase requires an X account.',
+      );
+    }
   }
 }
