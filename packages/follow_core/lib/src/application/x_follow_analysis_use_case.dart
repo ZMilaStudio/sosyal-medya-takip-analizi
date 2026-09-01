@@ -9,6 +9,7 @@ class XFollowAnalysisResult extends FollowAnalysisResult {
   const XFollowAnalysisResult({
     required super.snapshot,
     required super.analysis,
+    super.comparedToPrevious,
     required this.followerSourceFiles,
     required this.followingSourceFiles,
   });
@@ -82,6 +83,7 @@ class XFollowAnalysisUseCase {
     return XFollowAnalysisResult(
       snapshot: snapshot,
       analysis: analysis,
+      comparedToPrevious: previous != null,
       followerSourceFiles: imported.followerFiles,
       followingSourceFiles: imported.followingFiles,
     );
