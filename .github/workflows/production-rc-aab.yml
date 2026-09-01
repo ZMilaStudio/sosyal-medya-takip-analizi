@@ -153,10 +153,26 @@ jobs:
           grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
           grep -F 'android:usesCleartextTraffic="false"' "$RELEASE_MANIFEST"
 
-          if grep -F '<uses-permission' "$RELEASE_MANIFEST"; then
-            echo "Production release unexpectedly requests Android permissions." >&2
-            exit 1
+          # AndroidX Core intentionally merges this app-scoped signature permission
+          # to emulate RECEIVER_NOT_EXPORTED safely on older Android versions.
+          # It is not a runtime/data-access permission. Allow only this one library
+          # permission; reject INTERNET and every other merged uses-permission.
+          ALLOWED_INTERNAL_PERMISSION="$EXPECTED_PRODUCTION_PACKAGE_ID.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+          MERGED_PERMISSIONS="$(grep -oE '<uses-permission[^>]+android:name="[^"]+"' "$RELEASE_MANIFEST" \
+            | sed -E 's/.*android:name="([^"]+)".*/\1/' || true)"
+
+          if [ -n "$MERGED_PERMISSIONS" ]; then
+            printf 'Merged release permissions:\n%s\n' "$MERGED_PERMISSIONS"
+            while IFS= read -r permission; do
+              [ -z "$permission" ] && continue
+              if [ "$permission" != "$ALLOWED_INTERNAL_PERMISSION" ]; then
+                echo "Unexpected production permission: $permission" >&2
+                exit 1
+              fi
+            done <<< "$MERGED_PERMISSIONS"
           fi
+
+          ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
           if grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"; then
             echo "Production release is debuggable." >&2
             exit 1
