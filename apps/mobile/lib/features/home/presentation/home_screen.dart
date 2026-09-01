@@ -33,6 +33,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final xState = ref.watch(xImportControllerProvider);
     final recentAccounts = ref.watch(recentFollowAccountsProvider);
     final isBusy = instagramState.isLoading || xState.isLoading;
+    final instagramError = switch (instagramState) {
+      AsyncError(:final error) => instagramImportErrorMessage(error),
+      _ => null,
+    };
+    final xError = switch (xState) {
+      AsyncError(:final error) => xImportErrorMessage(error),
+      _ => null,
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -84,9 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   labelText: 'Instagram kullanıcı adın',
                   hintText: 'kullanici.adi',
                   info: const _InstagramLocalInfo(),
-                  error: instagramState case AsyncError(:final error)
-                      ? instagramImportErrorMessage(error)
-                      : null,
+                  error: instagramError,
                   importButton: _ImportButton(
                     loading: instagramState.isLoading,
                     label: 'Instagram Verisini İçe Aktar',
@@ -109,9 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   labelText: 'X kullanıcı adın',
                   hintText: 'kullanici_adi',
                   info: const _XLocalInfo(),
-                  error: xState case AsyncError(:final error)
-                      ? xImportErrorMessage(error)
-                      : null,
+                  error: xError,
                   importButton: _ImportButton(
                     loading: xState.isLoading,
                     label: 'X Arşivini İçe Aktar',
@@ -251,6 +255,7 @@ class _PlatformCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final extraWidget = extra ?? const SizedBox.shrink();
     return _SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -285,7 +290,7 @@ class _PlatformCard extends StatelessWidget {
           ],
           const SizedBox(height: 18),
           importButton,
-          if (extra != null) extra!,
+          extraWidget,
           const SizedBox(height: 4),
           footer,
         ],
