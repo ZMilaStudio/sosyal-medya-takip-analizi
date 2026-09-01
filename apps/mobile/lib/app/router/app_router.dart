@@ -1,6 +1,7 @@
 import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/about/presentation/about_privacy_screen.dart';
 import '../../features/analysis/presentation/analysis_screen.dart';
 import '../../features/data_management/presentation/local_data_management_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
@@ -30,6 +31,11 @@ final GoRouter appRouter = GoRouter(
       path: '/data-management',
       name: 'data-management',
       builder: (context, state) => const LocalDataManagementScreen(),
+    ),
+    GoRoute(
+      path: '/about-privacy',
+      name: 'about-privacy',
+      builder: (context, state) => const AboutPrivacyScreen(),
     ),
     GoRoute(
       path: '/instagram-guide',
