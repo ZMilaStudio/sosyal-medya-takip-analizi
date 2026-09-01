@@ -52,12 +52,13 @@ void main() {
     expect(find.text('X arşivi nasıl alınır?'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Yerel Veri Yönetimi'),
+      find.text('Gizlilik ve Hakkında'),
       300,
       scrollable: homeScroll,
     );
     expect(find.text('Analiz Geçmişi'), findsOneWidget);
     expect(find.text('Yok Sayılan Hesaplar'), findsOneWidget);
     expect(find.text('Yerel Veri Yönetimi'), findsOneWidget);
+    expect(find.text('Gizlilik ve Hakkında'), findsOneWidget);
   });
 }
