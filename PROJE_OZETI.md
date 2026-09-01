@@ -54,21 +54,24 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - arama / A-Z-Z-A / listeler / profil / ignored akışı fiziksel PASS ✅
 - backup `backup/device-v2-22-search-sort-working`
 
-## v2-23 — Takibi Bırakanlar + Yeni Takipçiler CI PASS / fiziksel test bekliyor
-Çalışan v2-22 yapısına yalnız iki tarihsel sekme geri eklendi.
+### v2-23 — 5 sekme PASS
+- final kaynak commit `a0c96ecfd33b9c546c2a852aac3c2b4eee40b1d0`
+- workflow run `33449350608`
+- VersionCode `300023`
+- APK SHA-256 `91a7c93fa8484d92af3d50845375eab0f130f84a5a9c058c3f1185dfac39d21e`
+- prerelease `device-test-v2-23`
+- 5 sekmenin tamamı fiziksel Samsung'da görünür ✅
+- ilk 3 sekme ve mevcut çalışan işlevler bozulmadan korunuyor ✅
+- Takibi Bırakanlar + Yeni Takipçiler sekmeleri fiziksel PASS ✅
+- arama / A-Z-Z-A / profil / Yok say / ignored akışı fiziksel PASS durumunu koruyor ✅
+- backup `backup/device-v2-23-five-tabs-working`
 
+## v2-23 model ve test notları
 Model:
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
 - previous snapshot yoksa iki sekme `(0)` gösterir; bu normal davranıştır.
 - previous snapshot varsa farklar iki snapshot üzerinden hesaplanır.
-
-UI:
-- ilk 3 sekme ve fiziksel PASS olmuş tüm yapı korunur.
-- 4. sekme `Takibi Bırakanlar`.
-- 5. sekme `Yeni Takipçiler`.
-- yeni sekmelerde profil açma, arama, A-Z/Z-A, Yok say ve ignored filtresi aynı çalışan `_UserList` üzerinden kullanılır.
-- launcher bu sürümde değiştirilmedi.
 
 Regresyon testleri:
 - previous snapshot yokken iki yeni sekme `(0)` ✅
@@ -78,22 +81,7 @@ Regresyon testleri:
 - arama ✅
 - A-Z/Z-A sıralama ✅
 - Yok say ✅
-
-CI / APK:
-- final kaynak commit `a0c96ecfd33b9c546c2a852aac3c2b4eee40b1d0`
-- workflow run `33449350608`
-- run number `23`
-- Analyze ✅
-- Test ✅
-- physical-device compatibility wiring ✅
-- deterministic signing ✅
-- APK build ✅
-- package / VersionCode / icon-resource / signing certificate doğrulama ✅
-- prerelease publish ✅
-- VersionCode `300023`
-- APK SHA-256 `91a7c93fa8484d92af3d50845375eab0f130f84a5a9c058c3f1185dfac39d21e`
-- prerelease `device-test-v2-23`
-- fiziksel Samsung doğrulaması ⏳
+- Analyze / Test / APK build / paket / VersionCode / imza doğrulama ✅
 
 Not: workflow release açıklama metni eski render/launcher denemesinden kalmadır ve v2-23 gerçek kod durumunu temsil etmez. Gerçek kaynak commit + bu proje özeti esas alınır.
 
@@ -116,7 +104,7 @@ Not: workflow release açıklama metni eski render/launcher denemesinden kalmad�
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
-- [ ] **v2-23 5 sekmeyi fiziksel Samsung'da doğrulama**
+- [x] **5 sekme fiziksel Samsung'da doğrulandı**
 - [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
 - [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
@@ -127,11 +115,5 @@ Not: workflow release açıklama metni eski render/launcher denemesinden kalmad�
 - [ ] X snapshot/geçmiş
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
-## Sıradaki fiziksel test
-`device-test-v2-23` mevcut v2-22'nin üzerine `Güncelle` olarak kurulacak.
-1. Beş sekmenin tamamı görünmeli.
-2. İlk üç sekme, arama/sıralama, profil ve Yok say işlevleri bozulmamalı.
-3. Mevcut analiz sonucunda previous snapshot yoksa `Takibi Bırakanlar (0)` ve `Yeni Takipçiler (0)` normaldir.
-4. Previous snapshot bağlandığında iki tarihsel sekme gerçek değişimleri göstermelidir.
-
-Bu fiziksel test geçmeden launcher değişikliğine geçilmeyecek.
+## Sıradaki iş
+v2-23 artık yeni çalışan fiziksel baseline'dır. Sıradaki kontrollü adım, kullanıcının onayladığı **4. seçeneğin koyu launcher simgesini** tek başına uygulayıp fiziksel cihazda doğrulamaktır. Gerçek geçmiş snapshot akışının Takibi Bırakanlar / Yeni Takipçiler sekmelerini otomatik doldurması ayrı bir test olarak açık kalır.
