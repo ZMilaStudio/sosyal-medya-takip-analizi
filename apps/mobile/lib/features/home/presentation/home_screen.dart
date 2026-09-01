@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../instagram_import/application/instagram_import_controller.dart';
+import '../../x_import/application/x_import_controller.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -13,18 +14,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _usernameController = TextEditingController();
+  final _instagramUsernameController = TextEditingController();
+  final _xUsernameController = TextEditingController();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _instagramUsernameController.dispose();
+    _xUsernameController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final importState = ref.watch(instagramImportControllerProvider);
-    final isLoading = importState.isLoading;
+    final instagramState = ref.watch(instagramImportControllerProvider);
+    final xState = ref.watch(xImportControllerProvider);
+    final isBusy = instagramState.isLoading || xState.isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -47,7 +51,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Takip ilişkilerini güvenli biçimde, cihazında analiz et.',
+                            'Instagram ve X takip ilişkilerini güvenli biçimde, cihazında analiz et.',
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                   color: AppColors.muted,
                                 ),
@@ -79,8 +83,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 20),
                       TextField(
-                        controller: _usernameController,
-                        enabled: !isLoading,
+                        controller: _instagramUsernameController,
+                        enabled: !isBusy,
                         autocorrect: false,
                         textCapitalization: TextCapitalization.none,
                         decoration: const InputDecoration(
@@ -90,8 +94,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      const _LocalInfo(),
-                      if (importState case AsyncError(:final error)) ...[
+                      const _InstagramLocalInfo(),
+                      if (instagramState case AsyncError(:final error)) ...[
                         const SizedBox(height: 14),
                         _ErrorMessage(
                           message: instagramImportErrorMessage(error),
@@ -99,32 +103,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                       const SizedBox(height: 18),
                       _ImportButton(
-                        loading: isLoading,
-                        onPressed: isLoading ? null : _pickInstagramArchive,
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: isLoading
-                            ? null
-                            : () => context.push('/history'),
-                        icon: const Icon(Icons.history_rounded),
-                        label: const Text('Analiz Geçmişi'),
-                      ),
-                      const SizedBox(height: 6),
-                      OutlinedButton.icon(
-                        onPressed: isLoading
-                            ? null
-                            : () => context.push('/ignored-accounts'),
-                        icon: const Icon(Icons.visibility_off_outlined),
-                        label: const Text('Yok Sayılan Hesaplar'),
+                        loading: instagramState.isLoading,
+                        label: 'Instagram Verisini İçe Aktar',
+                        onPressed: isBusy ? null : _pickInstagramArchive,
                       ),
                       const SizedBox(height: 4),
                       TextButton.icon(
-                        onPressed: isLoading
+                        onPressed: isBusy
                             ? null
                             : () => context.push('/instagram-guide'),
                         icon: const Icon(Icons.help_outline_rounded),
-                        label: const Text('Nasıl yapılır?'),
+                        label: const Text('Instagram arşivi nasıl alınır?'),
                       ),
                     ],
                   ),
@@ -144,13 +133,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ),
-                          const _SoonBadge(),
+                          const _LocalBadge(),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _xUsernameController,
+                        enabled: !isBusy,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.none,
+                        decoration: const InputDecoration(
+                          labelText: 'X kullanıcı adın',
+                          hintText: 'kullanici_adi',
+                          prefixIcon: Icon(Icons.alternate_email),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const _XLocalInfo(),
+                      if (xState case AsyncError(:final error)) ...[
+                        const SizedBox(height: 14),
+                        _ErrorMessage(message: xImportErrorMessage(error)),
+                      ],
+                      const SizedBox(height: 18),
+                      _ImportButton(
+                        loading: xState.isLoading,
+                        label: 'X Arşivini İçe Aktar',
+                        onPressed: isBusy ? null : _pickXArchive,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _SurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       Text(
-                        'İlk sürümde resmi X veri arşiviyle local analiz planlanıyor. Canlı API maliyeti ayrıca değerlendirilecek.',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        'Geçmiş ve yönetim',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: isBusy ? null : () => context.push('/history'),
+                        icon: const Icon(Icons.history_rounded),
+                        label: const Text('Analiz Geçmişi'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed:
+                            isBusy ? null : () => context.push('/ignored-accounts'),
+                        icon: const Icon(Icons.visibility_off_outlined),
+                        label: const Text('Yok Sayılan Hesaplar'),
                       ),
                     ],
                   ),
@@ -168,7 +203,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _pickInstagramArchive() async {
     final result = await ref
         .read(instagramImportControllerProvider.notifier)
-        .pickAndAnalyze(_usernameController.text);
+        .pickAndAnalyze(_instagramUsernameController.text);
+
+    if (!mounted || result == null) return;
+    context.push('/analysis', extra: result);
+  }
+
+  Future<void> _pickXArchive() async {
+    final result = await ref
+        .read(xImportControllerProvider.notifier)
+        .pickAndAnalyze(_xUsernameController.text);
 
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
@@ -304,30 +348,34 @@ class _LocalBadge extends StatelessWidget {
   }
 }
 
-class _SoonBadge extends StatelessWidget {
-  const _SoonBadge();
+class _InstagramLocalInfo extends StatelessWidget {
+  const _InstagramLocalInfo();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.softPurple,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Text(
-        'Yakında',
-        style: TextStyle(
-          color: AppColors.muted,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+    return const _LocalInfo(
+      text:
+          'Instagram’dan indirdiğin ZIP dosyası sunucuya gönderilmez. JSON ve HTML export desteklenir.',
+    );
+  }
+}
+
+class _XLocalInfo extends StatelessWidget {
+  const _XLocalInfo();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _LocalInfo(
+      text:
+          'X’in resmi veri arşivindeki follower.js ve following.js dosyaları cihazında okunur; arşiv sunucuya gönderilmez.',
     );
   }
 }
 
 class _LocalInfo extends StatelessWidget {
-  const _LocalInfo();
+  const _LocalInfo({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +405,7 @@ class _LocalInfo extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Instagram’dan indirdiğin ZIP dosyası sunucuya gönderilmez. JSON ve HTML export desteklenir.',
+              text,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -370,10 +418,12 @@ class _LocalInfo extends StatelessWidget {
 class _ImportButton extends StatelessWidget {
   const _ImportButton({
     required this.loading,
+    required this.label,
     required this.onPressed,
   });
 
   final bool loading;
+  final String label;
   final VoidCallback? onPressed;
 
   @override
@@ -413,9 +463,7 @@ class _ImportButton extends StatelessWidget {
                     ),
                   const SizedBox(width: 10),
                   Text(
-                    loading
-                        ? 'Analiz ediliyor…'
-                        : 'Instagram Verisini İçe Aktar',
+                    loading ? 'Analiz ediliyor…' : label,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
