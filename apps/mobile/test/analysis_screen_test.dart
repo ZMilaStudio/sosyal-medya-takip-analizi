@@ -62,6 +62,37 @@ void main() {
     );
   }
 
+  XFollowAnalysisResult xIdOnlyResult() {
+    const xAccount = SocialAccount(
+      platform: SocialPlatform.x,
+      username: 'owner_x',
+    );
+    final snapshot = FollowSnapshot(
+      account: xAccount,
+      capturedAt: DateTime.utc(2026, 9, 1),
+      followers: const [],
+      following: {
+        SocialUser(
+          platform: SocialPlatform.x,
+          username: 'id_755137239156490240',
+          platformUserId: '755137239156490240',
+          profileUrl: Uri.parse(
+            'https://twitter.com/intent/user?user_id=755137239156490240',
+          ),
+        ),
+      },
+      sourceType: SnapshotSourceType.archive,
+      sourceFormat: 'x-archive-js',
+    );
+    final analysis = const FollowAnalysisEngine().analyze(current: snapshot);
+    return XFollowAnalysisResult(
+      snapshot: snapshot,
+      analysis: analysis,
+      followerSourceFiles: const [],
+      followingSourceFiles: const [],
+    );
+  }
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
@@ -153,5 +184,17 @@ void main() {
     expect(find.text('@bob'), findsOneWidget);
     expect(find.text('Takip Etmeyenler (1)'), findsOneWidget);
     expect(find.text('@alice yok sayıldı.'), findsOneWidget);
+  });
+
+  testWidgets('shows X account id without inventing a handle', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: AnalysisScreen(result: xIdOnlyResult())),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('X Analizi'), findsOneWidget);
+    expect(find.text('Takip Etmeyenler (1)'), findsOneWidget);
+    expect(find.text('X hesabı • ID 755137239156490240'), findsOneWidget);
+    expect(find.text('@id_755137239156490240'), findsNothing);
   });
 }
