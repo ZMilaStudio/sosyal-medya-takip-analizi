@@ -1,0 +1,151 @@
+name: Production RC AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Production versionName (example: 1.0.0)
+        required: true
+        type: string
+      version_code:
+        description: Production versionCode (positive integer)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-production-rc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
+      EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
+      PLAY_UPLOAD_KEYSTORE_PATH: ${{ github.workspace }}/.github/production-signing/upload-keystore.jks
+      PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+      PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
+      PLAY_UPLOAD_KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+      PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+      PLAY_UPLOAD_CERT_SHA256: ${{ secrets.PLAY_UPLOAD_CERT_SHA256 }}
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Validate release inputs and signing secrets
+        run: |
+          case "${{ inputs.version_code }}" in
+            ''|*[!0-9]*)
+              echo "version_code must be a positive integer" >&2
+              exit 1
+              ;;
+          esac
+          test "${{ inputs.version_code }}" -gt 0
+          test -n "${{ inputs.version_name }}"
+
+          test -n "$PLAY_UPLOAD_KEYSTORE_B64"
+          test -n "$PLAY_UPLOAD_STORE_PASSWORD"
+          test -n "$PLAY_UPLOAD_KEY_ALIAS"
+          test -n "$PLAY_UPLOAD_KEY_PASSWORD"
+          test -n "$PLAY_UPLOAD_CERT_SHA256"
+
+      - name: Install private Play upload key
+        run: |
+          mkdir -p "$(dirname "$PLAY_UPLOAD_KEYSTORE_PATH")"
+          printf '%s' "$PLAY_UPLOAD_KEYSTORE_B64" | base64 --decode > "$PLAY_UPLOAD_KEYSTORE_PATH"
+          chmod 600 "$PLAY_UPLOAD_KEYSTORE_PATH"
+
+          keytool -list \
+            -keystore "$PLAY_UPLOAD_KEYSTORE_PATH" \
+            -storepass "$PLAY_UPLOAD_STORE_PASSWORD" \
+            -alias "$PLAY_UPLOAD_KEY_ALIAS" >/dev/null
+
+          KEY_OUTPUT="$(keytool -list -v \
+            -keystore "$PLAY_UPLOAD_KEYSTORE_PATH" \
+            -storepass "$PLAY_UPLOAD_STORE_PASSWORD" \
+            -alias "$PLAY_UPLOAD_KEY_ALIAS")"
+          ACTUAL_CERT_SHA256="$(printf '%s\n' "$KEY_OUTPUT" \
+            | grep -i 'SHA256:' \
+            | head -1 \
+            | sed 's/.*SHA256:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+
+          test -n "$ACTUAL_CERT_SHA256"
+          test "$ACTUAL_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+      - name: Verify production source guards
+        run: |
+          grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
+          grep -F 'applicationIdSuffix = ".dev"' android/app/build.gradle.kts
+          grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
+          test ! -e android/key.properties
+          ! grep -F 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
+
+          USER_ICON="android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp"
+          test -f "$USER_ICON"
+          ICON_SHA256="$(sha256sum "$USER_ICON" | awk '{print $1}')"
+          test "$ICON_SHA256" = "$EXPECTED_USER_ICON_SHA256"
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test --reporter expanded
+
+      - name: Build signed production RC AAB
+        run: |
+          flutter build appbundle \
+            --release \
+            --build-name="${{ inputs.version_name }}" \
+            --build-number="${{ inputs.version_code }}"
+
+      - name: Verify signed AAB
+        run: |
+          AAB="build/app/outputs/bundle/release/app-release.aab"
+          test -f "$AAB"
+          test -s "$AAB"
+
+          jarsigner -verify "$AAB"
+
+          AAB_CERT_OUTPUT="$(keytool -printcert -jarfile "$AAB")"
+          AAB_CERT_SHA256="$(printf '%s\n' "$AAB_CERT_OUTPUT" \
+            | grep -i 'SHA256:' \
+            | head -1 \
+            | sed 's/.*SHA256:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+
+          test -n "$AAB_CERT_SHA256"
+          test "$AAB_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+          unzip -l "$AAB" | grep -F 'takip_launcher_user.webp'
+          sha256sum "$AAB" > build/app/outputs/bundle/release/app-release.aab.sha256
+
+      - name: Upload production RC package
+        uses: actions/upload-artifact@v4
+        with:
+          name: takip-analizi-production-rc-${{ inputs.version_name }}-${{ inputs.version_code }}
+          path: |
+            apps/mobile/build/app/outputs/bundle/release/app-release.aab
+            apps/mobile/build/app/outputs/bundle/release/app-release.aab.sha256
+          retention-days: 1
+          if-no-files-found: error
