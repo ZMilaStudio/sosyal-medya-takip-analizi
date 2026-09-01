@@ -4,7 +4,11 @@ Son güncelleme: 1 Eylül 2026
 
 Bu gizlilik politikası, ZMila Studio tarafından geliştirilen **Takip Analizi** Android uygulamasının verileri nasıl işlediğini açıklar.
 
-> Bu metin production yayını öncesi hazırlanmış gizlilik politikası taslağıdır. Play Store yayınına geçmeden önce herkese açık kalıcı gizlilik politikası URL’si ve resmi destek iletişim kanalı eklenmelidir.
+Kalıcı gizlilik politikası adresi:
+https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md
+
+Gizlilik ve destek iletişimi:
+**zmilastudio@gmail.com**
 
 ## 1. Uygulamanın çalışma biçimi
 
@@ -12,14 +16,13 @@ Takip Analizi, Instagram ve X / Twitter takip ilişkilerini **local-first** yakl
 
 Uygulama:
 
-- Instagram kullanıcı adı veya şifresi istemez.
-- X / Twitter kullanıcı adı veya şifresi istemez.
+- Instagram veya X şifresi istemez.
 - Instagram private API kullanmaz.
 - Sosyal medya hesaplarına otomatik giriş yapmaz.
 - Otomatik takip etme veya takip bırakma işlemi yapmaz.
-- Kullanıcının seçtiği resmi Instagram / X veri arşivlerini cihaz üzerinde işler.
+- Kullanıcının açıkça seçtiği resmi Instagram / X veri arşivlerini cihaz üzerinde işler.
 
-## 2. İşlenen veriler
+## 2. Cihaz üzerinde işlenen veriler
 
 Kullanıcı uygulamaya bir sosyal medya arşivi seçtiğinde aşağıdaki veriler cihaz üzerinde işlenebilir:
 
@@ -35,7 +38,7 @@ X arşivinde takip ilişkisi analizi için gerekli olmayan medya, gönderi ve do
 
 ## 3. Veri toplama ve paylaşma
 
-Mevcut uygulama mimarisinde analiz verileri geliştirici sunucusuna gönderilmez ve üçüncü taraflarla paylaşılmaz.
+Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen bir sunucuya gönderilmez ve üçüncü taraflarla paylaşılmaz.
 
 Takip Analizi’nin mevcut Android build’i `INTERNET` izni istemez. Analiz, geçmiş ve kullanıcı tercihleri cihazın yerel depolamasında tutulur.
 
@@ -43,11 +46,11 @@ Kullanıcı bir profil bağlantısını açmayı seçerse bağlantı cihazdaki h
 
 ## 4. Dosya erişimi
 
-Uygulama, yalnızca kullanıcının Android sistem dosya seçicisi üzerinden açıkça seçtiği arşiv veya takip dosyalarına erişir.
+Uygulama yalnızca kullanıcının Android sistem dosya seçicisi üzerinden açıkça seçtiği arşiv veya takip dosyalarına erişir.
 
 Uygulama cihazdaki tüm dosyalara genel erişim istemez.
 
-## 5. Yerel veri saklama
+## 5. Yerel veri saklama ve silme
 
 Analiz snapshot’ları ve “Yok say” tercihleri cihazda yerel olarak saklanabilir. Bu veriler, takip değişikliklerini zaman içinde karşılaştırabilmek için kullanılır.
 
@@ -61,6 +64,8 @@ silebilir.
 
 Uygulamanın silme işlemleri Instagram veya X hesabındaki gerçek verilere dokunmaz.
 
+Uygulama kaldırıldığında Android’in uygulama verisi yönetimi kapsamında yerel uygulama verileri de cihazdan kaldırılabilir.
+
 ## 6. Çocukların gizliliği
 
 Takip Analizi çocuklara yönelik olarak tasarlanmamıştır ve bilerek çocuklardan kişisel veri toplamayı amaçlamaz.
@@ -69,15 +74,22 @@ Takip Analizi çocuklara yönelik olarak tasarlanmamıştır ve bilerek çocukla
 
 Uygulamanın temel güvenlik yaklaşımı, sosyal medya kimlik bilgilerini hiç toplamamak ve analizi cihaz üzerinde tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
 
-## 8. Politika değişiklikleri
+## 8. Üçüncü taraf hizmetler ve dış bağlantılar
+
+Takip Analizi Instagram veya X hesabında işlem yapmaz. Kullanıcı isteğiyle açılan harici profil bağlantıları Instagram, X, tarayıcı veya cihazdaki başka bir uygulama tarafından işlenebilir. Bu hizmetlerin veri işleme uygulamaları kendi gizlilik politikalarına tabidir.
+
+## 9. Politika değişiklikleri
 
 Uygulamanın veri işleme davranışı değişirse bu gizlilik politikası da güncellenecektir. Özellikle ileride canlı API, bulut senkronizasyonu, reklam, analitik veya başka bir ağ tabanlı özellik eklenirse bu metin ve Play Console Veri Güvenliği beyanları yeniden değerlendirilmelidir.
 
-## 9. Geliştirici
+## 10. Geliştirici ve iletişim
 
-Geliştirici: **ZMila Studio**
+Geliştirici: **ZMila Studio**  
+Uygulama: **Takip Analizi**  
+Gizlilik / destek e-postası: **zmilastudio@gmail.com**
 
-Production yayını öncesi resmi destek iletişim bilgisi ve kalıcı gizlilik politikası URL’si bu bölüme eklenecektir.
+Destek sayfası:
+https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md
 
 ---
 
@@ -85,40 +97,85 @@ Production yayını öncesi resmi destek iletişim bilgisi ve kalıcı gizlilik 
 
 Last updated: September 1, 2026
 
-This policy explains how the **Takip Analizi** Android application developed by ZMila Studio handles data.
+This privacy policy explains how the **Takip Analizi** Android application developed by **ZMila Studio** handles data.
 
-> This is a pre-release privacy-policy draft. A permanent public privacy-policy URL and official support contact must be added before Play Store publication.
+Permanent privacy-policy URL:
+https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md
 
-## How the app works
+Privacy and support contact:
+**zmilastudio@gmail.com**
 
-Takip Analizi analyzes Instagram and X / Twitter follow relationships using a local-first approach. It does not request social-media passwords, does not use Instagram private APIs, does not automatically sign in to accounts, and does not perform automated follow or unfollow actions.
+## 1. How the app works
 
-The app processes only the official export/archive files explicitly selected by the user.
+Takip Analizi analyzes Instagram and X / Twitter follow relationships using a **local-first** approach.
 
-## Data processed on the device
+The app:
 
-Depending on the selected archive, the app may process the platform name, account username or account identifier, follower/following relationships, analysis results, local snapshot history, and accounts the user chooses to ignore.
+- does not request Instagram or X passwords,
+- does not use Instagram private APIs,
+- does not automatically sign in to social-media accounts,
+- does not perform automated follow or unfollow actions,
+- processes only official Instagram / X archive files explicitly selected by the user on the device.
 
-X archive content unrelated to follow-relationship analysis, such as media, posts, or direct-message history, is not used for the follow analysis.
+## 2. Data processed on the device
 
-## Collection and sharing
+Depending on the selected archive, the app may process on the device:
 
-Under the current architecture, analysis data is not sent to a developer-operated server and is not shared with third parties. The current Android build does not request the `INTERNET` permission.
+- social-media platform,
+- account username or platform-provided account identifier,
+- followers,
+- following accounts,
+- analysis results,
+- analysis date and local snapshot history,
+- accounts the user chooses to ignore.
+
+X archive content unrelated to follow-relationship analysis, such as media, posts, or direct-message history, is not used for follow analysis.
+
+## 3. Collection and sharing
+
+Under the current architecture, analysis data is not sent to a server operated by ZMila Studio and is not shared with third parties.
+
+The current Android build does not request the `INTERNET` permission. Analysis results, history, and user preferences are stored locally on the device.
 
 If the user chooses to open a social profile, the link is handed off to an external browser or social-media application. Any subsequent processing is governed by that third party’s privacy policy.
 
-## File access
+## 4. File access
 
 The app accesses only archive or relationship files explicitly selected through the Android system file picker. It does not request broad access to all files on the device.
 
-## Local storage and deletion
+## 5. Local storage and deletion
 
-Analysis snapshots and ignored-account preferences may be stored locally to support historical comparisons. The **Local Data Management** screen allows the user to delete analysis history, ignored-account data, or all local application data. These actions do not alter data on Instagram or X.
+Analysis snapshots and ignored-account preferences may be stored locally to support historical comparisons.
 
-## Changes
+The **Local Data Management** screen allows the user to delete:
+
+- all analysis history,
+- ignored-account data,
+- all local application data managed by the app.
+
+These actions do not alter data on Instagram or X. Local application data may also be removed through Android app-data management or when the app is uninstalled, subject to Android device behavior.
+
+## 6. Children’s privacy
+
+Takip Analizi is not designed for children and does not intentionally seek to collect personal data from children.
+
+## 7. Security
+
+The app’s primary security approach is to avoid collecting social-media credentials and to keep analysis on the device. No device or software environment can provide an absolute security guarantee.
+
+## 8. Third-party services and external links
+
+Takip Analizi does not perform actions on Instagram or X accounts. External profile links opened at the user’s request may be handled by Instagram, X, a browser, or another installed application. Their data practices are governed by their own privacy policies.
+
+## 9. Changes to this policy
 
 If network APIs, cloud sync, advertising, analytics, or other data-processing features are added later, this policy and the Google Play Data safety declarations must be reviewed and updated.
 
-Developer: **ZMila Studio**
+## 10. Developer and contact
 
-An official support contact and permanent public policy URL will be added before production publication.
+Developer: **ZMila Studio**  
+App: **Takip Analizi**  
+Privacy / support email: **zmilastudio@gmail.com**
+
+Support page:
+https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md
