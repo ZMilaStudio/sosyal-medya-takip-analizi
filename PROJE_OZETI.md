@@ -5,7 +5,7 @@ Son güncelleme: 1 Eylül 2026
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu dosya okunarak proje devralınır.
 - Bu dosya + canlı GitHub repo proje gerçeklik kaynağıdır.
-- Çalışan fiziksel baseline korunur; kritik regressions olursa rollback branch kullanılır.
+- Çalışan fiziksel baseline korunur; kritik regression olursa rollback branch kullanılır.
 - Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek uygulama üzerinden ilerlenir.
 - **1 Eylül 2026 kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler toplu ilerletilecek; yalnız kritik sürüm noktalarında tek fiziksel doğrulama yapılacak.
 - GitHub Actions kotasını korumak için büyük geliştirmeler ayrı dev branch’lerinde hazırlanıp `test/device-apk` branch’ine tek seferde alınacak.
@@ -19,9 +19,9 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - `following.json` üst seviye `title` varyasyonu desteklenir.
 
 ### X / Twitter
-- İlk entegrasyon resmi X veri arşivi üzerinden local analizdir.
-- Canlı API/OAuth daha sonra maliyet ve politika uygunluğuna göre değerlendirilecek.
-- Küçük/orta X arşivi ZIP olarak; çok büyük arşivlerde yalnız `follower.js` + `following.js` dosyaları seçilerek analiz edilebilecek.
+- Ana yöntem resmi X veri arşivi üzerinden local analizdir.
+- Küçük/orta X arşivi ZIP olarak; çok büyük arşivlerde yalnız `follower.js` + `following.js` dosyaları seçilerek analiz edilebilir.
+- **1 Eylül 2026 canlı API kararı:** X API artık pay-per-use. Normal `Following/Followers: Read` fiyatı resmi dokümana göre kaynak başına `$0.010`. `$0.001` Owned Read yalnız authenticated kullanıcı aynı zamanda developer app owner olduğunda geçerli; genel son kullanıcı modeli için uygun değil. Bu yüzden canlı X API/OAuth MVP dışına ertelendi; arşiv importu ana ücretsiz/local yol olarak kalacak.
 
 ### Ortak analiz
 - 5 ana kategori: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
@@ -87,53 +87,62 @@ Ana gerçek Meta export doğrulaması:
 - kullanıcının sohbete yüklediği raster görsel doğrudan launcher olarak kullanılıyor ve fiziksel Samsung’da PASS.
 - launcher asset: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`
 - asset SHA-256 `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
-- Manifest doğrudan `@drawable/takip_launcher_user` kullanıyor; eski vektör launcher çözümü final değildir.
 
 ## Manuel iki snapshot karşılaştırma
-- `test/device-apk` kaynak commit: `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
-- workflow run: `33513457232`
-- CI tamamen success.
-- Analiz Geçmişi ekranında `Karşılaştır` modu eklendi.
-- Kullanıcı iki kayıt seçer; yalnız aynı platform + aynı hesap kabul edilir.
-- Kayıtlar tarihe göre eski/yeni sıralanır ve standart 5 sekmeli analiz ekranında farklar gösterilir.
-- Bu özellik için kullanıcıdan ayrı fiziksel PASS istenmeyecek; toplu sürüm içinde değerlendirilecek.
+- kaynak commit `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
+- workflow run `33513457232` / run #27
+- CI tamamen SUCCESS.
+- Analiz Geçmişi ekranında `Karşılaştır` modu vardır.
+- Aynı platform + aynı hesaptan iki kayıt seçilir; tarihe göre eski/yeni sıralanıp standart analiz motoruna verilir.
+- Bu özellik için ayrı fiziksel PASS istenmedi; toplu sürüm içinde ilerleniyor.
 
-## X arşiv geliştirme paketi — `dev/x-archive-import`
-Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
+## X arşiv entegrasyonu — CI SUCCESS
+İlk toplu X geliştirmesi `dev/x-archive-import` üzerinde hazırlandı ve `test/device-apk` branch’ine tek fast-forward ile alındı.
+
+- entegrasyon source/head: `adebabb4eecca456d4af1efd289ab7324825c66b`
+- workflow run: `33516696991` / run #28
+- Analyze ✅
+- tüm testler ✅
+- physical-device compatibility wiring ✅
+- signed debug APK build ✅
+- package/version/exact launcher/signing doğrulaması ✅
+- prerelease publish ✅
 
 ### X parser/importer
 - `XRelationshipParser` eklendi.
 - `window.YTD.following.part0 = [...]` / `window.YTD.follower.part0 = [...]` JS assignment formatı okunur.
 - `accountId` stabil kullanıcı kimliği olarak kullanılır.
 - Arşiv doğrudan kullanıcı adını verirse handle tutulur.
-- `userLink` yalnız `intent/user?user_id=...` içeriyorsa sahte kullanıcı adı üretilmez; UI’da `X hesabı • ID ...` gösterilir ve gerçek intent profil linki korunur.
+- `userLink` yalnız `intent/user?user_id=...` içeriyorsa sahte kullanıcı adı UI’da gösterilmez; hesap ID’si açıkça gösterilir ve intent profil linki korunur.
 - `XArchiveImporter` ZIP içinde `follower.js` / `following.js` dosyalarını bulur; medya ve tweet geçmişini yok sayar.
 - ZIP güvenlik limitleri ve unsafe path kontrolü vardır.
-- Büyük arşivler için `importRelationshipFiles(...)` ile çıkarılmış iki JS dosyası doğrudan okunabilir.
+- Büyük arşivler için çıkarılmış iki JS dosyası doğrudan okunabilir.
 
-### X analiz + snapshot
-- `XFollowAnalysisUseCase` mevcut `FollowAnalysisEngine` motorunu kullanır.
-- ZIP ve direct JS dosya akışları desteklenir.
+### X analiz + mobil
+- `XFollowAnalysisUseCase` ortak `FollowAnalysisEngine` motorunu kullanır.
 - X snapshot’ları aynı Drift geçmiş veritabanına kaydedilir.
-- Previous snapshot varsa Takibi Bırakanlar/Yeni Takipçiler otomatik hesaplanır.
-- Ortak `FollowAnalysisResult` soyut modeli eklendi; analiz ekranı Instagram/X ortak hale getirildi.
+- Previous snapshot varsa Takibi Bırakanlar/Yeni Takipçiler hesaplanır.
+- Ortak `FollowAnalysisResult` modeliyle analiz ekranı Instagram/X ortak hale getirildi.
+- Ana ekranda X kullanıcı adı + ZIP import + büyük arşiv iki-JS fallback vardır.
+- X profil/ID-only davranışı desteklenir.
+- Analiz Geçmişi Instagram + X snapshot’larını birlikte listeler.
+- Yok sayılan hesaplar platform bazında ayrıdır; eski Instagram kayıtları geriye uyumludur.
 
-### X mobil akış
-- Ana ekrandaki X `Yakında` durumu kaldırıldı.
-- X kullanıcı adı + `X Arşivini İçe Aktar` butonu eklendi.
-- Büyük arşiv fallback: `follower.js + following.js seç` butonu eklendi.
-- Analiz ekranı platforma göre `Instagram Analizi` / `X Analizi` başlığı gösterir.
-- X kullanıcı satırı profil linkini X/Twitter’da açar.
-- Handle içermeyen arşiv satırlarında kullanıcıya hesap ID’si açıkça gösterilir; sahte `@id_...` etiketi gösterilmez.
-- Analiz Geçmişi artık Instagram + X snapshot’larını birlikte listeler ve platform etiketini gösterir.
-- Yok sayılan hesaplar `ignored_accounts.<platform>.<owner>` anahtarıyla platform bazında ayrıldı; mevcut Instagram anahtar biçimi geriye uyumludur.
+## Product polish batch — `dev/product-polish`
+Run #28 sonrası Actions harcamadan yeni geliştirmeler bu branch’te toplanıyor.
 
-### X test kapsamı hazırlandı
-- parser: direct profil URL, intent user ID, explicit handle, stabil ID dedupe, malformed JS.
-- importer: ZIP, nested data folder, multipart, direct iki JS dosyası, eksik dosya, invalid ZIP, unsafe path.
-- use case: ZIP analiz, direct JS analiz, previous snapshot farkı, yanlış platform guard.
-- mobil: X ID-only kullanıcı gösterimi, platform-scoped ignored store, Instagram + X ana ekran smoke kapsamı.
-- Bu dev branch henüz Actions ile çalıştırılmadı; tüm paket hazırlandıktan sonra `test/device-apk` branch’ine tek seferde alınacak.
+### Tamamlanan geliştirmeler
+- X arşiv indirme rehberi eklendi: `/x-guide`.
+- Ana X kartına `X arşivi nasıl alınır?` girişi eklendi.
+- Rehber resmi X ayar akışını ve büyük arşivlerde `follower.js + following.js` yöntemini açıklar.
+- Analiz Geçmişi için `Tüm platformlar / Instagram / X` filtresi eklendi.
+- Filtre aktifken karşılaştırma yalnız görünür kayıtlar üzerinden çalışır.
+- Tek bir geçmiş snapshot’ını üç nokta menüsünden **onayla silme** eklendi.
+- `FollowHistoryDatabase.deleteSnapshot(...)` ilişkileri temizler ve artık referans edilmeyen kullanıcı kayıtlarını kaldırır.
+- Karşılaştırmalı analizlerde üst bölümde `Yeni / Bırakan / Net` değişim özeti eklendi.
+- `FollowAnalysisResult.comparedToPrevious` ile ilk import ile gerçekten karşılaştırılmış ama değişmemiş snapshot ayrımı yapılabilir.
+- X arşiv rehberi widget testi ve snapshot silme DB testi eklendi.
+- Karşılaştırma değişim özeti için widget test kapsamı güncellendi.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -157,16 +166,16 @@ Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
 - [x] iki keyfi snapshot’ı manuel seçip karşılaştırma — kod + CI success
 
 ### X
-- [x] X ilişki JS parser — dev branch
-- [x] X ZIP importer — dev branch
-- [x] büyük arşiv için direct `follower.js` + `following.js` importer — dev branch
-- [x] X analiz use case — dev branch
-- [x] X snapshot/geçmiş entegrasyonu — dev branch
-- [x] X ana ekran/import akışı — dev branch
-- [x] X profil/ID-only davranışı — dev branch
-- [ ] X geliştirme paketinin tek Actions run ile entegrasyon doğrulaması
+- [x] X ilişki JS parser
+- [x] X ZIP importer
+- [x] büyük arşiv direct `follower.js` + `following.js` importer
+- [x] X analiz use case
+- [x] X snapshot/geçmiş entegrasyonu
+- [x] X ana ekran/import akışı
+- [x] X profil/ID-only davranışı
+- [x] X toplu paket Actions entegrasyon doğrulaması — run #28 SUCCESS
+- [x] canlı API/OAuth maliyet/politika değerlendirmesi — MVP dışına ertelendi
 - [ ] gerçek kullanıcı X arşiviyle ileride tek kritik fiziksel doğrulama
-- [ ] canlı API/OAuth maliyet/politika değerlendirmesi
 
 ## Sıradaki iş
-`dev/x-archive-import` paketini tek seferde `test/device-apk` branch’ine fast-forward et, bir Actions run ile Analyze + tüm testler + APK build doğrulamasını al. CI geçerse X arşiv desteği test prerelease’e dahil edilmiş olacak. Kullanıcıdan küçük küçük PASS istenmeyecek; ardından doğrudan sonraki ürün geliştirmelerine devam edilecek.
+`dev/product-polish` üzerindeki X rehberi + geçmiş filtre/silme + değişim özeti paketini topluca tamamla. Sonra tek fast-forward ile `test/device-apk` branch’ine alıp yalnız bir Actions run çalıştır. Küçük küçük kullanıcı PASS turuna dönme; CI sonucuna göre gerekiyorsa teknik düzeltmeyi yap ve ürün geliştirmesine devam et.
