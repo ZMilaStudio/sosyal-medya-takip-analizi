@@ -28,6 +28,8 @@ void main() {
       'Şifre istemiyoruz',
       'Yalnız seçtiğin dosyalar',
       'Yerel geçmiş',
+      'Otomatik yedekleme kapalı',
+      'Raporu sen dışa aktarırsın',
       'Dış bağlantılar',
       'Yerel verilerimi yönet',
       'ZMila Studio',
@@ -39,5 +41,12 @@ void main() {
       );
       expect(find.text(label), findsOneWidget);
     }
+
+    await tester.scrollUntilVisible(
+      find.textContaining('zmilastudio@gmail.com'),
+      250,
+      scrollable: pageScroll,
+    );
+    expect(find.textContaining('zmilastudio@gmail.com'), findsOneWidget);
   });
 }
