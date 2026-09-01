@@ -2,10 +2,12 @@ import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/analysis/presentation/analysis_screen.dart';
+import '../../features/data_management/presentation/local_data_management_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/ignored_accounts/presentation/ignored_accounts_screen.dart';
 import '../../features/instagram_guide/presentation/instagram_export_guide_screen.dart';
+import '../../features/x_guide/presentation/x_archive_guide_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -25,9 +27,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const IgnoredAccountsScreen(),
     ),
     GoRoute(
+      path: '/data-management',
+      name: 'data-management',
+      builder: (context, state) => const LocalDataManagementScreen(),
+    ),
+    GoRoute(
       path: '/instagram-guide',
       name: 'instagram-guide',
       builder: (context, state) => const InstagramExportGuideScreen(),
+    ),
+    GoRoute(
+      path: '/x-guide',
+      name: 'x-guide',
+      builder: (context, state) => const XArchiveGuideScreen(),
     ),
     GoRoute(
       path: '/analysis',
