@@ -34,7 +34,7 @@ final GoRouter appRouter = GoRouter(
       name: 'analysis',
       builder: (context, state) {
         final extra = state.extra;
-        if (extra is! InstagramFollowAnalysisResult) {
+        if (extra is! FollowAnalysisResult) {
           return const HomeScreen();
         }
         return AnalysisScreen(result: extra);
