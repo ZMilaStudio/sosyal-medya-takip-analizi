@@ -124,7 +124,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - prerelease `device-test-v2-26`
 - **fiziksel launcher görünümü PASS ✅**
 
-## Gerçek snapshot fiziksel doğrulama — gece02.19
+## Gerçek snapshot fiziksel doğrulama — gece02.19 — TAM PASS
 - Test v2-26 üzerinde yapıldı; yeni build çıkarılmadı.
 - İlk gerçek snapshot: 75 takipçi, 53 takip edilen, 10 takip etmeyen, 43 karşılıklı.
 - İkinci gerçek Meta arşivi aynı `gece02.19` hesap adıyla içe aktarıldı ✅
@@ -133,9 +133,10 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Net takipçi değişimi matematiksel olarak tutarlı: `75 - 6 + 5 = 74` ✅
 - `Takibi Bırakanlar` sekmesi gerçek cihazda 6 kullanıcıyla liste render etti ✅
 - Görülen hesaplar: `@2tuba6`, `@erbaamasigi`, `@kmbujiteri_34`, `@nurcandan2026`, `@tugba_blogg1`, `@velora_nail.atelier`.
-- `Yeni Takipçiler (5)` sayısı gerçek snapshot karşılaştırmasından otomatik doldu ✅
-- Yeni Takipçiler sekmesindeki 5 kişilik gerçek listeyi fiziksel olarak açıp görme kontrolü henüz son adım olarak bekliyor.
+- `Yeni Takipçiler (5)` sekmesi gerçek cihazda 5 kullanıcıyla liste render etti ✅
+- Kullanıcı son fiziksel kontrolü PASS verdi ✅
 - Import controller zinciri gerçek cihazda uçtan uca doğrulandı: previous snapshot okunuyor → current previous ile karşılaştırılıyor → current snapshot kaydediliyor ✅
+- Sonuç: otomatik geçmiş snapshot karşılaştırma özelliği gerçek Meta arşivleriyle fiziksel olarak TAM PASS ✅
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -160,7 +161,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] kullanıcının exact launcher görseli fiziksel Samsung'da doğrulandı
 - [x] gerçek geçmiş snapshot akışı Takibi Bırakanlar/Yeni Takipçiler sayılarını otomatik dolduruyor
 - [x] gerçek Takibi Bırakanlar listesi fiziksel cihazda doğrulandı
-- [ ] gerçek Yeni Takipçiler listesindeki 5 kullanıcıyı fiziksel cihazda son kez doğrulama
+- [x] gerçek Yeni Takipçiler listesi fiziksel cihazda doğrulandı
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
 ### X
@@ -170,4 +171,4 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-Mevcut analiz ekranında `Yeni Takipçiler (5)` sekmesine dokunulup 5 kişilik gerçek listenin render olduğu fiziksel olarak doğrulanacak. Bu son kontrol de PASS olursa otomatik geçmiş snapshot karşılaştırma özelliği tamamen kapatılacak; ardından iki keyfi snapshot'ı elle karşılaştırma akışına geçilecek.
+Otomatik geçmiş snapshot karşılaştırma akışı artık gerçek Meta arşivleriyle TAM PASS. Sıradaki kontrollü adım, kullanıcının geçmişteki herhangi iki snapshot'ı seçip manuel olarak birbirleriyle karşılaştırabilmesini sağlayan **iki keyfi snapshot'ı elle karşılaştırma** akışını tasarlayıp uygulamaktır.
