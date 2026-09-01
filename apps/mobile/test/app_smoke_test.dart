@@ -13,7 +13,10 @@ void main() {
     final homeList = find.byType(ListView);
     final homeScroll = find.descendant(
       of: homeList,
-      matching: find.byType(Scrollable),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
     );
     expect(homeList, findsOneWidget);
     expect(homeScroll, findsOneWidget);
