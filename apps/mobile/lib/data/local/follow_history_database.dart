@@ -188,6 +188,17 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
     return _restoreSnapshot(snapshot, _accountFromRow(accountRow));
   }
 
+  Future<void> deleteSnapshot(int snapshotId) async {
+    await transaction(() async {
+      await (delete(storedSnapshotRelations)
+            ..where((row) => row.snapshotId.equals(snapshotId)))
+          .go();
+      await (delete(storedSnapshots)..where((row) => row.id.equals(snapshotId)))
+          .go();
+      await _deleteOrphanUsers();
+    });
+  }
+
   Future<FollowSnapshot?> previousSnapshotBefore(int snapshotId) async {
     final currentQuery = select(storedSnapshots)
       ..where((row) => row.id.equals(snapshotId))
