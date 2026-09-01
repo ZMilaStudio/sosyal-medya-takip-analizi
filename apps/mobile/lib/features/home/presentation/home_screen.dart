@@ -180,7 +180,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           'Büyük arşiv: follower.js + following.js seç',
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
+                      TextButton.icon(
+                        onPressed: isBusy ? null : () => context.push('/x-guide'),
+                        icon: const Icon(Icons.help_outline_rounded),
+                        label: const Text('X arşivi nasıl alınır?'),
+                      ),
+                      const SizedBox(height: 2),
                       const Text(
                         'Arşiv çok büyükse ZIP’i çıkardıktan sonra data klasöründeki iki takip dosyasını birlikte seçebilirsin.',
                         style: TextStyle(color: AppColors.muted),
@@ -399,7 +405,8 @@ class _RecentPlatformMark extends StatelessWidget {
       height: 38,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: platform == SocialPlatform.x ? AppColors.ink : AppColors.softPurple,
+        color:
+            platform == SocialPlatform.x ? AppColors.ink : AppColors.softPurple,
         borderRadius: BorderRadius.circular(12),
       ),
       child: platform == SocialPlatform.x
