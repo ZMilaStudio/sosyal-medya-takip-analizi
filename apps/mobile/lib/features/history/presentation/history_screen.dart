@@ -127,6 +127,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   item: item,
                   selectionMode: _compareMode,
                   selected: _selectedIds.contains(item.snapshotId),
+                  onDelete: () => _deleteSnapshot(item),
                   onTap: () => _compareMode
                       ? _toggleSnapshotSelection(visibleItems, item)
                       : _openSnapshot(item),
@@ -226,6 +227,43 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     });
   }
 
+  Future<void> _deleteSnapshot(FollowSnapshotHistoryItem item) async {
+    if (_compareMode) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bu analizi sil?'),
+        content: Text(
+          '${_platformLabel(item.account.platform)} • @${item.account.username}\n'
+          '${_formatDate(item.capturedAt)}\n\n'
+          'Bu geçmiş kaydı ve yalnız bu kayda ait ilişki verileri cihazdan silinecek.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final database = ref.read(followHistoryDatabaseProvider);
+    await database.deleteSnapshot(item.snapshotId);
+    if (!mounted) return;
+
+    _selectedIds.remove(item.snapshotId);
+    ref.invalidate(snapshotHistoryProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Analiz geçmişten silindi.')),
+    );
+  }
+
   Future<void> _openAnalysis({
     required FollowSnapshot current,
     required FollowSnapshot? previous,
@@ -238,12 +276,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       SocialPlatform.instagram => InstagramFollowAnalysisResult(
           snapshot: current,
           analysis: analysis,
+          comparedToPrevious: previous != null,
           followerSourceFiles: const [],
           followingSourceFiles: const [],
         ),
       SocialPlatform.x => XFollowAnalysisResult(
           snapshot: current,
           analysis: analysis,
+          comparedToPrevious: previous != null,
           followerSourceFiles: const [],
           followingSourceFiles: const [],
         ),
@@ -264,12 +304,14 @@ class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
     required this.item,
     required this.onTap,
+    required this.onDelete,
     required this.selectionMode,
     required this.selected,
   });
 
   final FollowSnapshotHistoryItem item;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
   final bool selectionMode;
   final bool selected;
 
@@ -326,9 +368,33 @@ class _HistoryCard extends StatelessWidget {
                   color: selected ? AppColors.primary : AppColors.muted,
                 )
               else
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.primary,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.primary,
+                    ),
+                    PopupMenuButton<_HistoryAction>(
+                      tooltip: 'Geçmiş işlemleri',
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (action) {
+                        if (action == _HistoryAction.delete) onDelete();
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: _HistoryAction.delete,
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded),
+                              SizedBox(width: 10),
+                              Text('Sil'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -516,6 +582,7 @@ class _HistoryError extends StatelessWidget {
 }
 
 enum _HistoryPlatformFilter { all, instagram, x }
+enum _HistoryAction { delete }
 
 String _platformLabel(SocialPlatform platform) => switch (platform) {
       SocialPlatform.instagram => 'Instagram',
