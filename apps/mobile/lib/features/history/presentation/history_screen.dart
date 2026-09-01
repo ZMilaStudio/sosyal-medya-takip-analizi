@@ -70,6 +70,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
           final filteredItems = _filterItems(items);
           final accounts = _filterAccounts(items);
+          final selectedAccount = _selectedAccount(items);
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -88,6 +89,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   onPlatformChanged: (platform) =>
                       _setPlatformFilter(items, platform),
                   onAccountChanged: _setAccountFilter,
+                  onDeleteAccountHistory:
+                      !_compareMode && selectedAccount != null
+                          ? () => _confirmDeleteAccountHistory(selectedAccount)
+                          : null,
                 ),
                 const SizedBox(height: 10),
                 _compareMode ? const _CompareInfo() : const _RetentionInfo(),
@@ -106,6 +111,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       onTap: () => _compareMode
                           ? _toggleSnapshotSelection(items, filteredItems[index])
                           : _openSnapshot(filteredItems[index]),
+                      onDelete: _compareMode
+                          ? null
+                          : () => _confirmDeleteSnapshot(
+                                items,
+                                filteredItems[index],
+                              ),
                     ),
                     if (index != filteredItems.length - 1)
                       const SizedBox(height: 10),
@@ -146,6 +157,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       accounts.putIfAbsent(_accountKey(item.account), () => item.account);
     }
     return List.unmodifiable(accounts.values);
+  }
+
+  SocialAccount? _selectedAccount(List<FollowSnapshotHistoryItem> items) {
+    final selectedKey = _accountFilterKey;
+    if (selectedKey == null) return null;
+    for (final item in items) {
+      if (_accountKey(item.account) == selectedKey) return item.account;
+    }
+    return null;
   }
 
   void _setPlatformFilter(
@@ -251,6 +271,96 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     });
   }
 
+  Future<void> _confirmDeleteSnapshot(
+    List<FollowSnapshotHistoryItem> items,
+    FollowSnapshotHistoryItem item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Analizi sil?'),
+            content: Text(
+              '${_platformLabel(item.account.platform)} @${item.account.username} '
+              'için ${_formatDate(item.capturedAt)} tarihli analiz cihazdan silinecek.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                child: const Text('Sil'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) return;
+
+    final accountKey = _accountKey(item.account);
+    final remainingForAccount = items
+        .where((candidate) => _accountKey(candidate.account) == accountKey)
+        .length;
+    await ref
+        .read(followHistoryDatabaseProvider)
+        .deleteSnapshot(item.snapshotId);
+    if (!mounted) return;
+
+    if (remainingForAccount <= 1 && _accountFilterKey == accountKey) {
+      setState(() => _accountFilterKey = null);
+    }
+    ref.invalidate(snapshotHistoryProvider);
+    ref.invalidate(recentFollowAccountsProvider);
+  }
+
+  Future<void> _confirmDeleteAccountHistory(SocialAccount account) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Tüm hesap geçmişini sil?'),
+            content: Text(
+              '${_platformLabel(account.platform)} @${account.username} için '
+              'saklanan bütün analizler cihazdan silinecek. Yok sayılan hesaplar '
+              'ayrı tutulur ve bu işlemden etkilenmez.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                child: const Text('Tümünü sil'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) return;
+
+    await ref
+        .read(followHistoryDatabaseProvider)
+        .deleteAccountHistory(account);
+    if (!mounted) return;
+
+    setState(() {
+      _accountFilterKey = null;
+      _selectedIds.clear();
+      _compareMode = false;
+    });
+    ref.invalidate(snapshotHistoryProvider);
+    ref.invalidate(recentFollowAccountsProvider);
+  }
+
   Future<void> _openAnalysis({
     required FollowSnapshot current,
     required FollowSnapshot? previous,
@@ -293,6 +403,7 @@ class _HistoryFilters extends StatelessWidget {
     required this.totalCount,
     required this.onPlatformChanged,
     required this.onAccountChanged,
+    required this.onDeleteAccountHistory,
   });
 
   final SocialPlatform? platform;
@@ -302,6 +413,7 @@ class _HistoryFilters extends StatelessWidget {
   final int totalCount;
   final ValueChanged<SocialPlatform?> onPlatformChanged;
   final ValueChanged<String?> onAccountChanged;
+  final VoidCallback? onDeleteAccountHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -384,11 +496,27 @@ class _HistoryFilters extends StatelessWidget {
               ),
             ),
           ],
+          if (onDeleteAccountHistory != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onDeleteAccountHistory,
+                icon: const Icon(Icons.delete_sweep_outlined),
+                label: const Text('Bu hesabın geçmişini sil'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
+
+enum _HistoryCardAction { delete }
 
 class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
@@ -396,12 +524,14 @@ class _HistoryCard extends StatelessWidget {
     required this.onTap,
     required this.selectionMode,
     required this.selected,
+    required this.onDelete,
   });
 
   final FollowSnapshotHistoryItem item;
   final VoidCallback onTap;
   final bool selectionMode;
   final bool selected;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -454,6 +584,31 @@ class _HistoryCard extends StatelessWidget {
                       ? Icons.check_circle_rounded
                       : Icons.radio_button_unchecked_rounded,
                   color: selected ? AppColors.primary : AppColors.muted,
+                )
+              else if (onDelete != null)
+                PopupMenuButton<_HistoryCardAction>(
+                  tooltip: 'Analiz işlemleri',
+                  onSelected: (action) {
+                    if (action == _HistoryCardAction.delete) onDelete!();
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: _HistoryCardAction.delete,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        title: Text(
+                          'Bu analizi sil',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 )
               else
                 const Icon(
