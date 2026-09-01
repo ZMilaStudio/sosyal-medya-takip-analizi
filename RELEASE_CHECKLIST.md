@@ -13,6 +13,7 @@ Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerke
 - [x] Instagram gerçek arşivi fiziksel cihazda doğrulandı.
 - [x] Snapshot farkları gerçek Instagram verisiyle doğrulandı.
 - [x] X parser/import/snapshot akışı CI ile doğrulandı.
+- [x] Uygulama içi `Gizlilik ve Hakkında` ekranı ve Home girişi eklendi.
 - [ ] Gerçek kullanıcı X arşivi ile tek kritik fiziksel doğrulama yapılacak.
 
 ## B. Android production kimliği
@@ -28,11 +29,14 @@ Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerke
 
 - [x] Device-test için ayrı ve sabit test sertifikası var.
 - [x] Public test keystore production release’e bağlanmıyor.
+- [x] Private signing dosyaları `.gitignore` ile ek olarak korunuyor.
+- [x] Release signing config yalnız `PLAY_UPLOAD_*` secure environment değerleriyle bağlanacak şekilde hazırlandı.
+- [x] `SIGNING_SETUP.md` güvenli kurulum ve recovery prosedürünü tanımlıyor.
+- [x] Manuel `production-rc-aab.yml` workflow’u signing secret doğrulaması + signer fingerprint kontrolü ile hazırlandı.
 - [ ] Google Play App Signing etkinleştirilecek / mevcut durum doğrulanacak.
 - [ ] Ayrı private upload key oluşturulacak veya mevcut production upload key kullanılacak.
-- [ ] Upload key yalnız GitHub Secret / güvenli yerel ortamda tutulacak; repoya commit edilmeyecek.
-- [ ] Release build signing config güvenli secret/env üzerinden bağlanacak.
-- [ ] İmzalı `.aab` için sertifika ve package doğrulaması yapılacak.
+- [ ] `PLAY_UPLOAD_*` GitHub Secrets gerçek private key bilgileriyle tanımlanacak.
+- [ ] İlk signed production RC AAB workflow’u çalıştırılacak.
 
 ## D. Gizlilik ve Play politikaları
 
@@ -41,6 +45,7 @@ Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerke
 - [x] Mevcut Android manifestinde `INTERNET` izni yok.
 - [x] Reklam/analytics/cloud SDK’sı mevcut uygulama bağımlılıklarında kullanılmıyor.
 - [x] Uygulama içinde yerel veri silme mekanizması var.
+- [x] Uygulama içinde gizlilik yaklaşımı kullanıcıya açıklanıyor.
 - [ ] Gizlilik politikası kalıcı herkese açık URL’ye yayınlanacak.
 - [ ] Resmi destek iletişim kanalı gizlilik politikasına eklenecek.
 - [ ] Play Console Veri Güvenliği formu production build ile son kez karşılaştırılacak.
@@ -61,13 +66,15 @@ Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerke
 
 ## F. Release build
 
-- [ ] `flutter analyze`.
-- [ ] `flutter test`.
-- [ ] `flutter build appbundle --release` production signing ile.
-- [ ] AAB package id = `com.zmilastudio.takipanalizi` doğrulaması.
+- [x] Production RC için manuel CI workflow tasarlandı; push’ta otomatik çalışmaz.
+- [x] Workflow `flutter analyze` + tüm testleri production build öncesi çalıştırır.
+- [x] Workflow private upload sertifikası SHA-256 fingerprint’ini build öncesi ve AAB sonrası doğrular.
+- [x] AAB artifact retention 1 gün ile sınırlandı.
+- [ ] Gerçek private signing secrets tanımlandıktan sonra `flutter build appbundle --release` çalıştırılacak.
+- [ ] AAB package id = `com.zmilastudio.takipanalizi` son build üzerinde doğrulanacak.
 - [ ] versionName/versionCode doğrulaması.
 - [ ] Launcher asset doğrulaması.
-- [ ] Release sertifika/upload key doğrulaması.
+- [ ] Release sertifika/upload key doğrulamasının gerçek AAB’de PASS olması.
 - [ ] AAB boyutu ve native kütüphaneler kontrolü.
 
 ## G. Son cihaz testi
@@ -84,6 +91,7 @@ Tek kritik production RC test turunda:
 - [ ] Manuel snapshot karşılaştırma.
 - [ ] Raporu kopyala / TXT kaydet.
 - [ ] Yerel Veri Yönetimi.
+- [ ] Gizlilik ve Hakkında ekranı.
 - [ ] X arşivi import veya doğrudan JS fallback.
 - [ ] X arşiv rehberi.
 - [ ] Uygulama yeniden açıldıktan sonra local geçmiş kalıcılığı.
