@@ -19,7 +19,7 @@ class AboutPrivacyScreen extends StatelessWidget {
             icon: Icons.phone_android_rounded,
             title: 'Local-first',
             body:
-                'Instagram ve X arşivleri cihazında analiz edilir. Mevcut Android build’i INTERNET izni istemez ve analiz verilerini geliştirici sunucusuna yüklemez.',
+                'Instagram ve X arşivleri cihazında analiz edilir. Production Android sürümü analiz verilerini geliştirici sunucusuna gönderecek INTERNET iznini istemeyecek şekilde hazırlanmıştır. Flutter debug/profile geliştirme build’leri geliştirme araçları için bu izni ekleyebilir.',
           ),
           const SizedBox(height: 10),
           const _InfoCard(
@@ -41,6 +41,20 @@ class AboutPrivacyScreen extends StatelessWidget {
             title: 'Yerel geçmiş',
             body:
                 'Takip değişikliklerini karşılaştırabilmek için analiz snapshot’ları ve Yok say tercihleri cihazında tutulabilir.',
+          ),
+          const SizedBox(height: 10),
+          const _InfoCard(
+            icon: Icons.cloud_off_rounded,
+            title: 'Otomatik yedekleme kapalı',
+            body:
+                'Production Android yapılandırması uygulama tarafından yönetilen analiz geçmişi ve tercihleri Android cloud backup kapsamı dışında bırakır; Android 12+ veri aktarım kurallarında da yerel app verileri hariç tutulur. Bazı üreticilerin sistem seviyesindeki cihaz taşıma davranışları uygulamanın tam kontrolü dışında olabilir.',
+          ),
+          const SizedBox(height: 10),
+          const _InfoCard(
+            icon: Icons.ios_share_rounded,
+            title: 'Raporu sen dışa aktarırsın',
+            body:
+                'Raporu kopyalamayı seçersen analiz metni sistem panosuna; TXT olarak kaydetmeyi seçersen seçtiğin dosya konumuna yazılır. Bu işlemler yalnız sen başlattığında gerçekleşir ve rapor geliştirici sunucusuna gönderilmez.',
           ),
           const SizedBox(height: 10),
           const _InfoCard(
@@ -94,7 +108,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Instagram ve X takip ilişkilerini, hesabının şifresini paylaşmadan ve arşivlerini sunucuya göndermeden analiz etmek için tasarlanmıştır.',
+                  'Instagram ve X takip ilişkilerini, hesabının şifresini paylaşmadan ve arşivlerini geliştirici sunucusuna göndermeden analiz etmek için tasarlanmıştır.',
                   style: TextStyle(color: AppColors.muted, height: 1.45),
                 ),
               ],
@@ -193,7 +207,7 @@ class _DeveloperCard extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Tam gizlilik politikası ve resmi destek bağlantısı production mağaza yayınıyla birlikte sunulacaktır.',
+            'Gizlilik ve destek: zmilastudio@gmail.com\nTam gizlilik politikası ve destek sayfası Google Play mağaza girişinde herkese açık olarak sunulur.',
             style: TextStyle(color: AppColors.muted, height: 1.4),
           ),
         ],
