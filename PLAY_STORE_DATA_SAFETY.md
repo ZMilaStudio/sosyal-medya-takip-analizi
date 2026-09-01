@@ -10,6 +10,10 @@ Bu dosya Play Console **Veri güvenliği** formunu doldururken kullanılacak tek
 - Production `main` manifestinde `android.permission.INTERNET` yoktur.
 - Flutter debug/profile geliştirme build’leri hot reload/debugger için kendi manifestlerinden `INTERNET` izni ekler; bu development davranışıdır.
 - Production RC workflow’u gerçek merged release manifestte `INTERNET` görülürse build’i fail edecek şekilde hazırlanmıştır.
+- Production manifestinde `android:allowBackup="false"` vardır.
+- Android 11 ve altı için `res/xml/backup_rules.xml` tüm app-managed backup domainlerini hariç tutar.
+- Android 12+ için `res/xml/data_extraction_rules.xml` hem `cloud-backup` hem `device-transfer` tarafında `root`, `file`, `database`, `sharedpref`, `external` domainlerini hariç tutar.
+- Production RC workflow’u backup policy dosyalarını ve merged release manifestte `allowBackup=false` değerini doğrular.
 - Kullanıcının sosyal medya şifresi uygulamaya girilmez.
 - Dosyalar Android sistem dosya seçicisi üzerinden kullanıcı tarafından seçilir.
 - Analiz snapshot’ları ve “Yok say” tercihleri cihaz üzerinde saklanır.
@@ -29,6 +33,7 @@ Gerekçe:
 - Sosyal medya arşivindeki veriler yalnız cihaz üzerinde işlenir.
 - ZMila Studio sunucusuna veya üçüncü taraf sunucuya aktarılmaz.
 - Google Play Data Safety kapsamındaki yalnız-cihazda erişim/işleme, veri cihaz dışına gönderilmiyorsa “collection” olarak beyan edilmek zorunda değildir.
+- Production Android yapılandırması app-managed yerel veriyi Android automatic backup kapsamı dışında bırakacak şekilde sertleştirilmiştir.
 
 ### Profil bağlantısı açma “sharing” midir?
 
@@ -66,6 +71,27 @@ Bunlar mevcut mimaride Data Safety “collected” verisi olarak beyan edilmek z
 - yerel geçmiş snapshot’ları,
 - yok sayılan hesap tercihleri.
 
+## Android backup / transfer politikası
+
+Android’de `android:allowBackup` varsayılanı `true` olduğundan production manifestte açıkça `false` olarak sabitlendi.
+
+Ek koruma:
+
+- Android 11 ve altı: `@xml/backup_rules`
+- Android 12+: `@xml/data_extraction_rules`
+
+Her iki kural seti app-managed local data domainlerini backup dışında bırakır. Android 12+ tarafında hem cloud backup hem device-transfer extraction için exclusion yazılmıştır.
+
+Amaç:
+
+- Drift snapshot veritabanını,
+- SharedPreferences tabanlı Yok say tercihlerini,
+- uygulamanın private files/root alanındaki yerel durumunu
+
+Android otomatik backup kapsamında taşımamaktır.
+
+Not: Android dokümantasyonuna göre bazı cihaz üreticilerinin doğrudan cihazdan cihaza taşıma davranışları sistem seviyesinde farklılık gösterebilir. Bu nedenle privacy policy mutlak “hiçbir koşulda cihazdan çıkamaz” iddiası kullanmaz; uygulama kontrolündeki backup mekanizmalarının kapatıldığı belirtilir.
+
 ## Permission / network notları
 
 ### Debug / profile
@@ -83,7 +109,15 @@ v2-38 debug APK badging bu yüzden `INTERNET` iznini göstermiştir.
 
 `apps/mobile/android/app/src/main/AndroidManifest.xml` bu izni içermez.
 
-Production RC workflow’u AAB build’inden sonra merged release manifesti bulur ve `android.permission.INTERNET` görülürse işlemi başarısız sayar. Böylece privacy/Data Safety beyanı gerçek release manifest üzerinden doğrulanmadan production adayı kabul edilmez.
+Production RC workflow’u AAB build’inden sonra merged release manifesti bulur ve:
+
+- `android.permission.INTERNET` görülürse,
+- `android:allowBackup="false"` kaybolursa,
+- targetSdk 36 değilse
+
+build’i başarısız sayar.
+
+Böylece privacy/Data Safety beyanı gerçek release manifest üzerinden doğrulanmadan production adayı kabul edilmez.
 
 ## Target API
 
@@ -108,7 +142,8 @@ Aşağıdakilerden herhangi biri eklenirse Veri Güvenliği formu ve gizlilik po
 - push notification altyapısı,
 - ücretli üyelik / ödeme,
 - uzaktan hata loglama,
-- production release’e `INTERNET` veya başka veri erişim izni eklenmesi.
+- production release’e `INTERNET` veya başka veri erişim izni eklenmesi,
+- `allowBackup`, `backup_rules` veya `data_extraction_rules` politikasının gevşetilmesi.
 
 ## Public privacy / support
 
@@ -125,14 +160,19 @@ Privacy / support email:
 
 Play Store’a production gönderimi yapılmadan önce:
 
-1. Production AAB’nin merged release manifest izinleri otomatik kontrolden geçmeli.
+1. Production AAB’nin merged release manifest izinleri ve backup policy’si otomatik kontrolden geçmeli.
 2. Bağımlılık ağacı reklam/analytics SDK’sı açısından yeniden kontrol edilmeli.
 3. Public privacy/support URL’leri erişilebilir olmalı.
 4. Play Console Veri Güvenliği formu `PLAY_CONSOLE_FORM_ANSWERS.md` ile karşılaştırılarak doldurulmalı.
 5. Production mimarisi bu dosyadan sapıyorsa önce bu belge ve privacy policy güncellenmeli.
 
-## Resmi Google Play referansları
+## Resmi referanslar
 
+Google Play:
 - https://support.google.com/googleplay/android-developer/answer/10787469
 - https://support.google.com/googleplay/android-developer/answer/10144311
 - https://support.google.com/googleplay/android-developer/answer/11926878
+
+Android backup:
+- https://developer.android.com/guide/topics/manifest/application-element
+- https://developer.android.com/about/versions/12/behavior-changes-12
