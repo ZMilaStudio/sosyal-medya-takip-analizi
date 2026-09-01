@@ -15,7 +15,7 @@ void main() {
     expect(find.text('Instagram Verisini İçe Aktar'), findsOneWidget);
     expect(find.text('Instagram arşivi nasıl alınır?'), findsOneWidget);
 
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
     await tester.pumpAndSettle();
 
     expect(find.text('X / Twitter'), findsOneWidget);
@@ -24,7 +24,9 @@ void main() {
       find.text('Büyük arşiv: follower.js + following.js seç'),
       findsOneWidget,
     );
+    expect(find.text('X arşivi nasıl alınır?'), findsOneWidget);
     expect(find.text('Analiz Geçmişi'), findsOneWidget);
     expect(find.text('Yok Sayılan Hesaplar'), findsOneWidget);
+    expect(find.text('Yerel Veri Yönetimi'), findsOneWidget);
   });
 }
