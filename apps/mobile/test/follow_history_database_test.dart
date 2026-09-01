@@ -10,6 +10,10 @@ void main() {
     platform: SocialPlatform.instagram,
     username: 'owner',
   );
+  const otherAccount = SocialAccount(
+    platform: SocialPlatform.instagram,
+    username: 'other',
+  );
 
   SocialUser user(String username) => SocialUser(
         platform: SocialPlatform.instagram,
@@ -20,9 +24,10 @@ void main() {
     required DateTime capturedAt,
     required List<SocialUser> followers,
     required List<SocialUser> following,
+    SocialAccount owner = account,
   }) =>
       FollowSnapshot(
-        account: account,
+        account: owner,
         capturedAt: capturedAt,
         followers: followers,
         following: following,
@@ -174,5 +179,62 @@ void main() {
       'user3',
       'user4',
     });
+  });
+
+  test('deletes one snapshot without removing newer history', () async {
+    await database.saveSnapshot(
+      snapshot(
+        capturedAt: DateTime.utc(2026, 8, 1),
+        followers: [user('old-only')],
+        following: [user('old-only')],
+      ),
+    );
+    await database.saveSnapshot(
+      snapshot(
+        capturedAt: DateTime.utc(2026, 8, 31),
+        followers: [user('current')],
+        following: [user('current')],
+      ),
+    );
+
+    final history = await database.listHistory();
+    final old = history.last;
+    await database.deleteSnapshot(old.snapshotId);
+
+    final remaining = await database.listHistory();
+    expect(remaining.length, 1);
+    expect(remaining.single.capturedAt, DateTime.utc(2026, 8, 31));
+    expect(await database.latestSnapshot(account), isNotNull);
+
+    final storedUsers = await database.select(database.storedSocialUsers).get();
+    expect(storedUsers.map((row) => row.username).toSet(), {'current'});
+  });
+
+  test('deletes only the selected account history', () async {
+    await database.saveSnapshot(
+      snapshot(
+        capturedAt: DateTime.utc(2026, 8, 1),
+        followers: [user('owner-user')],
+        following: [user('owner-user')],
+      ),
+    );
+    await database.saveSnapshot(
+      snapshot(
+        owner: otherAccount,
+        capturedAt: DateTime.utc(2026, 8, 2),
+        followers: [user('other-user')],
+        following: [user('other-user')],
+      ),
+    );
+
+    await database.deleteAccountHistory(account);
+
+    expect(await database.latestSnapshot(account), isNull);
+    expect(await database.latestSnapshot(otherAccount), isNotNull);
+
+    final history = await database.listHistory();
+    expect(history.length, 1);
+    expect(history.single.account.username, 'other');
+    expect(history.single.followersCount, 1);
   });
 }
