@@ -18,7 +18,7 @@ Support URL:
 
 `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
 
-Uygulama içinde ayrıca `Gizlilik ve Hakkında` ekranı vardır.
+Uygulama içinde ayrıca güncel `Gizlilik ve Hakkında` ekranı vardır.
 
 ## 2. Ads
 
@@ -49,14 +49,38 @@ Reviewer notes gerekiyorsa:
 Gerekçe:
 
 - Instagram/X arşiv verileri yalnız cihaz üzerinde işlenir.
-- Analiz/snapshot verileri yalnız cihazda tutulur.
+- Analiz/snapshot verileri uygulama tarafından cihazda tutulur.
 - Mevcut mimaride ZMila Studio sunucusuna veri gönderilmez.
 - Analytics, reklam veya cloud SDK’sı yoktur.
+- Production release’in merged manifestinde **hiç Android permission bulunmaması** CI ile zorunlu tutulacaktır.
+- Production manifestte `android:allowBackup="false"` vardır ve backup/data-transfer extraction rule’ları app-managed local data domainlerini hariç tutar.
 - Google Play’in Data Safety tanımında yalnız cihazda erişilen/işlenen ve cihaz dışına gönderilmeyen veri “collected” olarak beyan edilmek zorunda değildir.
 
 ### External profile links
 
 Kullanıcı bir hesap satırına dokunarak profil açmayı **kendisi başlatır**. URL, Android üzerinden ilgili sosyal uygulamaya veya tarayıcıya devredilir. Bu kullanıcı tarafından açıkça başlatılan ve beklenen bir eylemdir; Google’ın user-initiated transfer istisnası kapsamında “sharing” olarak beyan edilmesi gerekmeyen akış olarak değerlendirilmiştir.
+
+### Report copy / TXT export
+
+Kullanıcı analiz ekranındaki `Raporu kopyala` veya `TXT olarak kaydet` eylemini **kendisi başlatır**.
+
+- `Raporu kopyala` analiz metnini Android sistem panosuna yazar.
+- `TXT olarak kaydet` analiz metnini Android file picker üzerinden kullanıcının seçtiği dosya hedefine yazar.
+- Rapor hesap kullanıcı adlarını ve kategori sonuçlarını içerebilir.
+- Uygulama bu export’u ZMila Studio sunucusuna göndermez.
+- Bu, kullanıcının kendi verisini açıkça seçtiği hedefe aktardığı user-initiated local export olarak değerlendirilir.
+
+### Android automatic backup
+
+Production release için:
+
+- `android:allowBackup="false"`
+- Android 11 ve altı `backup_rules.xml`
+- Android 12+ `data_extraction_rules.xml`
+
+ile app-managed local analiz verisi cloud backup / backup extraction kapsamı dışında bırakılmıştır.
+
+Android dokümantasyonuna göre bazı OEM/system-level device-to-device migration davranışları uygulamanın tam kontrolü dışında olabilir. Bu nedenle mutlak bir “hiçbir sistem aktarımı olamaz” iddiası kullanılmaz; uygulama tarafından kontrol edilen backup policy’nin kapalı olduğu belirtilir.
 
 ### Local deletion
 
@@ -64,10 +88,11 @@ Kullanıcı bir hesap satırına dokunarak profil açmayı **kendisi başlatır*
 - Geliştirici sunucusunda kullanıcı verisi tutulmaz.
 - Kullanıcı `Yerel Veri Yönetimi` ekranından analiz geçmişini, yok sayılanları veya tüm yerel uygulama verisini silebilir.
 - Android uygulama veri yönetimi / uygulama kaldırma da yerel veriyi temizlemek için kullanılabilir.
+- Kullanıcının ayrıca dışa aktardığı TXT dosyası veya panoya kopyaladığı içerik uygulama sandbox’ı dışında olduğundan bunların silinmesi kullanıcının seçtiği hedef/sistem panosu üzerinden yönetilir.
 
 ### Encryption in transit
 
-Mevcut local analysis akışında geliştirici sunucusuna veri transferi olmadığı için uygulama veri toplama akışına ilişkin “encryption in transit” beyanı uygulanabilir bir veri transferi değildir.
+Mevcut local analysis akışında geliştirici sunucusuna veri transferi olmadığı için uygulama veri toplama akışına ilişkin “encryption in transit” beyanı uygulanabilir bir geliştirici veri transferi değildir.
 
 Harici Instagram/X profili açma işlemi ilgili üçüncü taraf uygulama/tarayıcı tarafından yönetilir.
 
@@ -141,13 +166,17 @@ Bu nedenle Play’in uygulama-içi hesap oluşturan ürünlere yönelik account-
 
 ## 13. Permissions / data access notları
 
-Production `main` manifestinde geniş dosya erişimi veya sosyal medya kimlik bilgisi izni yoktur.
+Production sözleşmesi: **release merged manifestte `<uses-permission>` bulunmayacak.**
 
 - Dosyalar Android sistem file picker üzerinden kullanıcı tarafından seçilir.
 - `MANAGE_EXTERNAL_STORAGE` kullanılmaz.
+- `READ/WRITE_EXTERNAL_STORAGE` kullanılmaz.
+- `READ_MEDIA_*` kullanılmaz.
 - Contacts / SMS / Call Log / Location / Camera / Microphone izinleri istenmez.
-- Debug ve profile Flutter build’leri geliştirme araçları için `INTERNET` iznini kendi manifestlerinden ekler.
-- **Production RC workflow’u**, gerçek release merged manifestinde `android.permission.INTERNET` bulunursa build’i fail edecek şekilde hazırlanmıştır.
+- Production kaynak manifestinde `android:usesCleartextTraffic="false"` vardır.
+- Debug ve profile Flutter build’leri geliştirme araçları için `INTERNET` iznini kendi manifestlerinden ekleyebilir; bu production davranışı değildir.
+- Production workflow gerçek merged release manifestte herhangi bir `<uses-permission>` görülürse fail olur.
+- Production workflow `android:debuggable="true"` veya `android:testOnly="true"` görülürse fail olur.
 
 ## 14. Target API
 
@@ -166,17 +195,23 @@ Production AAB üzerinde de aynı targetSdk final release kontrol listesinde yen
 Aşağıdaki durumlarda bu dosyadaki cevapları otomatik kullanma; yeniden değerlendir:
 
 - canlı Instagram/X API veya OAuth eklenirse,
-- `INTERNET` izni production release’e girerse,
+- production release’e herhangi bir Android permission girerse,
+- `usesCleartextTraffic`, `allowBackup` veya backup/data-extraction policy gevşetilirse,
 - analytics/crash reporting/reklam SDK’sı eklenirse,
 - cloud sync veya kullanıcı hesabı eklenirse,
-- destek formu uygulama içinde kişisel veri göndermeye başlarsa,
+- uygulama içi destek formu kişisel veri göndermeye başlarsa,
 - uygulama çocuk/genç hedef kitleye özel olarak yeniden tasarlanırsa,
 - kullanıcılar arasında mesajlaşma/paylaşım gibi native sosyal özellik eklenirse.
 
-## Resmi Google Play referansları
+## Resmi referanslar
 
+Google Play:
 - Data Safety: https://support.google.com/googleplay/android-developer/answer/10787469
 - User Data / Privacy Policy: https://support.google.com/googleplay/android-developer/answer/10144311
 - Target audience: https://support.google.com/googleplay/android-developer/answer/9867159
 - Content ratings: https://support.google.com/googleplay/android-developer/answer/9898843
 - Target API requirements: https://support.google.com/googleplay/android-developer/answer/11926878
+
+Android:
+- Application manifest / allowBackup: https://developer.android.com/guide/topics/manifest/application-element
+- Android 12 backup/data transfer rules: https://developer.android.com/about/versions/12/behavior-changes-12
