@@ -15,6 +15,7 @@ Android öncelikli, local-first Instagram ve X / Twitter takip ilişkisi analiz 
 - Analiz geçmişi ve yerel veri yönetimi.
 - Analiz raporunu kopyalama veya TXT olarak kaydetme.
 - Instagram ve X arşivi alma rehberleri.
+- Uygulama içi Gizlilik ve Hakkında açıklaması.
 
 ## Gizlilik yaklaşımı
 
@@ -31,13 +32,14 @@ Ayrıntılar: [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md)
 
 - Veri Güvenliği teknik taslağı: [`PLAY_STORE_DATA_SAFETY.md`](PLAY_STORE_DATA_SAFETY.md)
 - Production yayın kapıları: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+- Production upload-key kurulumu: [`SIGNING_SETUP.md`](SIGNING_SETUP.md)
 
 ## Android kimlikleri
 
 - Production package: `com.zmilastudio.takipanalizi`
 - Device-test package: `com.zmilastudio.takipanalizi.dev`
 
-Device-test build’leri production imzasından tamamen ayrıdır.
+Device-test build’leri production imzasından tamamen ayrıdır. Production signing yalnız private `PLAY_UPLOAD_*` environment/secrets değerleri mevcutsa devreye girer.
 
 ## Geliştirme düzeni
 
