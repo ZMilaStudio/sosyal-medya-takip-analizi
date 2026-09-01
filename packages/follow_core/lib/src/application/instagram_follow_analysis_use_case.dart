@@ -9,6 +9,7 @@ class InstagramFollowAnalysisResult extends FollowAnalysisResult {
   const InstagramFollowAnalysisResult({
     required super.snapshot,
     required super.analysis,
+    super.comparedToPrevious,
     required this.followerSourceFiles,
     required this.followingSourceFiles,
   });
@@ -67,6 +68,7 @@ class InstagramFollowAnalysisUseCase {
     return InstagramFollowAnalysisResult(
       snapshot: snapshot,
       analysis: analysis,
+      comparedToPrevious: previous != null,
       followerSourceFiles: imported.followerFiles,
       followingSourceFiles: imported.followingFiles,
     );
