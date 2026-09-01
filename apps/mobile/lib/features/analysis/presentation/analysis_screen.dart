@@ -60,7 +60,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final controller = messenger.showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
-        content: Text('${_userLabel(user, widget.result.snapshot.account.platform)} yok sayıldı.'),
+        content: Text(
+          '${_userLabel(user, widget.result.snapshot.account.platform)} yok sayıldı.',
+        ),
         action: SnackBarAction(
           label: 'Geri al',
           onPressed: () async {
@@ -147,6 +149,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         body: Column(
           children: [
             _Summary(result: result),
+            if (result.comparedToPrevious) _ChangeSummary(result: result),
             Expanded(
               child: TabBarView(
                 children: [
@@ -192,6 +195,90 @@ class _Summary extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ChangeSummary extends StatelessWidget {
+  const _ChangeSummary({required this.result});
+
+  final FollowAnalysisResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final gained = result.analysis.newFollowers.length;
+    final lost = result.analysis.unfollowers.length;
+    final net = gained - lost;
+    final netLabel = net > 0 ? '+$net' : '$net';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: _ChangeMetric(
+                  icon: Icons.person_add_alt_1_outlined,
+                  label: 'Yeni',
+                  value: '+$gained',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ChangeMetric(
+                  icon: Icons.person_remove_outlined,
+                  label: 'Bırakan',
+                  value: '-$lost',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ChangeMetric(
+                  icon: Icons.swap_vert_rounded,
+                  label: 'Net',
+                  value: netLabel,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChangeMetric extends StatelessWidget {
+  const _ChangeMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+      ],
     );
   }
 }
@@ -359,7 +446,9 @@ class _UserListState extends State<_UserList> {
                       leading: CircleAvatar(child: Text(firstCharacter)),
                       title: Text(label),
                       subtitle: idOnly
-                          ? const Text('Arşiv kullanıcı adını vermedi • Profile dokun')
+                          ? const Text(
+                              'Arşiv kullanıcı adını vermedi • Profile dokun',
+                            )
                           : user.displayName == null
                               ? null
                               : Text(user.displayName!),
@@ -406,7 +495,9 @@ class _UserListState extends State<_UserList> {
     if (uri == null) {
       if (_isXIdOnlyUser(user, widget.platform)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bu X hesabının profil bağlantısı arşivde yok.')),
+          const SnackBar(
+            content: Text('Bu X hesabının profil bağlantısı arşivde yok.'),
+          ),
         );
         return;
       }
