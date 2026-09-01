@@ -9,6 +9,12 @@ val deviceTestStorePassword = System.getenv("DEVICE_TEST_STORE_PASSWORD")
 val deviceTestKeyAlias = System.getenv("DEVICE_TEST_KEY_ALIAS")
 val deviceTestKeyPassword = System.getenv("DEVICE_TEST_KEY_PASSWORD")
 
+val playUploadKeystorePath = System.getenv("PLAY_UPLOAD_KEYSTORE_PATH")
+    ?.takeIf { it.isNotBlank() }
+val playUploadStorePassword = System.getenv("PLAY_UPLOAD_STORE_PASSWORD")
+val playUploadKeyAlias = System.getenv("PLAY_UPLOAD_KEY_ALIAS")
+val playUploadKeyPassword = System.getenv("PLAY_UPLOAD_KEY_PASSWORD")
+
 android {
     namespace = "com.zmilastudio.takipanalizi"
     compileSdk = flutter.compileSdkVersion
@@ -42,6 +48,21 @@ android {
                 }
             }
         }
+
+        if (playUploadKeystorePath != null) {
+            create("playUpload") {
+                storeFile = file(playUploadKeystorePath)
+                storePassword = requireNotNull(playUploadStorePassword) {
+                    "PLAY_UPLOAD_STORE_PASSWORD is required for production signing"
+                }
+                keyAlias = requireNotNull(playUploadKeyAlias) {
+                    "PLAY_UPLOAD_KEY_ALIAS is required for production signing"
+                }
+                keyPassword = requireNotNull(playUploadKeyPassword) {
+                    "PLAY_UPLOAD_KEY_PASSWORD is required for production signing"
+                }
+            }
+        }
     }
 
     buildTypes {
@@ -57,10 +78,14 @@ android {
             }
         }
         release {
-            // Production signing is intentionally not wired to the public
-            // device-test key. A separate private Play signing setup will be
-            // configured before release.
-            signingConfig = null
+            // Production signing is isolated from the public device-test key.
+            // A release is signed only when the private Play upload-key
+            // environment is explicitly provided by a secure CI/local setup.
+            signingConfig = if (playUploadKeystorePath != null) {
+                signingConfigs.getByName("playUpload")
+            } else {
+                null
+            }
         }
     }
 }
