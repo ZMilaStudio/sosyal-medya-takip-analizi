@@ -78,11 +78,11 @@ Analiz sonucunu kopyalayabilir veya TXT dosyası olarak kaydedebilirsin. Analiz 
 
 ### Gizlilik yaklaşımı
 
-Takip arşivleri geliştirici sunucusuna yüklenmez. Mevcut uygulama analiz için internet bağlantısı gerektirmez ve Android INTERNET izni istemez. Bir sosyal medya profilini açmayı seçersen bağlantı ilgili üçüncü taraf uygulamaya veya tarayıcıya devredilir.
+Takip arşivleri geliştirici sunucusuna yüklenmez; analiz cihazda kalacak şekilde tasarlanmıştır. Flutter geliştirme build’leri debug araçları için internet izni içerebilir, ancak production release hattı merged release manifestinde Android INTERNET izni bulunursa build’i kabul etmeyecek şekilde hazırlanmıştır. Bir sosyal medya profilini açmayı seçersen bağlantı kullanıcı tarafından başlatılan bir işlem olarak ilgili üçüncü taraf uygulamaya veya tarayıcıya devredilir.
 
 Takip Analizi bağımsız bir ZMila Studio uygulamasıdır; Instagram veya X tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
 
-Tam açıklama yaklaşık 1.917 karakterdir ve 4.000 karakter sınırının altındadır.
+Tam açıklama 4.000 karakter sınırının altındadır.
 
 ## Etiket yaklaşımı
 
@@ -125,17 +125,13 @@ Production RC’den sonra gerçek uygulama ekranlarından seçilecek:
 
 Mockup yerine gerçek uygulama ekranları temel alınacak.
 
-## Mağaza iletişim bilgileri — BLOCKER
+## Mağaza iletişim bilgileri
 
-Google Play store listing için **destek e-postası zorunludur**. Resmi destek e-postası henüz bu repoda tanımlı değildir; tahmin edilmeyecek veya uydurulmayacaktır.
+- Destek e-postası: `zmilastudio@gmail.com`
+- Destek web sitesi: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
+- Gizlilik politikası URL’si: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
 
-Production öncesi doldurulacak:
-
-- Destek e-postası: `BEKLİYOR`
-- Destek web sitesi: `BEKLİYOR`
-- Gizlilik politikası URL’si: `BEKLİYOR`
-
-Bu üç alan kesinleşmeden production listing tamamlanmış sayılmayacaktır.
+Bu sayfalar public repoda yayınlanmıştır ve uygulama hesabı/giriş gerektirmez.
 
 ## Metadata güvenlik kontrolü
 
