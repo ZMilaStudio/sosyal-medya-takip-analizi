@@ -49,7 +49,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - v2-29 Son hesaplar + geçmiş filtreleri: `5695b525a729dc7cf316e17928b5c4534383012f`, run `33527062959`, backup `backup/device-v2-29-recent-history-filters-ci-working`, tam CI success.
 - v2-30 geçmiş veri yönetimi: `804fb57255231ca349d83443135d32747f74284b`, run `33527775313`, backup `backup/device-v2-30-history-data-management-ci-working`, tam CI success.
 - v2-32 rapor export: `0959d2775ef8454103f1eddaccd89d4627bf6788`, run `33528930054`, backup `backup/device-v2-32-report-export-ci-working`, tam CI success.
-- **v2-37 product polish:** `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`, run `33531313731`, backup `backup/device-v2-37-product-polish-ci-working`, **tam CI success**. Analyze, 22 test, physical-device wiring, imzalı APK, package/version, exact launcher ve sertifika doğrulaması geçti.
+- **v2-37 product polish:** `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`, run `33531313731`, backup `backup/device-v2-37-product-polish-ci-working`, **tam CI success**. Analyze, tüm testler, physical-device wiring, imzalı APK, package/version, exact launcher ve sertifika doğrulaması geçti.
 
 ## v2-37 release bilgisi
 - Prerelease tag: `device-test-v2-37`.
@@ -71,7 +71,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - X profil linkleri harici uygulamada açılır.
 - Uygulama içi `X Arşivi Nasıl İndirilir?` rehberi vardır; resmi X ayarları → Hesabın → veri arşivini iste/doğrula/indir akışı ve büyük arşiv `follower.js + following.js` fallback anlatılır.
 
-## CI doğrulanmış UX / yönetim
+## CI doğrulanmış UX / yönetim — v2-37
 - Son hesaplar hızlı seçim.
 - Geçmişte platform + hesap filtreleri.
 - Manuel iki snapshot karşılaştırma.
@@ -87,6 +87,42 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - #35 `33530671363`: Analyze success; test `scrollable:` parametresi yanlış widget türü nedeniyle fail; APK skipped.
 - #36 `33530990276`: Analyze success; Yerel Veri testi geçti, yalnız Home smoke yatay TextField Scrollable’larını da saydığı için fail; APK skipped.
 - **#37 `33531313731`: TAM SUCCESS.** Dikey Scrollable filtresi sonrası tüm testler geçti; signed APK üretildi, exact launcher/package/version/certificate kontrolleri ve prerelease yayını geçti.
+
+## Aktif geliştirme — `dev/release-polish-v1`
+Taban: v2-37 güvenli baseline + son proje özeti.
+
+### Gizlilik / Play hazırlığı
+- `PRIVACY_POLICY.md`: Türkçe + İngilizce gizlilik politikası taslağı eklendi.
+- `PLAY_STORE_DATA_SAFETY.md`: mevcut local-first mimariye göre Play Veri Güvenliği teknik taslağı eklendi.
+- `RELEASE_CHECKLIST.md`: production yayın kapıları oluşturuldu.
+- `README.md`: güncel özellikler, gizlilik yaklaşımı, package kimlikleri ve release dokümanlarıyla yenilendi.
+- Kalıcı public privacy URL + resmi destek iletişim kanalı **production blocker** olarak açık bırakıldı; sahte/varsayımsal iletişim bilgisi eklenmedi.
+
+### Uygulama içi Gizlilik ve Hakkında
+- Yeni route: `/about-privacy`.
+- Yeni ekran: `apps/mobile/lib/features/about/presentation/about_privacy_screen.dart`.
+- Ana ekrandaki `Geçmiş ve yönetim` kartına `Gizlilik ve Hakkında` girişi eklendi.
+- Ekran local-first, şifre istememe, seçili dosya erişimi, yerel geçmiş, dış bağlantılar ve ZMila Studio geliştirici bilgisini açıklar.
+- `Yerel verilerimi yönet` düğmesi `/data-management` ekranına gider.
+- Home smoke testi yeni girişi doğrulayacak şekilde güncellendi.
+- `about_privacy_screen_test.dart` eklendi; test viewport bağımsız dikey scroll kullanıyor.
+
+### Production signing scaffold
+- `.gitignore` private `*.jks`, `*.keystore`, `*.p12`, `*.pem`, `*.key`, `key.properties`, `.env*` dosyalarını engelliyor.
+- Gradle release signing yalnız `PLAY_UPLOAD_KEYSTORE_PATH`, `PLAY_UPLOAD_STORE_PASSWORD`, `PLAY_UPLOAD_KEY_ALIAS`, `PLAY_UPLOAD_KEY_PASSWORD` environment değerleri sağlanırsa `playUpload` signing config kullanır.
+- Environment yoksa production release imzası `null`; public device-test key’e fallback yok.
+- `SIGNING_SETUP.md` secret adları, fingerprint doğrulaması, base64 hazırlama ve recovery prosedürünü açıklar.
+- `.github/workflows/production-rc-aab.yml` eklendi; **yalnız manuel `workflow_dispatch`** ile çalışır.
+- Workflow gerçek private secrets olmadan build’e başlamaz; upload key fingerprint’ini build öncesi ve AAB sonrası doğrular.
+- Production RC artifact retention **1 gün**.
+- Gerçek Play upload key / GitHub Secrets henüz tanımlanmadı ve production workflow çalıştırılmadı.
+
+### Release-polish doğrulama durumu
+- Kod/test paketi hazır.
+- Henüz `test/device-apk` üzerine alınmadı.
+- Henüz yeni Device Test CI run yok.
+- Sıradaki işlem: v2-37 baseline’a karşı diff kontrolü → branch başını `test/device-apk` üzerine tek fast-forward → Analyze + tüm testler + signed debug APK + package/version/exact launcher/certificate doğrulaması.
+- Küçük fiziksel PASS istenmeyecek.
 
 ## Test APK imza sistemi
 - Paket `com.zmilastudio.takipanalizi.dev`.
@@ -112,16 +148,19 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] rapor export
 - [x] Yerel Veri Yönetimi
 - [x] X arşiv rehberi
-- [x] product-polish paketinin tam CI doğrulaması
+- [x] v2-37 product-polish tam CI doğrulaması
+- [~] Gizlilik ve Hakkında + release signing scaffold — kod hazır, CI bekliyor
 
 ## Branch durumu
 - `test/device-apk`: `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a` — v2-37 tam CI success.
-- `dev/product-polish-batch`: v2-37 kodu + bu docs güncellemesi.
-- **Yeni tam çalışan rollback:** `backup/device-v2-37-product-polish-ci-working` → `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`.
+- `backup/device-v2-37-product-polish-ci-working`: `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a` — güncel güvenli rollback.
+- `dev/product-polish-batch`: v2-37 ürün polish hattı.
+- `dev/release-polish-v1`: aktif production hazırlık hattı; gizlilik ekranı + policy/docs + production signing scaffold + testler hazır.
 - Önceki rollback `backup/device-v2-32-report-export-ci-working` korunuyor.
 
 ## Sıradaki iş
-- v2-37 artık güvenli CI baseline.
-- Küçük fiziksel PASS istenmeyecek.
-- Sonraki geliştirme hattı: release polish / production hazırlığı ve kalan MVP boşluklarını tek toplu paket halinde ele al.
-- X gerçek arşiv fiziksel testi yalnız kritik doğrulama noktasında yapılacak.
+1. `dev/release-polish-v1` diff’ini v2-37 baseline’a karşı kontrol et.
+2. Beklenmeyen dosya/regression yoksa tek fast-forward ile `test/device-apk` üzerine al.
+3. Tek Device Test Actions run’ını tam success’e kapat.
+4. Success olursa yeni release-polish backup baseline oluştur ve bu dosyayı güncelle.
+5. Sonra Play Store listing metinleri + privacy/support URL yayınlama + gerçek private Play upload key aşamasına geç.
