@@ -40,9 +40,9 @@ X arşivinde takip ilişkisi analizi için gerekli olmayan medya, gönderi ve do
 
 Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen bir sunucuya gönderilmez ve üçüncü taraflarla paylaşılmaz.
 
-Production kaynak manifesti analiz için `INTERNET` izni istemeyecek şekilde yapılandırılmıştır. Flutter’ın debug/profile geliştirme build’leri; hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir. Google Play’e gönderilecek production AAB, release merged manifestinde bu iznin bulunmaması için otomatik kontrol edilecektir.
+Production kaynak manifesti analiz için herhangi bir Android `uses-permission` istemeyecek şekilde hazırlanmıştır. Flutter’ın debug/profile geliştirme build’leri; hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir. Google Play’e gönderilecek production AAB, release merged manifestinde herhangi bir Android permission bulunmaması için otomatik kontrol edilecektir.
 
-Production Android yapılandırması ayrıca uygulama verileri için `android:allowBackup="false"` kullanır ve eski/yeni Android backup kurallarında yerel uygulama verilerini cloud backup ile cihazlar arası veri aktarımından hariç tutar. Bu yapılandırma, analiz geçmişi ve uygulama tercihlerini Android’in otomatik yedekleme altyapısına dahil etmemeyi amaçlar. Bazı cihaz üreticilerinin sistem seviyesindeki doğrudan cihaz taşıma davranışları Android tarafından kontrol edilebilir ve uygulamanın tam denetimi dışında olabilir.
+Production Android yapılandırması `android:usesCleartextTraffic="false"` kullanır. Ayrıca uygulama verileri için `android:allowBackup="false"` kullanır ve eski/yeni Android backup kurallarında yerel uygulama verilerini cloud backup ile cihazlar arası veri aktarımından hariç tutar. Bu yapılandırma, analiz geçmişi ve uygulama tercihlerini Android’in otomatik yedekleme altyapısına dahil etmemeyi amaçlar. Bazı cihaz üreticilerinin sistem seviyesindeki doğrudan cihaz taşıma davranışları Android tarafından kontrol edilebilir ve uygulamanın tam denetimi dışında olabilir.
 
 Analiz, geçmiş ve kullanıcı tercihleri cihazın yerel depolamasında tutulur.
 
@@ -54,7 +54,18 @@ Uygulama yalnızca kullanıcının Android sistem dosya seçicisi üzerinden aç
 
 Uygulama cihazdaki tüm dosyalara genel erişim istemez.
 
-## 5. Yerel veri saklama ve silme
+## 5. Rapor kopyalama ve TXT dışa aktarma
+
+Takip Analizi analiz raporunu uygulama dışına çıkarmak için iki kullanıcı kontrollü seçenek sunabilir:
+
+- **Raporu kopyala:** analiz metnini Android sistem panosuna yazar.
+- **TXT olarak kaydet:** analiz metnini Android dosya seçicisi üzerinden kullanıcının seçtiği dosya hedefine yazar.
+
+Rapor; analiz edilen hesap adını, kategori sonuçlarını ve listelerdeki sosyal medya kullanıcı adlarını içerebilir. Bu işlemler yalnız kullanıcı açıkça seçtiğinde gerçekleşir ve rapor ZMila Studio sunucusuna gönderilmez.
+
+Sistem panosuna kopyalanan içerik ve kullanıcının seçtiği harici konuma kaydedilen TXT dosyası uygulamanın private veri alanının dışında olabilir. Bunların daha sonra saklanması, paylaşılması veya silinmesi kullanıcının cihazı, seçtiği dosya hedefi ve ilgili sistem/üçüncü taraf uygulamaları tarafından yönetilebilir.
+
+## 6. Yerel veri saklama ve silme
 
 Analiz snapshot’ları ve “Yok say” tercihleri cihazda yerel olarak saklanabilir. Bu veriler, takip değişikliklerini zaman içinde karşılaştırabilmek için kullanılır.
 
@@ -68,25 +79,29 @@ silebilir.
 
 Uygulamanın silme işlemleri Instagram veya X hesabındaki gerçek verilere dokunmaz.
 
+Yerel Veri Yönetimi, kullanıcının daha önce sistem panosuna kopyaladığı içeriği veya uygulama dışındaki bir hedefe kaydettiği TXT raporunu otomatik olarak silemez; bunlar kullanıcı tarafından ilgili hedefte yönetilir.
+
 Uygulama kaldırıldığında Android’in uygulama verisi yönetimi kapsamında yerel uygulama verileri de cihazdan kaldırılabilir.
 
-## 6. Çocukların gizliliği
+## 7. Çocukların gizliliği
 
 Takip Analizi çocuklara yönelik olarak tasarlanmamıştır ve bilerek çocuklardan kişisel veri toplamayı amaçlamaz.
 
-## 7. Güvenlik
+## 8. Güvenlik
 
-Uygulamanın temel güvenlik yaklaşımı; sosyal medya kimlik bilgilerini hiç toplamamak, analizi cihaz üzerinde tutmak, production build’de geliştirici sunucusuna analiz verisi gönderecek ağ izni kullanmamak ve uygulama tarafından yönetilen yerel analiz verisini Android otomatik backup kapsamının dışında tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
+Uygulamanın temel güvenlik yaklaşımı; sosyal medya kimlik bilgilerini hiç toplamamak, analizi cihaz üzerinde tutmak, production build’de Android permission istememek, cleartext trafiği kapatmak ve uygulama tarafından yönetilen yerel analiz verisini Android otomatik backup kapsamının dışında tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
 
-## 8. Üçüncü taraf hizmetler ve dış bağlantılar
+## 9. Üçüncü taraf hizmetler ve dış bağlantılar
 
 Takip Analizi Instagram veya X hesabında işlem yapmaz. Kullanıcı isteğiyle açılan harici profil bağlantıları Instagram, X, tarayıcı veya cihazdaki başka bir uygulama tarafından işlenebilir. Bu hizmetlerin veri işleme uygulamaları kendi gizlilik politikalarına tabidir.
 
-## 9. Politika değişiklikleri
+Kullanıcı tarafından dışa aktarılan TXT raporunun üçüncü taraf bir dosya sağlayıcısı, bulut sürücüsü veya başka bir uygulama üzerinden saklanması/paylaşılması halinde sonraki veri işleme ilgili hizmetin politikasına tabidir.
+
+## 10. Politika değişiklikleri
 
 Uygulamanın veri işleme davranışı değişirse bu gizlilik politikası da güncellenecektir. Özellikle ileride canlı API, bulut senkronizasyonu, reklam, analitik veya başka bir ağ tabanlı özellik eklenirse bu metin ve Play Console Veri Güvenliği beyanları yeniden değerlendirilmelidir.
 
-## 10. Geliştirici ve iletişim
+## 11. Geliştirici ve iletişim
 
 Geliştirici: **ZMila Studio**  
 Uygulama: **Takip Analizi**  
@@ -137,11 +152,11 @@ X archive content unrelated to follow-relationship analysis, such as media, post
 
 ## 3. Collection, network access, and sharing
 
-Under the current architecture, analysis data is not sent to a server operated by ZMila Studio and is not shared with third parties.
+Under the current architecture, analysis data is not sent to a server operated by ZMila Studio and is not shared with third parties by the app.
 
-The production source manifest is configured so that analysis does not request the `INTERNET` permission. Flutter debug/profile development builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling. The production AAB workflow will automatically verify that the merged release manifest does not contain this permission before the package is accepted as a release candidate.
+The production source manifest is designed to request no Android `uses-permission` entries. Flutter debug/profile development builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling. The production AAB workflow will automatically reject a merged release manifest containing any Android permission.
 
-The production Android configuration also sets `android:allowBackup="false"` and defines legacy/current Android backup rules that exclude app-managed local data from cloud backup and device-transfer extraction. This is intended to keep analysis history and app preferences out of Android automatic backup infrastructure. Some system-level direct device migration behavior can be controlled by Android or the device manufacturer and may be outside the app’s complete control.
+The production Android configuration sets `android:usesCleartextTraffic="false"`. It also sets `android:allowBackup="false"` and defines legacy/current Android backup rules that exclude app-managed local data from cloud backup and device-transfer extraction. This is intended to keep analysis history and app preferences out of Android automatic backup infrastructure. Some system-level direct device migration behavior can be controlled by Android or the device manufacturer and may be outside the app’s complete control.
 
 Analysis results, history, and user preferences are stored locally on the device.
 
@@ -151,7 +166,18 @@ If the user chooses to open a social profile, the link is handed off to an exter
 
 The app accesses only archive or relationship files explicitly selected through the Android system file picker. It does not request broad access to all files on the device.
 
-## 5. Local storage and deletion
+## 5. Report copy and TXT export
+
+Takip Analizi can offer two user-controlled ways to export an analysis report:
+
+- **Copy report:** writes the analysis text to the Android system clipboard.
+- **Save as TXT:** writes the analysis text to a file destination explicitly selected by the user through the Android file picker.
+
+A report can contain the analyzed account name, category results, and social-media usernames shown in the analysis lists. These actions occur only when initiated by the user, and the report is not sent to a ZMila Studio server.
+
+Clipboard content and a TXT file saved to a user-selected external destination can exist outside the app’s private data area. Their later storage, sharing, or deletion can be handled by the user’s device, selected storage provider, or other applications.
+
+## 6. Local storage and deletion
 
 Analysis snapshots and ignored-account preferences may be stored locally to support historical comparisons.
 
@@ -161,25 +187,31 @@ The **Local Data Management** screen allows the user to delete:
 - ignored-account data,
 - all local application data managed by the app.
 
-These actions do not alter data on Instagram or X. Local application data may also be removed through Android app-data management or when the app is uninstalled, subject to Android device behavior.
+These actions do not alter data on Instagram or X.
 
-## 6. Children’s privacy
+Local Data Management cannot automatically delete content previously copied to the system clipboard or a TXT report saved to a destination outside the app; those are managed by the user at the relevant destination.
+
+Local application data may also be removed through Android app-data management or when the app is uninstalled, subject to Android device behavior.
+
+## 7. Children’s privacy
 
 Takip Analizi is not designed for children and does not intentionally seek to collect personal data from children.
 
-## 7. Security
+## 8. Security
 
-The app’s security approach is to avoid collecting social-media credentials, keep analysis on the device, avoid a production network permission for developer-operated analysis transfer, and exclude app-managed local analysis data from Android automatic backup rules. No device or software environment can provide an absolute security guarantee.
+The app’s security approach is to avoid collecting social-media credentials, keep analysis on the device, request no Android permissions in the production release, disable cleartext traffic, and exclude app-managed local analysis data from Android automatic backup rules. No device or software environment can provide an absolute security guarantee.
 
-## 8. Third-party services and external links
+## 9. Third-party services and external links
 
 Takip Analizi does not perform actions on Instagram or X accounts. External profile links opened at the user’s request may be handled by Instagram, X, a browser, or another installed application. Their data practices are governed by their own privacy policies.
 
-## 9. Changes to this policy
+If the user saves or shares an exported TXT report through a third-party file provider, cloud drive, or another application, subsequent processing is governed by that service’s privacy practices.
+
+## 10. Changes to this policy
 
 If network APIs, cloud sync, advertising, analytics, or other data-processing features are added later, this policy and the Google Play Data safety declarations must be reviewed and updated.
 
-## 10. Developer and contact
+## 11. Developer and contact
 
 Developer: **ZMila Studio**  
 App: **Takip Analizi**  
