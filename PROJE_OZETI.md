@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 1 Eylül 2026
+Son güncelleme: 2 Eylül 2026
 
 ## Çalışma protokolü
 - Her yeni çalışma başlangıcında bu dosya okunur; bu dosya + canlı GitHub repo gerçeklik kaynağıdır.
@@ -143,7 +143,7 @@ Amaç: Drift snapshot DB, SharedPreferences Yok say tercihleri ve app-managed lo
   `com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`,
 - bunun dışında başka permission görülürse fail olur.
 
-Bu production merged-manifest guard’ı gerçek private signing olmadığı için henüz gerçek production AAB üzerinde çalıştırılmadı.
+Bu production merged-manifest guard’ı gerçek private signing ile production AAB üzerinde henüz çalıştırılmadı.
 
 ## Uygulama içi gizlilik güncellemesi
 `Gizlilik ve Hakkında` ekranı artık açıkça anlatır:
@@ -185,21 +185,33 @@ Privacy widget testi v2-39 CI’da PASS aldı.
 
 Gerçek production upgrade/veri-koruma testi ancak production 1.0.0 yayımlandıktan sonra versionCode>1 aynı `com.zmilastudio.takipanalizi` package üzerinde yapılabilir.
 
-## Production signing
+## Production signing — UPLOAD KEY HAZIR
 - Device-test public key production için kullanılmaz.
-- Private production upload key henüz oluşturulmadı/bağlanmadı.
+- Kullanıcının açık onayıyla **2 Eylül 2026** tarihinde yeni private production upload key oluşturuldu.
+- Private keystore/parolalar **repoya commit edilmedi**.
+- Yerel güvenli signing paketi oluşturuldu; içinde `.jks`, public PEM certificate, GitHub Secrets değer dosyası, recovery bilgisi ve checksum listesi bulunur.
+- Keystore türü: JKS.
+- Alias: `takip-upload`.
+- Key algorithm: RSA 3072.
+- Signature algorithm: `SHA256withRSA`.
+- Validity: 10000 gün.
+- DN: `CN=Takip Analizi Upload, OU=Android Release, O=ZMila Studio, C=TR`.
+- Upload certificate SHA-256: `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
+- Keystore certificate fingerprint ile export edilen PEM fingerprint’i bağımsız olarak birebir eşleşti: **PASS**.
+- Private key ile gerçek JAR signing self-test: **PASS**.
+- Keystore dosya SHA-256: `4ff8c92eb4ca8074d75791d3a753c1290232bb13b79aa121c26fe059f788a192`.
 - Google Play App Signing modelinde:
-  - geliştiricide private **upload key**,
+  - geliştiricide bu private **upload key**,
   - Google Play’de ayrı **app signing key** bulunur.
 - `SIGNING_SETUP.md` bu ayrımı, SHA fingerprint kontrolünü, PEM certificate export ve upload-key reset/recovery akışını açıklar.
-- Upload key Java `.jks/.keystore`, RSA en az 2048 bit.
 - Production workflow beklenen secrets:
   - `PLAY_UPLOAD_KEYSTORE_B64`
   - `PLAY_UPLOAD_STORE_PASSWORD`
   - `PLAY_UPLOAD_KEY_ALIAS`
   - `PLAY_UPLOAD_KEY_PASSWORD`
   - `PLAY_UPLOAD_CERT_SHA256`
-- Kullanıcının açık onayı olmadan private key oluşturma veya production signing workflow çalıştırma.
+- GitHub bağlı aracında repository secret write API güvenlik nedeniyle desteklenmiyor; secret değerleri güvenli dosyada hazırlandı ancak GitHub hesabına henüz girilmedi.
+- Production workflow secret’lar girilmeden çalıştırılmayacak.
 
 ## Privacy / support — TAMAMLANDI
 Public `main`:
@@ -292,13 +304,13 @@ Tüm demo isimleri sentetiktir; gerçek kişi verisi yok. ZIP’ler APK/AAB içi
 - `backup/device-v2-39-release-hardening-ci-working` → aynı tested commit.
 - `backup/pre-production-hardening-ci` → aynı pre/post-batch tested head `0816b881...`.
 - `backup/device-v2-38-release-polish-ci-working` önceki güvenli baseline olarak korunuyor.
-- `dev/release-polish-v1` v2-39 tested commitin ilerisinde yalnız production workflow/docs düzeltmeleri içeriyor; son v2-39 sonrası düzeltmeler yeni Device Test run gerektirmiyor çünkü app runtime kodu değişmedi.
+- `dev/release-polish-v1` v2-39 tested commitin ilerisinde production workflow/docs/signing hazırlığı içeriyor; son v2-39 sonrası değişiklikler yeni Device Test run gerektirmiyor çünkü app runtime kodu değişmedi.
 - Public `main` privacy/support yayın belgelerini içeriyor.
 
 ## Production’a kalan ana kapılar
 1. Google Play App Signing durumunu Play Console’da doğrula.
-2. Kullanıcı onayıyla doğru private upload key oluştur/kullan.
-3. `PLAY_UPLOAD_*` GitHub Secrets değerlerini güvenli biçimde tanımla.
+2. **TAMAMLANDI:** private production upload key oluşturuldu ve self-test edildi.
+3. `PLAY_UPLOAD_*` GitHub Secrets değerlerini hazırlanmış güvenli dosyadan repository secrets alanına gir.
 4. Manuel production RC AAB workflow’unu `1.0.0 / 1` ile çalıştır.
 5. Gerçek production AAB’de package/version/API36/signing/merged manifest permission-backup-cleartext guard’larını PASS kapat.
 6. Play Console Data Safety / IARC / target audience / app access alanlarını tamamla.
@@ -308,6 +320,8 @@ Tüm demo isimleri sentetiktir; gerçek kişi verisi yok. ZIP’ler APK/AAB içi
 
 ## Sıradaki iş
 - v2-39 CI başarılı; **yeni Device Test Actions çalıştırma**.
-- Sonraki gerçek teknik blocker private Play upload signing’dir.
-- Kullanıcı onayı olmadan private key/secrets üretme veya production workflow çalıştırma.
-- Production signing aşamasına geçilene kadar doküman/görsel plan dışındaki runtime geliştirmeyi gereksiz yere açma.
+- Private upload key artık hazır.
+- Sıradaki blocker: GitHub repository secrets’in güvenli biçimde girilmesi + Play Console App Signing durumunun doğrulanması.
+- GitHub bağlı araç secret write API sunmadığı için secret değerlerini repoya veya sohbete yazma; `GITHUB_SECRETS.txt` güvenli paketinden kullanıcı GitHub Settings’e girmeli.
+- Secret’lar girilmeden production workflow çalıştırma.
+- Production signing aşaması dışında runtime geliştirmeyi gereksiz yere açma.
