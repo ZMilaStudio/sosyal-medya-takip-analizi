@@ -1,4 +1,5 @@
 export 'src/analysis/follow_analysis_engine.dart';
+export 'src/application/follow_analysis_result.dart';
 export 'src/application/instagram_follow_analysis_use_case.dart';
 export 'src/application/x_follow_analysis_use_case.dart';
 export 'src/importers/instagram/instagram_archive_importer.dart';
