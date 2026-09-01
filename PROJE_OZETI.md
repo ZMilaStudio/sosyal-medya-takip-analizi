@@ -48,7 +48,7 @@ Ana gerçek Meta export doğrulaması:
 - İki gerçek liste de fiziksel cihazda render edildi ve kullanıcı PASS verdi.
 - Sonuç: otomatik previous → current karşılaştırma → current snapshot kaydı akışı gerçek Meta arşivleriyle TAM PASS.
 
-## Fiziksel çalışan baselines
+## Fiziksel / CI çalışan baselines
 ### v2-16 — liste baseline
 - commit `90059b024cc844a101a84ac076e49a22d12b86b6`
 - backup `backup/device-v2-16-working-baseline`
@@ -87,15 +87,21 @@ Ana gerçek Meta export doğrulaması:
 - kullanıcının sohbete yüklediği raster görsel doğrudan launcher olarak kullanılıyor ve fiziksel Samsung’da PASS.
 - launcher asset: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`
 - asset SHA-256 `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
-- Manifest doğrudan `@drawable/takip_launcher_user` kullanıyor; eski vektör launcher çözümü final değildir.
+- Manifest doğrudan `@drawable/takip_launcher_user` kullanıyor.
 
 ### v2-28 — X arşiv entegrasyon baseline
-- `test/device-apk` kaynak commit `adebabb4eecca456d4af1efd289ab7324825c66b`
+- kaynak commit `adebabb4eecca456d4af1efd289ab7324825c66b`
 - workflow run `33516696991`
 - Analyze + tüm testler + APK build + imza + exact launcher doğrulaması tamamen success.
 - backup `backup/device-v2-28-x-archive-ci-working`
-- Bu baseline X arşiv desteğinin toplu CI doğrulanmış geri dönüş noktasıdır.
-- Kullanıcı kararı gereği bu özellik için küçük küçük fiziksel PASS turu yapılmadı.
+- X arşiv desteğinin toplu CI doğrulanmış geri dönüş noktasıdır.
+
+### v2-29 — Son hesaplar + geçmiş filtreleri
+- kaynak commit `5695b525a729dc7cf316e17928b5c4534383012f`
+- workflow run `33527062959`
+- Analyze + tüm testler + APK build + imza + exact launcher doğrulaması tamamen success.
+- backup `backup/device-v2-29-recent-history-filters-ci-working`
+- Ana ekranda Son hesaplar hızlı seçimi ve geçmişte platform/hesap filtreleri CI doğrulandı.
 
 ## Manuel iki snapshot karşılaştırma
 - kaynak commit `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
@@ -104,7 +110,6 @@ Ana gerçek Meta export doğrulaması:
 - Analiz Geçmişi ekranında `Karşılaştır` modu eklendi.
 - Kullanıcı iki kayıt seçer; yalnız aynı platform + aynı hesap kabul edilir.
 - Kayıtlar tarihe göre eski/yeni sıralanır ve standart 5 sekmeli analiz ekranında farklar gösterilir.
-- Bu özellik için kullanıcıdan ayrı fiziksel PASS istenmeyecek; toplu sürüm içinde değerlendirilecek.
 
 ## X arşiv desteği — CI doğrulanmış
 ### X parser/importer
@@ -122,7 +127,7 @@ Ana gerçek Meta export doğrulaması:
 - ZIP ve direct JS dosya akışları desteklenir.
 - X snapshot’ları aynı Drift geçmiş veritabanına kaydedilir.
 - Previous snapshot varsa Takibi Bırakanlar/Yeni Takipçiler otomatik hesaplanır.
-- Ortak `FollowAnalysisResult` soyut modeli eklendi; analiz ekranı Instagram/X ortak hale getirildi.
+- Ortak `FollowAnalysisResult` soyut modeli ile analiz ekranı Instagram/X ortak hale getirildi.
 
 ### X mobil akış
 - Ana ekrandaki X `Yakında` durumu kaldırıldı.
@@ -134,18 +139,31 @@ Ana gerçek Meta export doğrulaması:
 - Analiz Geçmişi Instagram + X snapshot’larını birlikte listeler ve platform etiketini gösterir.
 - Yok sayılan hesaplar `ignored_accounts.<platform>.<owner>` anahtarıyla platform bazında ayrıldı; mevcut Instagram anahtar biçimi geriye uyumludur.
 
-## Ana ekran + geçmiş UX geliştirme paketi — `dev/recent-accounts-home`
-- X CI baseline’ı üzerinden açıldı; Actions tetiklemeden toplu hazırlanıyor.
+## Ana ekran + geçmiş UX — CI doğrulanmış
 - `recentFollowAccountsProvider` cihaz geçmişinden platform+hesap bazında en son kayıtları çıkarır; en fazla 6 hesap gösterilir.
-- Ana ekrana `Son hesaplar` kartı eklendi.
-- Son hesap satırında platform, kullanıcı adı, takipçi/takip edilen sayısı ve son analiz tarihi gösterilir.
+- Ana ekranda `Son hesaplar` kartı bulunur.
+- Satırda platform, kullanıcı adı, takipçi/takip edilen sayısı ve son analiz tarihi gösterilir.
 - Satıra dokununca ilgili Instagram/X kullanıcı adı alanı otomatik doldurulur.
-- Yeni Instagram/X snapshot kaydı sonrası recent provider invalidate edilir; kart güncel kalır.
-- Analiz Geçmişi ekranına platform filtresi (`Tümü / Instagram / X`) eklendi.
-- Aynı ekranda kayıtlı hesaplara göre ikinci filtre eklendi.
+- Yeni Instagram/X snapshot kaydı sonrası recent provider invalidate edilir.
+- Analiz Geçmişi ekranında platform filtresi (`Tümü / Instagram / X`) vardır.
+- Kayıtlı hesaba göre ikinci filtre vardır.
 - Filtre değiştiğinde görünmeyen manuel karşılaştırma seçimleri temizlenir.
 - Filtre sonucu kayıt yoksa ayrı boş durum gösterilir.
-- Son kod commit: `c492f375f4c28f5276beccb01e4f075dcc4e3053` (özet commitinden önce).
+- Bu paket workflow run `33527062959` ile tamamen success.
+
+## Veri yönetimi geliştirme paketi — `dev/history-data-management`
+- v2-29 CI baseline üzerinden açıldı; Actions tetiklemeden hazırlanıyor.
+- `FollowHistoryDatabase.deleteSnapshot(snapshotId)` eklendi.
+- Tek snapshot silinince ilişkiler temizlenir; hesapta başka snapshot yoksa hesap kaydı da kaldırılır; orphan sosyal kullanıcı kayıtları temizlenir.
+- `FollowHistoryDatabase.deleteAccountHistory(account)` eklendi.
+- Hesabın tüm snapshot/ilişki geçmişi silinir; başka hesapların geçmişi korunur.
+- Geçmiş kartlarında üç nokta menüsünden `Bu analizi sil` eklendi.
+- Hesap filtresi seçiliyken `Bu hesabın geçmişini sil` eylemi görünür.
+- Her iki silme işlemi de onay diyaloğu ister.
+- Hesap geçmişini silmek Yok Sayılan Hesaplar listesini etkilemez.
+- Silme sonrası snapshot history ve Son hesaplar provider’ları invalidate edilir.
+- Veritabanı testlerine tek snapshot silme ve yalnız seçili hesabın geçmişini silme senaryoları eklendi.
+- Son kod commit `dcece3bcb4ef3c1875690c8f8f07f945811bdf8d` (bu özet commitinden önce).
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -166,7 +184,7 @@ Ana gerçek Meta export doğrulaması:
 - [x] arama/sıralama
 - [x] 5 sekme
 - [x] gerçek otomatik snapshot karşılaştırma
-- [x] iki keyfi snapshot’ı manuel seçip karşılaştırma — kod + CI success
+- [x] iki keyfi snapshot’ı manuel seçip karşılaştırma
 
 ### X
 - [x] X ilişki JS parser
@@ -183,11 +201,13 @@ Ana gerçek Meta export doğrulaması:
 ### UX / yönetim
 - [x] platformlar arası ortak geçmiş
 - [x] manuel snapshot karşılaştırma
-- [x] Son hesaplar hızlı kullanıcı adı doldurma — dev branch
-- [x] geçmişte platform filtresi — dev branch
-- [x] geçmişte hesap filtresi — dev branch
-- [ ] analiz geçmişinden kayıt silme / hesap geçmişini temizleme
-- [ ] uygulama içi veri yönetimi ve dışa aktarma seçenekleri
+- [x] Son hesaplar hızlı kullanıcı adı doldurma — CI success
+- [x] geçmişte platform filtresi — CI success
+- [x] geçmişte hesap filtresi — CI success
+- [x] tek snapshot silme — dev branch
+- [x] seçili hesabın tüm geçmişini silme — dev branch
+- [ ] uygulama içi genel veri yönetimi / tüm yerel veriyi temizleme
+- [ ] analiz sonuçlarını dışa aktarma / paylaşma
 
 ## Sıradaki iş
-`dev/recent-accounts-home` paketini `test/device-apk` branch’ine tek seferde fast-forward et ve tek Actions run ile derleme doğrulamasını al. CI geçince bu UX paketi yeni test prerelease’e dahil edilmiş olacak. Ardından küçük PASS döngüsüne dönmeden veri yönetimi (snapshot silme / hesap geçmişini temizleme) geliştirmesine geç.
+`dev/history-data-management` paketini `test/device-apk` branch’ine tek fast-forward ile al ve tek Actions run ile doğrula. CI geçince veri yönetimi test prerelease’e dahil edilmiş olacak. Ardından küçük fiziksel PASS döngüsüne dönmeden genel veri yönetimi / analiz sonucu dışa aktarma geliştirmesine geç.
