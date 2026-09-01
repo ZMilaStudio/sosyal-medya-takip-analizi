@@ -1,6 +1,6 @@
 # Takip Analizi — Production Signing Setup
 
-Son güncelleme: 1 Eylül 2026
+Son güncelleme: 2 Eylül 2026
 
 Bu proje iki tamamen ayrı imza zinciri kullanır:
 
@@ -12,6 +12,29 @@ Bu proje iki tamamen ayrı imza zinciri kullanır:
 `.github/test-signing` altındaki device-test anahtarı veya sertifikası **production APK/AAB imzalamak için kullanılmayacaktır**.
 
 Production upload key yalnız güvenli bir secret store veya yerel güvenli ortamdan sağlanır.
+
+## Güncel production upload key — 2 Eylül 2026
+
+Kullanıcının açık onayıyla yeni private upload key oluşturuldu ve yerel signing paketi içinde saklandı. Private keystore ve parolalar bu repoya commit edilmedi.
+
+Public/secret olmayan kimlik bilgileri:
+
+- Keystore type: `JKS`
+- Alias: `takip-upload`
+- Key algorithm: `RSA 3072`
+- Signature algorithm: `SHA256withRSA`
+- Validity: `10000` gün
+- DN: `CN=Takip Analizi Upload, OU=Android Release, O=ZMila Studio, C=TR`
+- Upload certificate SHA-256: `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`
+- Keystore file SHA-256: `4ff8c92eb4ca8074d75791d3a753c1290232bb13b79aa121c26fe059f788a192`
+
+Doğrulamalar:
+
+1. Keystore içindeki certificate fingerprint ile dışa aktarılan PEM certificate fingerprint’i bağımsız olarak karşılaştırıldı — **PASS**.
+2. Private key ile gerçek JAR signing self-test yapıldı — **PASS**.
+3. Private değerler repo, commit mesajı ve public loglara yazılmadı.
+
+GitHub bağlı araç repository secret write işlemini güvenlik nedeniyle desteklemediğinden `PLAY_UPLOAD_*` değerleri henüz GitHub hesabına otomatik girilmedi. Değerler özel `GITHUB_SECRETS.txt` dosyasında hazırlandı.
 
 ## Play App Signing — güncel model
 
@@ -163,9 +186,11 @@ Workflow sırasıyla:
 7. signed release AAB üretir,
 8. merged release manifestte targetSdk 36 doğrular,
 9. merged release manifestte `android.permission.INTERNET` varsa fail olur,
-10. AAB signer sertifikasını tekrar doğrular,
-11. exact launcher source guard’ını korur,
-12. AAB + SHA-256 dosyasını **1 gün retention** ile artifact olarak yükler.
+10. yalnız beklenen AndroidX internal signature permission’a tolerans gösterir; başka permission varsa fail olur,
+11. `allowBackup=false`, `usesCleartextTraffic=false`, `debuggable/testOnly` guard’larını doğrular,
+12. AAB signer sertifikasını tekrar doğrular,
+13. exact launcher source guard’ını korur,
+14. AAB + SHA-256 dosyasını **1 gün retention** ile artifact olarak yükler.
 
 ## İlk Play upload operasyonu
 
@@ -174,13 +199,12 @@ Private upload key hazır olduktan sonra önerilen sıra:
 1. Play Console’da Takip Analizi uygulamasını aç.
 2. Play App Signing / App integrity durumunu kontrol et.
 3. Upload key certificate fingerprint / certificate beklentisini belirle.
-4. Yerel private upload key’i oluştur veya mevcut doğru key’i kullan.
-5. SHA-256 fingerprint’i iki kez doğrula.
-6. GitHub repository secrets `PLAY_UPLOAD_*` alanlarını güvenli biçimde doldur.
-7. `Production RC AAB` workflow’unu `1.0.0 / 1` ile manuel çalıştır.
-8. Artifact AAB SHA-256 + signer fingerprint + package/version/manifest guard sonuçlarını kaydet.
-9. AAB’yi önce uygun test/release track’ine yükle.
-10. Play Console’un signing certificate ekranındaki fingerprints ile beklenen rolleri karıştırma: upload certificate ile app signing certificate farklı olabilir.
+4. Güncel upload certificate SHA-256 değerinin `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65` olduğunu doğrula.
+5. GitHub repository secrets `PLAY_UPLOAD_*` alanlarını güvenli `GITHUB_SECRETS.txt` dosyasından doldur.
+6. `Production RC AAB` workflow’unu `1.0.0 / 1` ile manuel çalıştır.
+7. Artifact AAB SHA-256 + signer fingerprint + package/version/manifest guard sonuçlarını kaydet.
+8. AAB’yi önce uygun test/release track’ine yükle.
+9. Play Console’un signing certificate ekranındaki fingerprints ile beklenen rolleri karıştırma: upload certificate ile app signing certificate farklı olabilir.
 
 ## Recovery — upload key kaybolursa
 
