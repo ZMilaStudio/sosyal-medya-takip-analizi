@@ -92,7 +92,38 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Gradle production release signing yalnız `PLAY_UPLOAD_*` secure environment değerleri mevcutsa `playUpload` signing config kullanır; device-test key’e fallback yoktur.
 - `.github/workflows/production-rc-aab.yml`: yalnız manuel `workflow_dispatch`; versionName/versionCode input, private secret kontrolü, upload-key fingerprint doğrulaması, Analyze + test + signed AAB + signer fingerprint kontrolü, 1 gün artifact retention.
 - `production-rc-aab.yml` henüz gerçek private key ile çalıştırılmadı; bu kasıtlıdır.
-- Kalıcı public privacy URL + resmi destek iletişim kanalı production blocker olarak açık bırakıldı; sahte iletişim bilgisi eklenmedi.
+
+## Play Store listing paketi — Actions kullanılmadan hazırlandı
+Google Play’in 1 Eylül 2026’da resmi dokümanlarından sınırlar doğrulandı:
+- mağaza adı en fazla 30 karakter,
+- kısa açıklama en fazla 80,
+- tam açıklama en fazla 4.000,
+- mağaza simgesi 512×512 32-bit PNG, en fazla 1.024 KB,
+- feature graphic 1024×500 JPEG veya alfa kanalsız 24-bit PNG,
+- store listing destek e-postası zorunlu; website güçlü biçimde önerilir.
+
+Hazırlanan dosyalar:
+- `PLAY_STORE_LISTING_TR.md`: Türkçe production listing.
+  - ad: `Takip Analizi` — 13/30,
+  - kısa açıklama: `Instagram ve X takip ilişkilerini arşivlerinden cihazında analiz et.` — 68/80,
+  - tam açıklama yaklaşık 1.917/4.000,
+  - önerilen kategori `Araçlar`,
+  - gerçek uygulama ekranlarına dayalı screenshot planı,
+  - metadata/trademark yanıltıcılık guardrail’leri.
+- `PLAY_STORE_LISTING_EN.md`: İngilizce localization.
+  - ad aynı,
+  - kısa açıklama 77/80,
+  - kategori `Tools`,
+  - aynı gerçek işlev/gizlilik sınırları.
+- `PRIVACY_SUPPORT_PUBLISH_PLAN.md`: kalıcı privacy URL + resmi destek e-postası + destek web sayfası için yayın planı.
+- `RELEASE_CHECKLIST.md` mağaza metinleri hazır olarak güncellendi.
+
+Sabit kararlar:
+- Mevcut ürün için kategori ilk tercihi **Araçlar / Tools**; `Sosyal` sosyal ağ/check-in ürünleri için daha uygun olduğu için seçilmeyecek.
+- Kesin Play tag adları uydurulmayacak; production zamanı Console’un sunduğu listeden en fazla 5 gerçekten ilgili tag seçilecek.
+- Mağaza simgesi yeni logo olarak yeniden üretilmeyecek; kilitli exact launcher tasarımından türetilecek.
+- Kalıcı public privacy URL + resmi destek e-postası/web sitesi production blocker olarak açık; sahte iletişim bilgisi eklenmeyecek.
+- Mevcut local-first yaklaşım için uygulama içine zorunlu web bağlantısı/INTERNET izni eklemek yerine public privacy URL’sini Play Store listing’de sunmak tercih ediliyor.
 
 ## Test APK imza sistemi
 - Paket `com.zmilastudio.takipanalizi.dev`.
@@ -121,24 +152,25 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] Gizlilik ve Hakkında
 - [x] release signing scaffold + Play hazırlık dokümanları
 - [x] v2-38 release-polish tam CI doğrulaması
+- [x] TR + EN Play Store listing metinleri ve privacy/support yayın planı
 
 ## Branch durumu
 - `test/device-apk`: `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe` — v2-38 tam CI success.
 - **Güncel güvenli rollback:** `backup/device-v2-38-release-polish-ci-working` → `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe`.
 - `backup/device-v2-37-product-polish-ci-working` korunuyor.
-- `dev/release-polish-v1`: v2-38 kodu + bu docs success güncellemesi.
+- `dev/release-polish-v1`: v2-38 kodu + Play Store listing/privacy-support docs güncellemeleri. Docs-only değişiklikler nedeniyle yeni Actions çalıştırılmadı.
 - `dev/product-polish-batch`: önceki ürün polish hattı.
 
 ## Production’a kalan ana kapılar
 1. Gerçek Play App Signing / private upload key durumunu belirle ve `PLAY_UPLOAD_*` secrets değerlerini güvenli biçimde tanımla.
 2. Final production versionName/versionCode kararı.
 3. Kalıcı public privacy policy URL + resmi destek URL/e-posta.
-4. Play Store kısa/tam açıklama, kategori ve mağaza görselleri.
-5. Play Data safety / içerik derecelendirme / hedef kitle formlarının son doldurulması.
+4. Gerçek production RC’den mağaza ekran görüntülerini al; 512×512 store icon ve 1024×500 feature graphic hazırla.
+5. Play Console tag seçimi, Data safety / içerik derecelendirme / hedef kitle formlarının son doldurulması.
 6. Gerçek private key ile manuel production RC AAB workflow’unu çalıştırma.
 7. Tek kritik production RC fiziksel PASS; X gerçek arşiv doğrulaması bu turda yapılacak.
 
 ## Sıradaki iş
-- v2-38 güvenli CI baseline olarak kilitlendi; küçük fiziksel PASS istenmeyecek.
-- Actions kotasını harcamadan önce Play Store listing metinleri ve privacy/support yayın planını hazırlamaya devam et.
-- Production signing yalnız kullanıcı gerçek private upload key aşamasına hazır olduğunda devreye alınacak.
+- v2-38 güvenli CI baseline; küçük fiziksel PASS istenmeyecek.
+- Yeni Actions harcamadan mağaza görsel hazırlık planı / Play Console form cevapları hazırlanabilir.
+- Gerçek private signing veya public privacy/support bilgileri kullanıcı tarafından hazır olduğunda production RC aşamasına geçilecek.
