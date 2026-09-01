@@ -9,14 +9,35 @@ void main() {
       const MaterialApp(home: AboutPrivacyScreen()),
     );
 
+    final pageList = find.byType(ListView);
+    final pageScroll = find.descendant(
+      of: pageList,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+    expect(pageList, findsOneWidget);
+    expect(pageScroll, findsOneWidget);
+
     expect(find.text('Gizlilik ve Hakkında'), findsOneWidget);
     expect(find.text('Takip Analizi'), findsOneWidget);
     expect(find.text('Local-first'), findsOneWidget);
-    expect(find.text('Şifre istemiyoruz'), findsOneWidget);
-    expect(find.text('Yalnız seçtiğin dosyalar'), findsOneWidget);
-    expect(find.text('Yerel geçmiş'), findsOneWidget);
-    expect(find.text('Dış bağlantılar'), findsOneWidget);
-    expect(find.text('Yerel verilerimi yönet'), findsOneWidget);
-    expect(find.text('ZMila Studio'), findsOneWidget);
+
+    for (final label in [
+      'Şifre istemiyoruz',
+      'Yalnız seçtiğin dosyalar',
+      'Yerel geçmiş',
+      'Dış bağlantılar',
+      'Yerel verilerimi yönet',
+      'ZMila Studio',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        250,
+        scrollable: pageScroll,
+      );
+      expect(find.text(label), findsOneWidget);
+    }
   });
 }
