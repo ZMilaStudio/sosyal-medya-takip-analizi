@@ -123,6 +123,16 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - prerelease `device-test-v2-26`
 - **fiziksel launcher görünümü PASS ✅**
 
+## Gerçek snapshot fiziksel doğrulama — gece02.19
+- Test v2-26 üzerinde başlatıldı; yeni build çıkarılmadı.
+- Kullanıcı `gece02.19` hesabının eski Meta arşivini aynı hesap adıyla içe aktardı.
+- Eski arşiv ilk gerçek snapshot olarak cihaz veritabanına kaydedildi ✅
+- Eski snapshot ekran sonucu: 75 takipçi, 53 takip edilen, 10 takip etmeyen, 43 karşılıklı.
+- Kullanıcı yeni Meta arşivini talep etti; teslim bekleniyor.
+- Yeni arşiv geldiğinde uygulama/veri silinmeden aynı `gece02.19` kullanıcı adıyla ikinci kez içe aktarılacak.
+- Import controller doğrulandı: önce `latestSnapshot(account)` okunuyor, current analiz previous ile yapılıyor, sonra current snapshot `saveSnapshot` ile kaydediliyor.
+- Hedef: ikinci gerçek snapshot sonrası `Takibi Bırakanlar` ve `Yeni Takipçiler` sekmelerinin gerçek değişikliklerle otomatik dolduğunu fiziksel olarak doğrulamak.
+
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
 - sabit test sertifikası SHA-256 `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`
@@ -144,7 +154,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] arama/sıralama fiziksel doğrulandı
 - [x] 5 sekme fiziksel Samsung'da doğrulandı
 - [x] kullanıcının exact launcher görseli fiziksel Samsung'da doğrulandı
-- [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
+- [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama — `gece02.19` testi devam ediyor
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
 ### X
@@ -154,4 +164,4 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-v2-26 artık launcher dahil yeni fiziksel çalışan baseline'dır. Sıradaki kontrollü adım, gerçek geçmiş snapshot akışının `Takibi Bırakanlar` ve `Yeni Takipçiler` sekmelerini otomatik doldurduğunu fiziksel cihazda doğrulamaktır. Ardından iki keyfi snapshot'ı elle karşılaştırma akışı ele alınacaktır.
+`gece02.19` için yeni Meta arşivi geldiğinde uygulamayı veya verilerini silmeden, kullanıcı adını yine `gece02.19` girerek yeni ZIP içe aktarılacak. Ardından 4. ve 5. sekmelerdeki `Takibi Bırakanlar` / `Yeni Takipçiler` sayıları ve kullanıcı listeleri fiziksel olarak kontrol edilecek.
