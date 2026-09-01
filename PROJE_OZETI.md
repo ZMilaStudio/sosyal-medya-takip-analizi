@@ -18,7 +18,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Yok sayılan hesaplar hesap bazında cihazda tutulur; ham snapshot sayılarını değiştirmez, yalnız analiz listelerini filtreler.
 - Kullanıcı satırına dokununca resmi Instagram profil URL'si harici uygulamada açılır.
 - Final analiz hedefi 5 sekmedir: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
-- Launcher hedefi kullanıcının onayladığı **4. seçeneğin koyu versiyonu**; v2-25 fiziksel doğrulama adayıdır.
+- Launcher için kullanıcı 1 Eylül 2026'da exact görseli tekrar yükledi. Bundan sonra launcher görseli yeniden çizilmeyecek/üretilmeyecek; kullanıcının yüklediği raster görsel esas alınacak.
 
 ## Gerçek Meta export
 - 569 takipçi
@@ -76,43 +76,42 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - sentetik previous/current `@newcomer` new follower testi ✅
 - liste / arama / sıralama / Yok say regresyon testleri ✅
 
-## Launcher simgesi teşhisi ve v2-25
-Önceki fiziksel sürümlerde yanlış simgenin görünmesinin sebebi bulundu:
-- v2-14 döneminde manifest yanlışlıkla `@drawable/takip_launcher` adlı sonradan oluşturulmuş kişi+büyüteç vektörüne bağlanmıştı.
-- Bu dosya kullanıcının daha önce onayladığı **4. seçeneğin koyu versiyonu değildi**.
-- Onaylı koyu launcher kaynakları Git geçmişindeki `863eb72e703151b71f151509aa46e12d6fb7fbf1` ve tam Android wiring'i sağlayan `6294a348448f8bfa28ac6e547c06e4383adfa2c8` commitlerinde bulundu.
-
-v2-25 için geri getirilen doğru Android zinciri:
-- Manifest `android:icon="@mipmap/ic_launcher"`
-- Manifest `android:roundIcon="@mipmap/ic_launcher_round"`
-- Android 26+ adaptive foreground: `@drawable/ic_launcher_foreground`
-- adaptive normal + round kaynakları mevcut
-- legacy normal + round fallback mevcut
-- arka plan `#07152F`
-- foreground ana renkleri `#35C2B1`, `#EEF4FF`, `#8A8FD1`
-- v2-23 uygulama/analiz koduna dokunulmadı.
-
+## Launcher simgesi — son durum
 ### v2-24 — yayınlanmadı
 - launcher kaynak kodu ve tüm uygulama testleri geçti ✅
 - APK build geçti ✅
 - VersionCode 300024
-- son APK doğrulama adımı yanlış negatif verdi: workflow `aapt dump badging` çıktısını `head -40` ile kesiyor, `application-icon-*` satırı 40. satırdan sonra kaldığı için grep başarısız oluyordu.
-- APK prerelease yayınlanmadı; **v2-24 kullanılmayacak**.
+- son APK doğrulama adımı yanlış negatif verdi: workflow `aapt dump badging` çıktısını `head -40` ile kesiyordu.
+- prerelease yayınlanmadı; **v2-24 kullanılmayacak**.
 
-### v2-25 — launcher fiziksel doğrulama adayı
-- launcher kaynak commit zinciri: `52513e14b1805f1ad865f15bb62d72241b6b40a3`
-- CI doğrulama düzeltme commit: `d3ec866bbf943d997001c021f8807ef372500ddc`
-- workflow run `33479549756`
-- VersionCode `300025`
+### v2-25 — kullanıcı tarafından RED
+- eski Git geçmişindeki vektör/adaptive launcher zinciri geri getirilmişti.
+- teknik CI tamamen geçti ancak kullanıcı fiziksel sonucu istediği görsel olarak kabul etmedi ❌
+- bu nedenle v2-25 launcher çözümü geçersizdir; doğru simge olarak kabul edilmeyecek.
+- backup `backup/device-v2-25-before-exact-icon`
+
+### v2-26 — kullanıcının yüklediği exact raster simge
+- kullanıcı istediği launcher görselini doğrudan sohbete yükledi.
+- görsel yeniden çizilmedi, AI ile yeniden üretilmedi, renk/kompozisyon değiştirilmedi.
+- Android launcher için yalnız 192×192'e LANCZOS ile küçültülüp WebP olarak paketlendi.
+- repo asset: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`
+- kaynak launcher asset SHA-256: `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
+- manifest doğrudan `android:icon="@drawable/takip_launcher_user"` ve `android:roundIcon="@drawable/takip_launcher_user"` kullanıyor.
+- eski `@mipmap/ic_launcher` / vektör zinciri launcher olarak artık kullanılmıyor.
+- source commit `aa63720d49d97fd7f23de69549c307964c684fd5`
+- workflow run `33485074032`
+- VersionCode `300026`
 - Analyze ✅
 - 15 test ✅
-- manifest/adaptive/round/legacy launcher wiring ✅
+- manifest exact raster wiring ✅
+- kaynak icon SHA kilidi ✅
 - APK build ✅
-- APK package/version/launcher resource/signing certificate doğrulaması ✅
+- APK içinde `takip_launcher_user.webp` doğrulaması ✅
+- paket / VersionCode / signing certificate ✅
 - prerelease publish ✅
-- APK SHA-256 `0917c494733399b6e25acb2f1284fe00d01efbafeac987238ad1217531f1593b`
-- prerelease `device-test-v2-25`
-- fiziksel Samsung launcher doğrulaması ⏳
+- APK SHA-256 `9442a5a88c8136014ca1bc71f5565128b2d36fe47092e077aa0d9cf255f3c1f3`
+- prerelease `device-test-v2-26`
+- fiziksel launcher görünümü kullanıcı onayı ⏳
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -134,7 +133,7 @@ v2-25 için geri getirilen doğru Android zinciri:
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
 - [x] 5 sekme fiziksel Samsung'da doğrulandı
-- [ ] **v2-25 koyu seçenek 4 launcher simgesini fiziksel Samsung'da doğrulama**
+- [ ] **v2-26 kullanıcının exact launcher görselini fiziksel Samsung'da doğrulama**
 - [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -145,4 +144,4 @@ v2-25 için geri getirilen doğru Android zinciri:
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-`device-test-v2-25` mevcut v2-23 uygulamasının üzerine `Güncelle` olarak kurulacak. Bu tur yalnız launcher simgesi fiziksel olarak kontrol edilecek; uygulama açılıp v2-23'te PASS olan listelerin hâlâ yerinde olduğu hızlıca doğrulanacak. Simge kullanıcı tarafından doğru görülmeden launcher işi tamamlanmış sayılmayacak.
+`device-test-v2-26` mevcut uygulamanın üzerine `Güncelle` olarak kurulacak. Bu tur yalnız kullanıcının gönderdiği exact launcher görselinin telefonda doğru göründüğü kontrol edilecek. Samsung launcher eski ikonu cache'lerse ana ekran kısayolu kaldırılıp uygulama çekmecesinden yeniden eklenmeli veya launcher/telefon yeniden başlatılmalı. Simge kullanıcı tarafından doğru görülmeden launcher işi tamamlanmış sayılmayacak.
