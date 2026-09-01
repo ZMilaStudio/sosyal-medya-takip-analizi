@@ -105,20 +105,27 @@ Taban: v2-32 `0959d2775ef8454103f1eddaccd89d4627bf6788`.
 - Yeni `X Arşivi Nasıl İndirilir?` ekranı.
 - Güncel resmi X akışına göre Ayarlar ve gizlilik → Hesabın → veri arşivini indir/iste/doğrulama adımları.
 - ZIP doğrudan import ve büyük arşiv için `follower.js + following.js` fallback anlatılır.
-- Rehber widget testi eklendi.
+- Rehber widget testi eklendi ve run #34 içinde geçti.
 
 ### Ana ekran polish
 - X kartına `X arşivi nasıl alınır?` bağlantısı eklendi.
 - Geçmiş ve yönetim kartına `Yerel Veri Yönetimi` bağlantısı eklendi.
 - Mevcut import/Son hesaplar/geçmiş/Yok say akışları korunarak platform kartları ortak widget’a refactor edildi.
-- Home smoke testi hedefe kadar scroll eden daha dayanıklı yapıya geçirildi.
+- Home smoke testi ana `ListView`’ı açıkça hedefleyen yapıya geçirildi.
 
 ### Product polish CI geçmişi
 - Run `33529876792` (#33) Analyze aşamasında durdu; APK/test aşamasına geçmedi.
-- Sebep: HomeScreen refactor’unda `AsyncValue` pattern ifadesinin named argument içinde yanlış kullanılması + nullable extra widget lint’i + smoke testte unused import.
-- Düzeltme: Instagram/X error stringleri build başında switch ile çözülüyor; nullable extra `SizedBox.shrink()` ile normalize edildi; unused import kaldırıldı.
-- Düzeltme commitleri: `793a1a46910848942dfca31ad0373ccac07c38bb`, `ccd3c650e7e99445fb03f5fe8644238a9c2bb6fa`.
-- Bu düzeltmeler henüz Actions ile yeniden doğrulanmadı.
+  - Sebep: HomeScreen refactor’unda `AsyncValue` pattern ifadesinin named argument içinde yanlış kullanılması + nullable extra widget lint’i + smoke testte unused import.
+  - Düzeltme: Instagram/X error stringleri build başında switch ile çözülüyor; nullable extra `SizedBox.shrink()` ile normalize edildi; unused import kaldırıldı.
+- Run `33530222021` (#34): **Analyze success**, mevcut temel testler ve yeni X rehber testi geçti; Test adımı iki yeni testin viewport/scroll varsayımı yüzünden fail oldu, APK aşamasına geçmedi.
+  - `local_data_management_screen_test.dart`: offscreen alt butonları build edilmeden `tester.widget` ile okumaya çalıştığı için `Bad state: No element`.
+  - `app_smoke_test.dart`: birden fazla `Scrollable` arasından otomatik seçim yaptığı için `Bad state: Too many elements`.
+  - Üretim kodu için Analyze temiz; hata yalnız test harness seçimindeydi.
+- Test düzeltmeleri:
+  - Home smoke testi `find.byType(ListView)` ile tek ana listeyi açıkça `scrollable:` olarak kullanıyor.
+  - Yerel Veri testi de tek `ListView` üzerinden her butonu sırayla görünür hale getirip disabled durumunu kontrol ediyor.
+  - Düzeltme commitleri `9afa3d3b16924dd7091b83218fc280cbafc5c22e` ve `fbe2b9e5f45b843d8a264f694c73e2c565180c2a`.
+- Bu son test düzeltmeleri henüz Actions ile doğrulanmadı.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -148,9 +155,9 @@ Taban: v2-32 `0959d2775ef8454103f1eddaccd89d4627bf6788`.
 - [x] X arşiv rehberi — product polish branch
 
 ## Şu anki branch durumu
-- `test/device-apk`: `55d15b56fad613736edb2969bee651f61148c150` — product polish #33 Analyze failure; son çalışan rollback v2-32’dir.
-- `dev/product-polish-batch`: düzeltmeler dahil en son kod commit `ccd3c650e7e99445fb03f5fe8644238a9c2bb6fa` (bu özet commitinden önce).
+- `test/device-apk`: `f44afb891dc08fd645ca44e49eb2fb03e156ea9a` — #34 Analyze success / test harness failure; son tam çalışan rollback v2-32’dir.
+- `dev/product-polish-batch`: test düzeltmeleri dahil; son kod commit `fbe2b9e5f45b843d8a264f694c73e2c565180c2a` (bu özet commitinden önce).
 - Güvenli rollback: `backup/device-v2-32-report-export-ci-working`.
 
 ## Sıradaki iş
-Bu özet commitinden sonra `dev/product-polish-batch` başını `test/device-apk` branch’ine fast-forward et ve tek yeni Actions run al. Analyze + yeni widget testleri + tüm mevcut testler + signed debug APK + package/version/exact launcher tamamen geçerse yeni backup baseline oluştur. Kullanıcıdan küçük fiziksel PASS isteme; ardından release polish / kalan MVP işlerine geç.
+Bu özet commitinden sonra `dev/product-polish-batch` başını `test/device-apk` branch’ine fast-forward et ve tek yeni Actions run al. Analyze + tüm testler + signed debug APK + package/version/exact launcher tamamen geçerse yeni backup baseline oluştur. Kullanıcıdan küçük fiziksel PASS isteme; ardından release polish / kalan MVP işlerine geç.
