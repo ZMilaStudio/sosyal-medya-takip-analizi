@@ -5,7 +5,7 @@ Son güncelleme: 1 Eylül 2026
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu dosya okunarak proje devralınır.
 - Bu dosya + canlı GitHub repo proje gerçeklik kaynağıdır.
-- Çalışan fiziksel/CI baseline korunur; kritik regressions olursa backup branch kullanılır.
+- Çalışan fiziksel/CI baseline korunur; kritik regression olursa backup branch kullanılır.
 - Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek uygulama üzerinden ilerlenir.
 - **1 Eylül 2026 kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler toplu ilerletilecek; yalnız kritik sürüm noktalarında tek fiziksel doğrulama yapılacak.
 - GitHub Actions kotasını korumak için büyük geliştirmeler dev branch’lerinde hazırlanıp `test/device-apk` branch’ine toplu alınır.
@@ -49,6 +49,17 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - v2-29 Son hesaplar + geçmiş filtreleri: `5695b525a729dc7cf316e17928b5c4534383012f`, run `33527062959`, backup `backup/device-v2-29-recent-history-filters-ci-working`, tam CI success.
 - v2-30 geçmiş veri yönetimi: `804fb57255231ca349d83443135d32747f74284b`, run `33527775313`, backup `backup/device-v2-30-history-data-management-ci-working`, tam CI success.
 - v2-32 rapor export: `0959d2775ef8454103f1eddaccd89d4627bf6788`, run `33528930054`, backup `backup/device-v2-32-report-export-ci-working`, tam CI success.
+- **v2-37 product polish:** `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`, run `33531313731`, backup `backup/device-v2-37-product-polish-ci-working`, **tam CI success**. Analyze, 22 test, physical-device wiring, imzalı APK, package/version, exact launcher ve sertifika doğrulaması geçti.
+
+## v2-37 release bilgisi
+- Prerelease tag: `device-test-v2-37`.
+- VersionCode: `300037`.
+- Paket: `com.zmilastudio.takipanalizi.dev`.
+- APK: `takip-analizi-device-test.apk`.
+- APK SHA-256: `973a61df68ca62b5d588f5fa8623bb2ccc1a39bbe9d80d75e199e89c41874683`.
+- Boyut: 180,733,762 byte.
+- Exact launcher asset kilidi korunuyor; kaynak icon SHA-256 `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`.
+- Production değildir; mevcut v2 uygulamanın üzerine kaldırmadan kurulabilir.
 
 ## X arşiv desteği
 - X `window.YTD.*` JS formatları okunur; `accountId` stabil kimliktir.
@@ -58,6 +69,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - X ortak `FollowAnalysisEngine` ve aynı Drift geçmiş veritabanını kullanır.
 - Previous snapshot varsa Takibi Bırakanlar/Yeni Takipçiler otomatik hesaplanır.
 - X profil linkleri harici uygulamada açılır.
+- Uygulama içi `X Arşivi Nasıl İndirilir?` rehberi vardır; resmi X ayarları → Hesabın → veri arşivini iste/doğrula/indir akışı ve büyük arşiv `follower.js + following.js` fallback anlatılır.
 
 ## CI doğrulanmış UX / yönetim
 - Son hesaplar hızlı seçim.
@@ -65,36 +77,16 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Manuel iki snapshot karşılaştırma.
 - Tek snapshot silme ve seçilen hesabın tüm geçmişini silme; açık onay ve DB güvence testleri.
 - Analiz raporunda `Raporu kopyala` + `TXT olarak kaydet`; 5 kategori ve özet sayılar; yok sayılanlar rapordan çıkarılır.
+- **Yerel Veri Yönetimi** ekranı: analiz sayısı, hesap sayısı, yok sayılan kayıt sayısı; tüm geçmişi sil, yok sayılanları temizle, tüm yerel veriyi temizle. Riskli işlemler onay ister ve sosyal medya platformundaki verilere dokunmaz.
+- Ana ekranda X arşiv rehberi ve Yerel Veri Yönetimi bağlantıları vardır.
+- Instagram/X ana kartları ortak `_PlatformCard` yapısında; mevcut import/Son hesaplar/geçmiş/Yok say akışları korunur.
 
-## Aktif geliştirme — `dev/product-polish-batch`
-Taban: v2-32 `0959d2775ef8454103f1eddaccd89d4627bf6788`.
-
-### Yerel Veri Yönetimi
-- Yeni ekran analiz sayısı, hesap sayısı, yok sayılan kayıt sayısını gösterir.
-- `Tüm analiz geçmişini sil`, `Yok sayılanları temizle`, `Tüm yerel veriyi temizle` vardır.
-- Riskli işlemler açık onay ister; sosyal medya platformundaki verilere dokunmadığı açıkça yazılıdır.
-- Hata snackbar’ı ve başarılı işlem sonrası provider yenilemeleri vardır.
-- Widget testi boş cihazda riskli eylemlerin disabled olduğunu doğrular.
-
-### X arşiv rehberi
-- `X Arşivi Nasıl İndirilir?` ekranı eklendi.
-- Resmi X ayarları → Hesabın → veri arşivini iste/doğrula/indir akışı anlatılır.
-- ZIP doğrudan import ve büyük arşiv `follower.js + following.js` fallback anlatılır.
-- X rehber testi #34/#35/#36 test koşularında geçti.
-
-### Ana ekran polish
-- X kartında `X arşivi nasıl alınır?` bağlantısı.
-- Yönetim kartında `Yerel Veri Yönetimi` bağlantısı.
-- Instagram/X kartları ortak `_PlatformCard` widget’ına refactor edildi; mevcut import/Son hesaplar/geçmiş/Yok say akışları korunur.
-
-### Product polish CI geçmişi
+## Product polish CI geçmişi
 - #33 `33529876792`: Analyze fail — HomeScreen refactor sözdizimi/lint; düzeltildi.
-- #34 `33530222021`: Analyze success; temel testler + X rehber geçti. İki yeni test viewport/scroll harness nedeniyle fail; APK skipped.
-- #35 `33530671363`: Analyze success; iki test `scrollable:` parametresine ListView verilmesi nedeniyle fail; üretim testleri geçti; APK skipped.
-- #36 `33530990276`: Analyze success. **Yerel Veri Yönetimi testi artık geçti.** Toplam 21 test geçti; yalnız Home smoke fail oldu. Sebep: Home ListView descendant’ında ana dikey Scrollable yanında iki TextField’ın yatay Scrollable’ı da bulunduğu için `findsOneWidget` beklentisi 3 sonuç aldı. APK skipped.
-- Son düzeltme: Home smoke `Scrollable` finder’ı yalnız `widget.axisDirection == AxisDirection.down` olan dikey scrollable ile filtreliyor.
-- Son test düzeltme commit: `5f8c50e45ad1c0992b9191e0b2fbe0adb63fbcd1`.
-- Bu son düzeltme henüz Actions ile doğrulanmadı.
+- #34 `33530222021`: Analyze success; iki yeni test viewport/scroll harness nedeniyle fail; APK skipped.
+- #35 `33530671363`: Analyze success; test `scrollable:` parametresi yanlış widget türü nedeniyle fail; APK skipped.
+- #36 `33530990276`: Analyze success; Yerel Veri testi geçti, yalnız Home smoke yatay TextField Scrollable’larını da saydığı için fail; APK skipped.
+- **#37 `33531313731`: TAM SUCCESS.** Dikey Scrollable filtresi sonrası tüm testler geçti; signed APK üretildi, exact launcher/package/version/certificate kontrolleri ve prerelease yayını geçti.
 
 ## Test APK imza sistemi
 - Paket `com.zmilastudio.takipanalizi.dev`.
@@ -105,26 +97,31 @@ Taban: v2-32 `0959d2775ef8454103f1eddaccd89d4627bf6788`.
 ### Instagram
 - [x] resmi export analizi, geçmiş, profil linki, Yok say, arama/sıralama, 5 sekme
 - [x] otomatik + manuel snapshot karşılaştırma
-- [x] rapor export — CI success
+- [x] rapor export
 
 ### X
 - [x] JS parser, ZIP/direct JS import, analiz, snapshot/geçmiş, profil/ID-only davranışı
 - [x] X entegrasyonu CI success
-- [x] uygulama içi X arşiv rehberi — product polish branch
+- [x] uygulama içi X arşiv rehberi
 - [ ] gerçek kullanıcı X arşiviyle ileride tek kritik fiziksel doğrulama
 - [ ] canlı API/OAuth maliyet/politika değerlendirmesi
 
 ### UX / yönetim
 - [x] ortak geçmiş, Son hesaplar, filtreler, manuel karşılaştırma
-- [x] tek snapshot / hesap geçmişi silme — CI success
-- [x] rapor export — CI success
-- [x] Yerel Veri Yönetimi — product polish branch
-- [x] X arşiv rehberi — product polish branch
+- [x] tek snapshot / hesap geçmişi silme
+- [x] rapor export
+- [x] Yerel Veri Yönetimi
+- [x] X arşiv rehberi
+- [x] product-polish paketinin tam CI doğrulaması
 
 ## Branch durumu
-- `test/device-apk`: `c3af7f883982481a9ef57c7f2de8df63c62e4ce9` — #36 Analyze success / yalnız Home smoke test harness failure.
-- `dev/product-polish-batch`: dikey Scrollable smoke düzeltmesi dahil; son kod commit `5f8c50e45ad1c0992b9191e0b2fbe0adb63fbcd1` (bu özet commitinden önce).
-- Son tam çalışan rollback: `backup/device-v2-32-report-export-ci-working`.
+- `test/device-apk`: `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a` — v2-37 tam CI success.
+- `dev/product-polish-batch`: v2-37 kodu + bu docs güncellemesi.
+- **Yeni tam çalışan rollback:** `backup/device-v2-37-product-polish-ci-working` → `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`.
+- Önceki rollback `backup/device-v2-32-report-export-ci-working` korunuyor.
 
 ## Sıradaki iş
-Bu özet commitinden sonra dev branch başını `test/device-apk` branch’ine fast-forward et. Tek Actions run ile Analyze + tüm testler + signed debug APK + package/version/exact launcher doğrulaması tamamen geçerse yeni backup baseline oluştur. Kullanıcıdan küçük fiziksel PASS isteme; ardından release polish / kalan MVP işlerine geç.
+- v2-37 artık güvenli CI baseline.
+- Küçük fiziksel PASS istenmeyecek.
+- Sonraki geliştirme hattı: release polish / production hazırlığı ve kalan MVP boşluklarını tek toplu paket halinde ele al.
+- X gerçek arşiv fiziksel testi yalnız kritik doğrulama noktasında yapılacak.
