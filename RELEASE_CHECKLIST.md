@@ -2,7 +2,7 @@
 
 Son güncelleme: 1 Eylül 2026
 
-Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerken kullanılacak kapı listesidir.
+Bu checklist, v2-38 CI baseline’dan Google Play production yayınına geçerken kullanılacak kapı listesidir.
 
 ## A. Kod / kalite
 
@@ -42,27 +42,35 @@ Bu checklist, v2-37 CI baseline’dan Google Play production yayınına geçerke
 
 - [x] `PRIVACY_POLICY.md` taslağı hazır.
 - [x] `PLAY_STORE_DATA_SAFETY.md` teknik taslağı hazır.
+- [x] `PRIVACY_SUPPORT_PUBLISH_PLAN.md` yayın planı hazır.
 - [x] Mevcut Android manifestinde `INTERNET` izni yok.
 - [x] Reklam/analytics/cloud SDK’sı mevcut uygulama bağımlılıklarında kullanılmıyor.
 - [x] Uygulama içinde yerel veri silme mekanizması var.
 - [x] Uygulama içinde gizlilik yaklaşımı kullanıcıya açıklanıyor.
 - [ ] Gizlilik politikası kalıcı herkese açık URL’ye yayınlanacak.
-- [ ] Resmi destek iletişim kanalı gizlilik politikasına eklenecek.
+- [ ] Resmi destek e-postası ve tercihen destek web sayfası kesinleştirilecek.
 - [ ] Play Console Veri Güvenliği formu production build ile son kez karşılaştırılacak.
 - [ ] İçerik derecelendirmesi ve hedef kitle formu doldurulacak.
 - [ ] Uygulama erişimi / özel erişim gerekmiyor beyanı doğrulanacak.
 
 ## E. Play Store mağaza içeriği
 
-- [ ] Kısa açıklama.
-- [ ] Tam açıklama.
-- [ ] Uygulama kategorisi.
-- [ ] Telefon ekran görüntüleri.
-- [ ] Gerekirse 7 inç / 10 inç tablet ekran görüntüleri.
-- [ ] 512×512 mağaza simgesi.
-- [ ] 1024×500 feature graphic.
-- [ ] Gizlilik politikası URL’si.
-- [ ] Destek URL’si / destek e-postası.
+- [x] Türkçe mağaza metni: `PLAY_STORE_LISTING_TR.md`.
+- [x] İngilizce mağaza metni: `PLAY_STORE_LISTING_EN.md`.
+- [x] Uygulama adı: `Takip Analizi`.
+- [x] Türkçe kısa açıklama hazır — 68/80 karakter.
+- [x] Türkçe tam açıklama hazır — yaklaşık 1.917/4.000 karakter.
+- [x] İngilizce kısa açıklama hazır — 77/80 karakter.
+- [x] Önerilen kategori: `Araçlar / Tools`.
+- [x] Metadata yanıltıcılık ve resmi Instagram/X ilişkisi ima etmeme guardrail’leri yazıldı.
+- [x] Mağaza görsel içerik planı ve ekran görüntüsü adayları yazıldı.
+- [ ] Telefon ekran görüntüleri production RC’den alınacak.
+- [ ] Gerekirse 7 inç / 10 inç tablet ekran görüntüleri hazırlanacak.
+- [ ] 512×512 mağaza simgesi hazırlanacak; exact launcher tasarımından türetilecek.
+- [ ] 1024×500 feature graphic hazırlanacak.
+- [ ] Gizlilik politikası URL’si girilecek.
+- [ ] Destek e-postası ve website girilecek.
+- [ ] Play Console’daki mevcut tag listesinden en fazla 5 gerçekten ilgili etiket seçilecek.
 
 ## F. Release build
 
