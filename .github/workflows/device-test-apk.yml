@@ -93,7 +93,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
 
-          BADGING="$($AAPT dump badging "$APK" | head -40)"
+          BADGING="$($AAPT dump badging "$APK")"
           echo "$BADGING"
           echo "$BADGING" | grep -F "name='$EXPECTED_PACKAGE_ID'"
           echo "$BADGING" | grep -F "versionCode='$DEVICE_TEST_VERSION_CODE'"
