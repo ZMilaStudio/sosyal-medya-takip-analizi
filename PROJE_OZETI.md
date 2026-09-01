@@ -66,6 +66,16 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - arama / A-Z-Z-A / profil / Yok say / ignored akışı fiziksel PASS durumunu koruyor ✅
 - backup `backup/device-v2-23-five-tabs-working`
 
+### v2-26 — exact launcher PASS
+- source commit `aa63720d49d97fd7f23de69549c307964c684fd5`
+- workflow run `33485074032`
+- VersionCode `300026`
+- prerelease `device-test-v2-26`
+- APK SHA-256 `9442a5a88c8136014ca1bc71f5565128b2d36fe47092e077aa0d9cf255f3c1f3`
+- kullanıcının sohbete yüklediği raster görsel doğrudan launcher olarak kullanılıyor ✅
+- fiziksel Samsung launcher görünümü kullanıcı tarafından PASS ✅
+- v2-23'te PASS olan analiz özellikleri korunuyor ✅
+
 ## v2-23 model ve test notları
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
@@ -90,7 +100,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - bu nedenle v2-25 launcher çözümü geçersizdir; doğru simge olarak kabul edilmeyecek.
 - backup `backup/device-v2-25-before-exact-icon`
 
-### v2-26 — kullanıcının yüklediği exact raster simge
+### v2-26 — kullanıcının yüklediği exact raster simge PASS
 - kullanıcı istediği launcher görselini doğrudan sohbete yükledi.
 - görsel yeniden çizilmedi, AI ile yeniden üretilmedi, renk/kompozisyon değiştirilmedi.
 - Android launcher için yalnız 192×192'e LANCZOS ile küçültülüp WebP olarak paketlendi.
@@ -111,7 +121,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - prerelease publish ✅
 - APK SHA-256 `9442a5a88c8136014ca1bc71f5565128b2d36fe47092e077aa0d9cf255f3c1f3`
 - prerelease `device-test-v2-26`
-- fiziksel launcher görünümü kullanıcı onayı ⏳
+- **fiziksel launcher görünümü PASS ✅**
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -133,7 +143,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
 - [x] 5 sekme fiziksel Samsung'da doğrulandı
-- [ ] **v2-26 kullanıcının exact launcher görselini fiziksel Samsung'da doğrulama**
+- [x] kullanıcının exact launcher görseli fiziksel Samsung'da doğrulandı
 - [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
@@ -144,4 +154,4 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-`device-test-v2-26` mevcut uygulamanın üzerine `Güncelle` olarak kurulacak. Bu tur yalnız kullanıcının gönderdiği exact launcher görselinin telefonda doğru göründüğü kontrol edilecek. Samsung launcher eski ikonu cache'lerse ana ekran kısayolu kaldırılıp uygulama çekmecesinden yeniden eklenmeli veya launcher/telefon yeniden başlatılmalı. Simge kullanıcı tarafından doğru görülmeden launcher işi tamamlanmış sayılmayacak.
+v2-26 artık launcher dahil yeni fiziksel çalışan baseline'dır. Sıradaki kontrollü adım, gerçek geçmiş snapshot akışının `Takibi Bırakanlar` ve `Yeni Takipçiler` sekmelerini otomatik doldurduğunu fiziksel cihazda doğrulamaktır. Ardından iki keyfi snapshot'ı elle karşılaştırma akışı ele alınacaktır.
