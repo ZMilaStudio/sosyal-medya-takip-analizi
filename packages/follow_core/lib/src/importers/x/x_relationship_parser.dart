@@ -5,10 +5,11 @@ import '../../models/social_user.dart';
 
 /// Parses the JavaScript relationship files inside an official X data archive.
 ///
-/// Current X archives expose relationship data as JavaScript assignments such
-/// as `window.YTD.following.part0 = [...]` and `window.YTD.follower.part0 = [...]`.
-/// The parser deliberately ignores the assignment prefix and reads only the JSON
-/// array so minor namespace changes do not break imports.
+/// X archives expose relationship data as JavaScript assignments such as
+/// `window.YTD.following.part0 = [...]` and `window.YTD.follower.part0 = [...]`.
+/// Depending on archive generation, `userLink` may be a direct profile URL or
+/// an `intent/user?user_id=...` URL that contains no handle. Stable account IDs
+/// are therefore treated as the canonical identity whenever available.
 class XRelationshipParser {
   const XRelationshipParser();
 
@@ -17,8 +18,6 @@ class XRelationshipParser {
     final Object? decoded;
     try {
       decoded = jsonDecode(jsonText);
-    } on JsonUnsupportedObjectError catch (error) {
-      throw FormatException('X ilişki verisi çözümlenemedi: $error');
     } on FormatException {
       rethrow;
     }
@@ -58,17 +57,21 @@ class XRelationshipParser {
     final accountId = _stringValue(payload['accountId']) ??
         _stringValue(payload['account_id']) ??
         _stringValue(payload['id']);
-
-    final username = _firstUsername([
-      payload['username'],
-      payload['screenName'],
-      payload['screen_name'],
-      payload['handle'],
+    final rawLink = _firstString([
       payload['userLink'],
       payload['user_link'],
       payload['profileLink'],
       payload['profile_link'],
     ]);
+
+    final username = _firstUsername([
+          payload['username'],
+          payload['screenName'],
+          payload['screen_name'],
+          payload['handle'],
+        ]) ??
+        _usernameFromUrl(rawLink) ??
+        _fallbackUsername(accountId);
 
     if (username == null) return null;
 
@@ -76,7 +79,7 @@ class XRelationshipParser {
       platform: SocialPlatform.x,
       username: username,
       platformUserId: accountId,
-      profileUrl: Uri.https('x.com', '/$username'),
+      profileUrl: _profileUrl(rawLink, username),
     );
   }
 
@@ -86,8 +89,6 @@ class XRelationshipParser {
       if (value is Map) return Map<String, Object?>.from(value);
     }
 
-    // Some exports or transformed fixtures may expose the relationship object
-    // directly instead of wrapping it in `following` / `follower`.
     if (entry.containsKey('accountId') ||
         entry.containsKey('userLink') ||
         entry.containsKey('username')) {
@@ -100,12 +101,16 @@ class XRelationshipParser {
     for (final value in values) {
       final raw = _stringValue(value);
       if (raw == null) continue;
+      final username = _normalizeHandle(raw);
+      if (username != null) return username;
+    }
+    return null;
+  }
 
-      final direct = _normalizeHandle(raw);
-      if (direct != null) return direct;
-
-      final fromUrl = _usernameFromUrl(raw);
-      if (fromUrl != null) return fromUrl;
+  String? _firstString(Iterable<Object?> values) {
+    for (final value in values) {
+      final text = _stringValue(value);
+      if (text != null) return text;
     }
     return null;
   }
@@ -117,25 +122,49 @@ class XRelationshipParser {
     return value;
   }
 
-  String? _usernameFromUrl(String raw) {
+  String? _usernameFromUrl(String? raw) {
+    if (raw == null) return null;
     final uri = Uri.tryParse(raw.trim());
     if (uri == null || !uri.hasScheme || uri.pathSegments.isEmpty) return null;
+    if (!_isXHost(uri.host)) return null;
 
-    final host = uri.host.toLowerCase();
-    if (host != 'x.com' &&
-        host != 'www.x.com' &&
-        host != 'twitter.com' &&
-        host != 'www.twitter.com' &&
-        host != 'mobile.twitter.com') {
-      return null;
-    }
+    // Intent links identify the account by query-string user_id, not handle.
+    // Never interpret the literal `/intent/user` path as a username.
+    if (uri.pathSegments.first.toLowerCase() == 'intent') return null;
 
-    for (final segment in uri.pathSegments.reversed) {
-      final username = _normalizeHandle(Uri.decodeComponent(segment));
-      if (username != null) return username;
-    }
-    return null;
+    if (uri.pathSegments.length != 1) return null;
+    final candidate = Uri.decodeComponent(uri.pathSegments.single);
+    if (_reservedPathSegments.contains(candidate.toLowerCase())) return null;
+    return _normalizeHandle(candidate);
   }
+
+  Uri? _profileUrl(String? rawLink, String username) {
+    if (rawLink != null) {
+      final parsed = Uri.tryParse(rawLink.trim());
+      if (parsed != null && parsed.hasScheme && _isXHost(parsed.host)) {
+        return parsed;
+      }
+    }
+
+    if (_isFallbackUsername(username)) return null;
+    return Uri.https('x.com', '/$username');
+  }
+
+  bool _isXHost(String host) {
+    final normalized = host.toLowerCase();
+    return normalized == 'x.com' ||
+        normalized == 'www.x.com' ||
+        normalized == 'twitter.com' ||
+        normalized == 'www.twitter.com' ||
+        normalized == 'mobile.twitter.com';
+  }
+
+  String? _fallbackUsername(String? accountId) {
+    if (accountId == null || !_accountIdPattern.hasMatch(accountId)) return null;
+    return 'id_$accountId';
+  }
+
+  bool _isFallbackUsername(String username) => username.startsWith('id_');
 
   String? _stringValue(Object? value) {
     if (value == null) return null;
@@ -144,4 +173,16 @@ class XRelationshipParser {
   }
 
   static final RegExp _usernamePattern = RegExp(r'^[A-Za-z0-9_]{1,50}$');
+  static final RegExp _accountIdPattern = RegExp(r'^\d+$');
+  static const _reservedPathSegments = {
+    'home',
+    'intent',
+    'search',
+    'settings',
+    'explore',
+    'notifications',
+    'messages',
+    'compose',
+    'i',
+  };
 }
