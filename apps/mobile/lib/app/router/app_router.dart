@@ -6,6 +6,7 @@ import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/ignored_accounts/presentation/ignored_accounts_screen.dart';
 import '../../features/instagram_guide/presentation/instagram_export_guide_screen.dart';
+import '../../features/x_guide/presentation/x_archive_guide_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -28,6 +29,11 @@ final GoRouter appRouter = GoRouter(
       path: '/instagram-guide',
       name: 'instagram-guide',
       builder: (context, state) => const InstagramExportGuideScreen(),
+    ),
+    GoRoute(
+      path: '/x-guide',
+      name: 'x-guide',
+      builder: (context, state) => const XArchiveGuideScreen(),
     ),
     GoRoute(
       path: '/analysis',
