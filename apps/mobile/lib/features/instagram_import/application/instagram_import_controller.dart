@@ -58,6 +58,7 @@ class InstagramImportController
       );
 
       await database.saveSnapshot(result.snapshot);
+      ref.invalidate(recentFollowAccountsProvider);
       state = AsyncData(result);
       return result;
     } catch (error, stackTrace) {
