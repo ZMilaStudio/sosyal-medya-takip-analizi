@@ -48,7 +48,7 @@ String buildAnalysisTextReport(
     buffer
       ..writeln()
       ..writeln('${category.title} (${category.users.length})')
-      ..writeln('-' * (category.title.length + 4));
+      ..writeln(_divider(category.title.length + 4));
 
     if (category.users.isEmpty) {
       buffer.writeln('Hesap yok.');
@@ -106,6 +106,8 @@ List<SocialUser> _visibleUsers(
     ..sort((a, b) => a.normalizedUsername.compareTo(b.normalizedUsername));
   return List.unmodifiable(visible);
 }
+
+String _divider(int length) => List.filled(length, '-').join();
 
 String _platformLabel(SocialPlatform platform) => switch (platform) {
       SocialPlatform.instagram => 'Instagram',
