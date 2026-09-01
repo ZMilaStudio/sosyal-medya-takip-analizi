@@ -2,156 +2,165 @@
 
 Son güncelleme: 1 Eylül 2026
 
-Bu checklist, v2-38 CI baseline’dan Google Play production yayınına geçerken kullanılacak kapı listesidir.
+Bu checklist, **v2-39 release-hardening CI baseline** üzerinden Google Play production yayınına geçiş kapılarını izler.
 
 ## A. Kod / kalite
 
-- [x] Analyze temiz — v2-38 baseline.
-- [x] Otomatik testler geçiyor — v2-38 baseline.
-- [x] Fiziksel cihaz uyumluluk wiring kontrolü var.
+- [x] Analyze temiz — v2-39.
+- [x] Tüm otomatik testler geçiyor — v2-39, 23 test.
+- [x] Fiziksel-cihaz uyumluluk wiring kontrolü geçiyor.
 - [x] Exact kullanıcı launcher asset’i hash ile kilitli.
 - [x] Instagram gerçek arşivi fiziksel cihazda doğrulandı.
-- [x] Snapshot farkları gerçek Instagram verisiyle doğrulandı.
+- [x] Gerçek Instagram snapshot farkları fiziksel cihazda doğrulandı.
 - [x] X parser/import/snapshot akışı CI ile doğrulandı.
-- [x] Uygulama içi `Gizlilik ve Hakkında` ekranı ve Home girişi eklendi.
-- [x] Release-hardening batch’inde Android backup / permission / cleartext guard’ları kaynakta hazırlandı.
-- [x] Uygulama içi privacy ekranı backup ve kullanıcı-initiated report export davranışıyla güncellendi.
-- [ ] Release-hardening batch tek Device Test CI turunda doğrulanacak.
-- [ ] Gerçek kullanıcı X arşivi ile tek kritik fiziksel doğrulama production RC turunda yapılacak.
+- [x] Uygulama içi `Gizlilik ve Hakkında` ekranı + Home girişi var.
+- [x] Android backup / cleartext / production-source permission guard’ları v2-39 CI’da PASS.
+- [x] Privacy ekranında backup ve user-initiated report export metni test edildi.
+- [ ] Gerçek kullanıcı X arşiviyle tek kritik fiziksel doğrulama production RC turunda yapılacak.
 
 ## B. Android production kimliği
 
 - [x] Production applicationId: `com.zmilastudio.takipanalizi`.
 - [x] Device-test applicationId: `com.zmilastudio.takipanalizi.dev`.
 - [x] Uygulama etiketi: `Takip Analizi`.
-- [x] Launcher simgesi hazır ve test hash’i ile korunuyor.
+- [x] Launcher simgesi hazır ve hash ile korunuyor.
 - [x] İlk production versionName/versionCode: **`1.0.0` / `1`**.
 - [x] `apps/mobile/pubspec.yaml`: `version: 1.0.0+1`.
 - [x] Production RC workflow varsayılan inputları `1.0.0` / `1`.
-- [x] v2-38 CI badging: compileSdk 36 / targetSdk 36.
-- [ ] Production AAB üzerinde versionName/versionCode ve targetSdk son kez doğrulanacak.
+- [x] v2-39 badging: compileSdk 36 / targetSdk 36 / Android 16.
+- [ ] Gerçek production AAB üzerinde package/version/targetSdk son kez doğrulanacak.
 
 ## C. Android privacy / security manifest sözleşmesi
 
-Production release için hedef sözleşme:
+Production kaynak manifesti:
 
-- [x] `src/main/AndroidManifest.xml` içinde `<uses-permission>` yok.
+- [x] App-defined `<uses-permission>` yok.
 - [x] `android:allowBackup="false"`.
 - [x] `android:fullBackupContent="@xml/backup_rules"`.
 - [x] `android:dataExtractionRules="@xml/data_extraction_rules"`.
-- [x] Android 11 ve altı backup rules tüm `root/file/database/sharedpref/external` domainlerini exclude eder.
-- [x] Android 12+ data-extraction rules aynı domainleri hem `cloud-backup` hem `device-transfer` için exclude eder.
+- [x] Android 11 ve altı backup rules: `root/file/database/sharedpref/external` exclude.
+- [x] Android 12+ rules: aynı domainler `cloud-backup` + `device-transfer` için exclude.
 - [x] `android:usesCleartextTraffic="false"`.
-- [x] Production workflow merged release manifestte herhangi bir `<uses-permission>` görülürse fail olur.
-- [x] Production workflow `android:debuggable="true"` veya `android:testOnly="true"` görülürse fail olur.
-- [x] Production workflow merged release manifestte `allowBackup=false` ve cleartext=false değerlerini doğrular.
-- [x] Device Test workflow production-source backup/permission/cleartext guard’larını preflight olarak kontrol edecek şekilde güncellendi.
-- [ ] Bu yeni guard’lar tek Device Test CI run’ında doğrulanacak.
+
+Merged release sözleşmesi:
+
+- [x] AndroidX Core’un `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı app-scoped **signature-level internal** izni beklenen library davranışı olarak tanındı.
+- [x] Bu izin runtime/user-data izni değildir; AndroidX’in non-exported dynamic receiver güvenliği içindir.
+- [x] Production workflow yalnız bu AndroidX internal iznine tolerans gösterecek.
+- [x] `android.permission.INTERNET` kesin olarak reddedilecek.
+- [x] AndroidX internal izin dışında başka merged `uses-permission` reddedilecek.
+- [x] `debuggable=true` ve `testOnly=true` reddedilecek.
+- [x] `allowBackup=false`, cleartext=false ve targetSdk36 merged manifestte doğrulanacak.
+- [ ] Bu merged-release kontrolleri gerçek production AAB workflow’unda PASS alacak.
 
 ## D. İmzalama
 
-- [x] Device-test için ayrı ve sabit test sertifikası var.
+- [x] Device-test için ayrı sabit test sertifikası var.
 - [x] Public test keystore production release’e bağlanmıyor.
-- [x] Private signing dosyaları `.gitignore` ile ek olarak korunuyor.
-- [x] Release signing config yalnız `PLAY_UPLOAD_*` secure environment değerleriyle bağlanacak şekilde hazırlandı.
-- [x] `SIGNING_SETUP.md` Google’ın güncel Play App Signing / upload key modeline göre güncel.
-- [x] Manuel `production-rc-aab.yml` workflow’u signing secret doğrulaması + signer fingerprint kontrolü ile hazırlandı.
-- [ ] Google Play App Signing etkinleştirilecek / mevcut durum doğrulanacak.
-- [ ] Ayrı private upload key oluşturulacak veya mevcut doğru production upload key kullanılacak.
-- [ ] `PLAY_UPLOAD_*` GitHub Secrets gerçek private key bilgileriyle tanımlanacak.
+- [x] Private signing dosyaları `.gitignore` ile korunuyor.
+- [x] Release signing yalnız `PLAY_UPLOAD_*` secure environment değerleriyle bağlanıyor; test key fallback yok.
+- [x] `SIGNING_SETUP.md` güncel Play App Signing / upload key modeline göre hazır.
+- [x] Manuel `production-rc-aab.yml` signing secret + fingerprint kontrolleriyle hazır.
+- [ ] Google Play App Signing durumu Console’da doğrulanacak.
+- [ ] Ayrı private upload key oluşturulacak veya doğru mevcut key kullanılacak.
+- [ ] `PLAY_UPLOAD_*` GitHub Secrets gerçek değerlerle tanımlanacak.
 - [ ] İlk signed production RC AAB workflow’u çalıştırılacak.
 
 ## E. Gizlilik ve Play politikaları
 
-- [x] Final privacy policy Türkçe + İngilizce public `main` branch’te yayınlandı.
+- [x] Final privacy policy TR + EN public `main` branch’te yayınlandı.
 - [x] Privacy URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`.
 - [x] Support URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`.
-- [x] Resmi destek / gizlilik e-postası: `zmilastudio@gmail.com`.
-- [x] Privacy policy Android backup exclusion, permissionless production sözleşmesi ve cleartext=false davranışıyla eşleştirildi.
-- [x] Privacy policy `Raporu kopyala` / `TXT olarak kaydet` user-initiated export akışını ve dışa aktarılan verinin app silme alanı dışında kalabileceğini açıklar.
-- [x] `PLAY_STORE_DATA_SAFETY.md` teknik taslağı güncel.
-- [x] `PLAY_CONSOLE_FORM_ANSWERS.md` backup, permissionless release ve report export ile güncel.
-- [x] Reklam/analytics/cloud SDK’sı mevcut uygulama bağımlılıklarında kullanılmıyor.
-- [x] Uygulama içinde yerel veri silme mekanizması var.
-- [x] Uygulama içinde gizlilik yaklaşımı kullanıcıya açıklanıyor.
-- [ ] Play Console Veri Güvenliği formu production build ile son kez karşılaştırılacak.
-- [ ] İçerik derecelendirmesi / IARC formu Console’da doldurulacak.
-- [ ] Hedef kitle `18+` seçimi Console’da uygulanacak.
+- [x] Destek / gizlilik e-postası: `zmilastudio@gmail.com`.
+- [x] Policy local processing, backup exclusions, cleartext=false, AndroidX internal permission ve user-initiated report export ile eşleştirildi.
+- [x] `PLAY_STORE_DATA_SAFETY.md` güncel.
+- [x] `PLAY_CONSOLE_FORM_ANSWERS.md` güncel.
+- [x] Reklam/analytics/cloud SDK’sı yok.
+- [x] Uygulama içi yerel veri silme mekanizması var.
+- [ ] Play Console Veri Güvenliği formu gerçek production AAB ile son kez karşılaştırılacak.
+- [ ] IARC içerik derecelendirmesi Console’da tamamlanacak.
+- [ ] Hedef kitle `18+` Console’da uygulanacak.
 - [ ] App access: özel erişim gerekmez beyanı Console’da uygulanacak.
 
 ## F. Play Store mağaza içeriği
 
-- [x] Türkçe mağaza metni: `PLAY_STORE_LISTING_TR.md`.
-- [x] İngilizce mağaza metni: `PLAY_STORE_LISTING_EN.md`.
+- [x] Türkçe listing: `PLAY_STORE_LISTING_TR.md`.
+- [x] İngilizce listing: `PLAY_STORE_LISTING_EN.md`.
 - [x] Uygulama adı: `Takip Analizi`.
-- [x] Türkçe kısa açıklama hazır — 68/80 karakter.
-- [x] Türkçe tam açıklama 4.000 karakter sınırının altında.
-- [x] İngilizce kısa açıklama hazır — 77/80 karakter.
-- [x] Önerilen kategori: `Araçlar / Tools`.
-- [x] Metadata yanıltıcılık ve resmi Instagram/X ilişkisi ima etmeme guardrail’leri yazıldı.
-- [x] Store listing contact alanları gerçek privacy/support URL ve e-posta ile doldurulmaya hazır.
-- [x] `STORE_VISUAL_CAPTURE_PLAN.md`: 8 gerçek uygulama screenshot’ı için çekim ve privacy planı hazır.
-- [x] Sentetik Instagram/X store-demo snapshot ZIP’leri hazır; gerçek kişi verisi kullanılmayacak.
-- [x] **512×512 mağaza simgesi hazırlandı**; exact orijinal kullanıcı rasterından yalnız Lanczos resize ile türetildi.
-  - PNG: 512×512 RGB, 169.565 byte.
+- [x] TR kısa açıklama 68/80.
+- [x] EN kısa açıklama 77/80.
+- [x] Kategori: `Araçlar / Tools`.
+- [x] Contact alanları privacy/support URL ve e-posta ile hazır.
+- [x] `STORE_VISUAL_CAPTURE_PLAN.md`: 8 gerçek-app screenshot planı.
+- [x] Sentetik Instagram/X store-demo snapshot ZIP’leri hazır.
+- [x] 512×512 exact mağaza simgesi hazır.
+  - RGB PNG, 169.565 byte.
   - SHA-256: `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
-  - Türetme kaydı: `STORE_ICON_DERIVATION.md`.
-- [ ] Telefon ekran görüntüleri production RC’den alınacak.
-- [ ] Gerekirse 7 inç / 10 inç tablet ekran görüntüleri hazırlanacak.
+- [ ] Telefon screenshot’ları production RC’den alınacak.
+- [ ] Gerekirse 7/10 inç tablet görselleri hazırlanacak.
 - [ ] 1024×500 feature graphic hazırlanacak.
-- [ ] Play Console’daki mevcut tag listesinden en fazla 5 gerçekten ilgili etiket seçilecek.
+- [ ] Play Console’dan en fazla 5 gerçek ilgili tag seçilecek.
 
-## G. Release build
+## G. Device Test release-hardening baseline
 
-- [x] Production RC için manuel CI workflow tasarlandı; push’ta otomatik çalışmaz.
-- [x] Workflow varsayılan production sürümü `1.0.0 / 1`.
-- [x] Workflow `flutter analyze` + tüm testleri production build öncesi çalıştırır.
-- [x] Workflow private upload sertifikası SHA-256 fingerprint’ini build öncesi ve AAB sonrası doğrular.
-- [x] Workflow exact launcher source SHA-256 kilidini doğrular.
-- [x] Workflow merged release manifestte targetSdk 36’yı doğrular.
-- [x] Workflow merged release manifest için permissionless / non-debuggable / non-testOnly / no-backup / no-cleartext sözleşmesini doğrular.
-- [x] AAB artifact retention 1 gün ile sınırlandı.
-- [ ] Gerçek private signing secrets tanımlandıktan sonra `flutter build appbundle --release` çalıştırılacak.
-- [ ] AAB package id = `com.zmilastudio.takipanalizi` son build üzerinde doğrulanacak.
-- [ ] versionName/versionCode doğrulaması gerçek AAB/Play upload üzerinde tamamlanacak.
-- [ ] Release sertifika/upload key doğrulamasının gerçek AAB’de PASS olması.
-- [ ] AAB boyutu ve native kütüphaneler kontrolü.
+- [x] Commit: `0816b8811aae6cf7aa2be67e63c524156093507b`.
+- [x] Run: `33551771267` — **SUCCESS**.
+- [x] Prerelease: `device-test-v2-39`.
+- [x] Package: `com.zmilastudio.takipanalizi.dev`.
+- [x] versionName: `1.0.0-dev`.
+- [x] VersionCode: `300039`.
+- [x] APK size: `180,743,127` byte.
+- [x] APK SHA-256: `d18151fbc8c75897abd14934cc71b9ef29911b1d035cb6c1670a176fac9dde97`.
+- [x] Test signer SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`.
+- [x] Exact launcher source SHA-256: `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`.
+- [x] Backup: `backup/device-v2-39-release-hardening-ci-working`.
+- [x] Analyze + 23 tests + production-source backup/permission/cleartext preflight + APK signing/package/icon checks PASS.
 
-## H. Son cihaz testi — ilk production 1.0.0
+Not: v2-39 debug APK’da `INTERNET` Flutter debug tooling nedeniyle ve `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` AndroidX internal güvenlik mekanizması nedeniyle görünür. Production sözleşmesi ayrı merged release manifestte uygulanır.
 
-**Önemli:** `.dev` device-test paketi ile production paket farklı applicationId kullanır. Bu nedenle ilk production `1.0.0`, v2-38 `.dev` uygulamasının üstüne upgrade değildir ve `.dev` verisini devralmamalıdır.
+## H. Production release build
 
-İlk production RC test turunda:
+- [x] Production RC workflow manuel; push’ta otomatik çalışmaz.
+- [x] `flutter analyze` + tüm testler production build öncesi çalışır.
+- [x] Private upload sertifikası fingerprint’i build öncesi ve AAB sonrası doğrulanır.
+- [x] Exact launcher source guard var.
+- [x] Merged release manifest targetSdk / izin / backup / cleartext / debuggable/testOnly guard’ları var.
+- [x] AAB artifact retention 1 gün.
+- [ ] Gerçek private secrets sonrası signed production AAB üretilecek.
+- [ ] AAB package id = `com.zmilastudio.takipanalizi` doğrulanacak.
+- [ ] versionName/versionCode gerçek AAB üzerinde doğrulanacak.
+- [ ] Upload signer fingerprint PASS olacak.
+- [ ] AAB boyutu ve native kütüphaneler kontrol edilecek.
 
-- [ ] Production paket **temiz kurulum** olarak Play Internal Testing / uygun production-signed dağıtım üzerinden yüklenir.
+## I. Son cihaz testi — ilk production 1.0.0
+
+**Önemli:** `.dev` device-test ve production farklı applicationId’dir. İlk production `1.0.0`, v2-39 `.dev` üstüne upgrade değildir ve `.dev` verisini devralmamalıdır.
+
+İlk production RC turunda:
+
+- [ ] Production package temiz kurulum olarak Play Internal Testing / uygun production-signed dağıtım üzerinden yüklenir.
 - [ ] Package id `com.zmilastudio.takipanalizi` doğrulanır.
-- [ ] Instagram demo snapshot 1 import.
-- [ ] Instagram demo snapshot 2 aynı hesapla import; otomatik geçmiş karşılaştırma doğrulanır.
+- [ ] Instagram demo snapshot 1 + snapshot 2 aynı hesapla import edilir.
 - [ ] 5 analiz sekmesi.
 - [ ] Arama/sıralama.
 - [ ] Profil açma.
 - [ ] Yok say / geri yükle.
-- [ ] Analiz geçmişi.
-- [ ] Manuel snapshot karşılaştırma.
-- [ ] Raporu kopyala / TXT kaydet; TXT dosyasının kullanıcı seçtiği hedefe gittiği doğrulanır.
+- [ ] Analiz geçmişi + manuel snapshot karşılaştırma.
+- [ ] Raporu kopyala / TXT kaydet.
 - [ ] Yerel Veri Yönetimi.
-- [ ] Gizlilik ve Hakkında ekranında backup/export güncel metinleri görünür.
-- [ ] X demo snapshot 1 + snapshot 2 import.
-- [ ] X arşivi direct JS fallback.
-- [ ] X arşiv rehberi.
-- [ ] Uygulama kapatılıp yeniden açıldığında **aynı production kurulumu içinde** local geçmiş kalıcılığı doğrulanır.
-- [ ] Gerçek kullanıcı X arşiviyle tek kritik fiziksel doğrulama yapılır.
+- [ ] Güncel Gizlilik ve Hakkında ekranı.
+- [ ] X demo snapshot 1 + snapshot 2.
+- [ ] X direct JS fallback + X rehberi.
+- [ ] Uygulama kapat/aç ile aynı production kurulumunda local geçmiş kalıcılığı.
+- [ ] Gerçek kullanıcı X arşiviyle tek kritik fiziksel doğrulama.
 
-### Production upgrade testi
+Gerçek production upgrade/veri koruma testi, ancak production `1.0.0` sonrasında versionCode>1 aynı package üzerinde yapılabilir.
 
-- İlk production sürümünde `.dev → production` upgrade testi **uygulanmaz**; paketler farklıdır.
-- Gerçek production upgrade/veri koruma testi ancak production `1.0.0` yayınlandıktan sonra sonraki production sürümünde (`versionCode > 1`) aynı `com.zmilastudio.takipanalizi` package üzerinde yapılabilir.
-
-## I. Yayın kararı
+## J. Yayın kararı
 
 Aşağıdaki dört madde tamamlanmadan production rollout yapılmayacak:
 
 1. Private Play upload signing tamamlanmış olmalı.
-2. Play Data Safety / IARC / target audience / app access formları Console’da tamamlanmış olmalı.
+2. Play Data Safety / IARC / target audience / app access formları tamamlanmış olmalı.
 3. Store screenshot’ları + feature graphic tamamlanmış olmalı.
 4. Production RC temiz kurulum + local persistence + gerçek X kritik fiziksel testten PASS almalı.
