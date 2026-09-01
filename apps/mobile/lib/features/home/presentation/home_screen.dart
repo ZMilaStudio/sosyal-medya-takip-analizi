@@ -160,6 +160,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         label: 'X Arşivini İçe Aktar',
                         onPressed: isBusy ? null : _pickXArchive,
                       ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: isBusy ? null : _pickXRelationshipFiles,
+                        icon: const Icon(Icons.data_object_rounded),
+                        label: const Text(
+                          'Büyük arşiv: follower.js + following.js seç',
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Arşiv çok büyükse ZIP’i çıkardıktan sonra data klasöründeki iki takip dosyasını birlikte seçebilirsin.',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
                     ],
                   ),
                 ),
@@ -213,6 +226,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final result = await ref
         .read(xImportControllerProvider.notifier)
         .pickAndAnalyze(_xUsernameController.text);
+
+    if (!mounted || result == null) return;
+    context.push('/analysis', extra: result);
+  }
+
+  Future<void> _pickXRelationshipFiles() async {
+    final result = await ref
+        .read(xImportControllerProvider.notifier)
+        .pickRelationshipFiles(_xUsernameController.text);
 
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
