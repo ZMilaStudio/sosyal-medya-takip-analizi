@@ -61,7 +61,7 @@ Copy an analysis report or save it as a TXT file. You can delete analysis histor
 
 ### Privacy approach
 
-Your follow-archive files are not uploaded to a developer-operated server. The current app does not require an internet connection for analysis and does not request the Android INTERNET permission. If you choose to open a social-media profile, the link is handed off to the relevant third-party app or browser.
+Your follow-archive files are not uploaded to a developer-operated server. Analysis is designed to stay on the device. Flutter development builds can include internet access for debugging, while the production release pipeline explicitly rejects a merged release manifest containing the Android INTERNET permission. If you choose to open a social-media profile, the link is handed off to the relevant third-party app or browser as a user-initiated action.
 
 Takip Analizi is an independent ZMila Studio application and is not developed, sponsored, endorsed, or approved by Instagram or X.
 
@@ -73,15 +73,13 @@ Use only tags actually offered by Play Console and clearly supported by the app 
 - Do not use social-networking or messaging tags merely to attract traffic.
 - Prefer the closest available tags related to utilities, analysis, or local file processing when such tags are offered by Play Console.
 
-## Store contact — BLOCKER
+## Store contact
 
-A support email is required by Google Play. The official support address has not yet been defined in this repository and will not be guessed or invented.
+- Support email: `zmilastudio@gmail.com`
+- Support website: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
+- Privacy-policy URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
 
-Before production:
-
-- Support email: `PENDING`
-- Support website: `PENDING`
-- Privacy-policy URL: `PENDING`
+These pages are published on the public repository and do not require an app login.
 
 ## Metadata guardrails
 
