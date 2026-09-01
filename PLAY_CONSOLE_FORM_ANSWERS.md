@@ -2,7 +2,7 @@
 
 Son güncelleme: 1 Eylül 2026
 
-Bu dosya, mevcut **local-first v2-38 / release-polish** mimarisine göre Google Play Console formlarında kullanılacak cevap taslağıdır. Production AAB davranışı değişirse cevaplar yeniden kontrol edilmelidir.
+Bu dosya mevcut **local-first release-hardening** mimarisine göre Google Play Console formlarında kullanılacak cevap taslağıdır. Production AAB davranışı değişirse cevaplar yeniden kontrol edilmelidir.
 
 ## 1. Privacy policy
 
@@ -52,7 +52,9 @@ Gerekçe:
 - Analiz/snapshot verileri uygulama tarafından cihazda tutulur.
 - Mevcut mimaride ZMila Studio sunucusuna veri gönderilmez.
 - Analytics, reklam veya cloud SDK’sı yoktur.
-- Production release’in merged manifestinde **hiç Android permission bulunmaması** CI ile zorunlu tutulacaktır.
+- Production kaynak manifestinde `INTERNET` veya app-defined `uses-permission` yoktur.
+- AndroidX Core merged manifestte eski Android sürümlerinde non-exported dynamic receiver güvenliği için paket-kapsamlı `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı signature-level internal permission ekleyebilir. Bu kullanıcıdan istenen runtime/data-access izni değildir.
+- Production CI bu AndroidX internal izni dışında başka merged `uses-permission` kabul etmez ve `INTERNET` iznini kesin olarak reddeder.
 - Production manifestte `android:allowBackup="false"` vardır ve backup/data-transfer extraction rule’ları app-managed local data domainlerini hariç tutar.
 - Google Play’in Data Safety tanımında yalnız cihazda erişilen/işlenen ve cihaz dışına gönderilmeyen veri “collected” olarak beyan edilmek zorunda değildir.
 
@@ -166,21 +168,26 @@ Bu nedenle Play’in uygulama-içi hesap oluşturan ürünlere yönelik account-
 
 ## 13. Permissions / data access notları
 
-Production sözleşmesi: **release merged manifestte `<uses-permission>` bulunmayacak.**
+Production sözleşmesi:
+
+- Kaynak `main` manifestte app-defined `<uses-permission>` olmayacak.
+- Release merged manifestte yalnız AndroidX Core’un uygulama-kapsamlı signature-level `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` iznine tolerans gösterilecek.
+- `android.permission.INTERNET` ve başka tüm merged `uses-permission` girdileri CI tarafından reddedilecek.
+
+Ayrıca:
 
 - Dosyalar Android sistem file picker üzerinden kullanıcı tarafından seçilir.
 - `MANAGE_EXTERNAL_STORAGE` kullanılmaz.
 - `READ/WRITE_EXTERNAL_STORAGE` kullanılmaz.
 - `READ_MEDIA_*` kullanılmaz.
-- Contacts / SMS / Call Log / Location / Camera / Microphone izinleri istenmez.
+- Contacts / SMS / Call Log / Location / Camera / Microphone runtime izinleri istenmez.
 - Production kaynak manifestinde `android:usesCleartextTraffic="false"` vardır.
 - Debug ve profile Flutter build’leri geliştirme araçları için `INTERNET` iznini kendi manifestlerinden ekleyebilir; bu production davranışı değildir.
-- Production workflow gerçek merged release manifestte herhangi bir `<uses-permission>` görülürse fail olur.
 - Production workflow `android:debuggable="true"` veya `android:testOnly="true"` görülürse fail olur.
 
 ## 14. Target API
 
-v2-38 CI debug APK badging doğrulaması:
+v2-39 CI debug APK badging doğrulaması:
 
 - `compileSdkVersion = 36`
 - `targetSdkVersion = 36`
@@ -195,7 +202,7 @@ Production AAB üzerinde de aynı targetSdk final release kontrol listesinde yen
 Aşağıdaki durumlarda bu dosyadaki cevapları otomatik kullanma; yeniden değerlendir:
 
 - canlı Instagram/X API veya OAuth eklenirse,
-- production release’e herhangi bir Android permission girerse,
+- production release’e AndroidX internal receiver permission dışında yeni bir Android permission girerse,
 - `usesCleartextTraffic`, `allowBackup` veya backup/data-extraction policy gevşetilirse,
 - analytics/crash reporting/reklam SDK’sı eklenirse,
 - cloud sync veya kullanıcı hesabı eklenirse,
@@ -212,6 +219,7 @@ Google Play:
 - Content ratings: https://support.google.com/googleplay/android-developer/answer/9898843
 - Target API requirements: https://support.google.com/googleplay/android-developer/answer/11926878
 
-Android:
+Android / AndroidX:
 - Application manifest / allowBackup: https://developer.android.com/guide/topics/manifest/application-element
 - Android 12 backup/data transfer rules: https://developer.android.com/about/versions/12/behavior-changes-12
+- AndroidX Core merged receiver permission: https://android.googlesource.com/platform/prebuilts/sdk/+/fa1474c543bdd7eaa690ba935d9ea8249fd12880/current/androidx/manifests/androidx.core_core/AndroidManifest.xml
