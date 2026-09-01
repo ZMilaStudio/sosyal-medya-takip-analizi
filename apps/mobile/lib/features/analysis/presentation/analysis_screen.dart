@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/local/ignored_accounts_store.dart';
+import '../application/analysis_report.dart';
 
 class AnalysisScreen extends StatefulWidget {
   const AnalysisScreen({
@@ -60,7 +65,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final controller = messenger.showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
-        content: Text('${_userLabel(user, widget.result.snapshot.account.platform)} yok sayıldı.'),
+        content: Text(
+          '${_userLabel(user, widget.result.snapshot.account.platform)} yok sayıldı.',
+        ),
         action: SnackBarAction(
           label: 'Geri al',
           onPressed: () async {
@@ -84,6 +91,35 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       controller.close();
       _snackBarTimer = null;
     });
+  }
+
+  String _reportText() => buildAnalysisTextReport(
+        widget.result,
+        ignoredUsernames: _ignored,
+      );
+
+  Future<void> _copyReport() async {
+    await Clipboard.setData(ClipboardData(text: _reportText()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Analiz raporu panoya kopyalandı.')),
+    );
+  }
+
+  Future<void> _saveReport() async {
+    final bytes = Uint8List.fromList(utf8.encode(_reportText()));
+    final output = await FilePicker.saveFile(
+      dialogTitle: 'Analiz raporunu kaydet',
+      fileName: analysisReportFileName(widget.result),
+      bytes: bytes,
+      mimeType: 'text/plain',
+      type: FileType.custom,
+      allowedExtensions: const ['txt'],
+    );
+    if (!mounted || output == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Analiz raporu kaydedildi.')),
+    );
   }
 
   @override
@@ -126,6 +162,36 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             platform == SocialPlatform.x ? 'X Analizi' : 'Instagram Analizi',
           ),
           actions: [
+            PopupMenuButton<_ReportAction>(
+              tooltip: 'Rapor',
+              icon: const Icon(Icons.ios_share_rounded),
+              onSelected: (action) async {
+                switch (action) {
+                  case _ReportAction.copy:
+                    await _copyReport();
+                  case _ReportAction.save:
+                    await _saveReport();
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _ReportAction.copy,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.copy_rounded),
+                    title: Text('Raporu kopyala'),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _ReportAction.save,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.download_outlined),
+                    title: Text('TXT olarak kaydet'),
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               tooltip: 'Yok sayılan hesaplar',
               onPressed: () async {
@@ -359,7 +425,9 @@ class _UserListState extends State<_UserList> {
                       leading: CircleAvatar(child: Text(firstCharacter)),
                       title: Text(label),
                       subtitle: idOnly
-                          ? const Text('Arşiv kullanıcı adını vermedi • Profile dokun')
+                          ? const Text(
+                              'Arşiv kullanıcı adını vermedi • Profile dokun',
+                            )
                           : user.displayName == null
                               ? null
                               : Text(user.displayName!),
@@ -406,7 +474,9 @@ class _UserListState extends State<_UserList> {
     if (uri == null) {
       if (_isXIdOnlyUser(user, widget.platform)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bu X hesabının profil bağlantısı arşivde yok.')),
+          const SnackBar(
+            content: Text('Bu X hesabının profil bağlantısı arşivde yok.'),
+          ),
         );
         return;
       }
@@ -441,3 +511,5 @@ String _userLabel(SocialUser user, SocialPlatform platform) {
 }
 
 enum _UserAction { ignore }
+
+enum _ReportAction { copy, save }
