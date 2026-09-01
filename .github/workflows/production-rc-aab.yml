@@ -4,12 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: Production versionName (example: 1.0.0)
+        description: Production versionName
         required: true
+        default: '1.0.0'
         type: string
       version_code:
         description: Production versionCode (positive integer)
         required: true
+        default: '1'
         type: string
 
 permissions:
@@ -21,6 +23,7 @@ jobs:
     timeout-minutes: 30
     env:
       EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
+      EXPECTED_TARGET_SDK: '36'
       EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
       PLAY_UPLOAD_KEYSTORE_PATH: ${{ github.workspace }}/.github/production-signing/upload-keystore.jks
       PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
@@ -91,6 +94,7 @@ jobs:
           grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
           grep -F 'applicationIdSuffix = ".dev"' android/app/build.gradle.kts
           grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
+          grep -F 'version: 1.0.0+1' pubspec.yaml
           test ! -e android/key.properties
           ! grep -F 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
 
@@ -127,6 +131,7 @@ jobs:
           test -n "$RELEASE_MANIFEST"
           echo "Merged release manifest: $RELEASE_MANIFEST"
           grep -F '<manifest' "$RELEASE_MANIFEST"
+          grep -F "android:targetSdkVersion=\"$EXPECTED_TARGET_SDK\"" "$RELEASE_MANIFEST"
           ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
 
       - name: Verify signed AAB
