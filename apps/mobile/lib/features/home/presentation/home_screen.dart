@@ -76,102 +76,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 18),
                 ],
-                _SurfaceCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const _InstagramMark(),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              'Instagram',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          const _LocalBadge(),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _instagramUsernameController,
-                        enabled: !isBusy,
-                        autocorrect: false,
-                        textCapitalization: TextCapitalization.none,
-                        decoration: const InputDecoration(
-                          labelText: 'Instagram kullanıcı adın',
-                          hintText: 'kullanici.adi',
-                          prefixIcon: Icon(Icons.alternate_email),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const _InstagramLocalInfo(),
-                      if (instagramState case AsyncError(:final error)) ...[
-                        const SizedBox(height: 14),
-                        _ErrorMessage(
-                          message: instagramImportErrorMessage(error),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      _ImportButton(
-                        loading: instagramState.isLoading,
-                        label: 'Instagram Verisini İçe Aktar',
-                        onPressed: isBusy ? null : _pickInstagramArchive,
-                      ),
-                      const SizedBox(height: 4),
-                      TextButton.icon(
-                        onPressed: isBusy
-                            ? null
-                            : () => context.push('/instagram-guide'),
-                        icon: const Icon(Icons.help_outline_rounded),
-                        label: const Text('Instagram arşivi nasıl alınır?'),
-                      ),
-                    ],
+                _PlatformCard(
+                  mark: const _InstagramMark(),
+                  title: 'Instagram',
+                  controller: _instagramUsernameController,
+                  enabled: !isBusy,
+                  labelText: 'Instagram kullanıcı adın',
+                  hintText: 'kullanici.adi',
+                  info: const _InstagramLocalInfo(),
+                  error: instagramState case AsyncError(:final error)
+                      ? instagramImportErrorMessage(error)
+                      : null,
+                  importButton: _ImportButton(
+                    loading: instagramState.isLoading,
+                    label: 'Instagram Verisini İçe Aktar',
+                    onPressed: isBusy ? null : _pickInstagramArchive,
+                  ),
+                  footer: TextButton.icon(
+                    onPressed: isBusy
+                        ? null
+                        : () => context.push('/instagram-guide'),
+                    icon: const Icon(Icons.help_outline_rounded),
+                    label: const Text('Instagram arşivi nasıl alınır?'),
                   ),
                 ),
                 const SizedBox(height: 18),
-                _SurfaceCard(
-                  child: Column(
+                _PlatformCard(
+                  mark: const _XMark(),
+                  title: 'X / Twitter',
+                  controller: _xUsernameController,
+                  enabled: !isBusy,
+                  labelText: 'X kullanıcı adın',
+                  hintText: 'kullanici_adi',
+                  info: const _XLocalInfo(),
+                  error: xState case AsyncError(:final error)
+                      ? xImportErrorMessage(error)
+                      : null,
+                  importButton: _ImportButton(
+                    loading: xState.isLoading,
+                    label: 'X Arşivini İçe Aktar',
+                    onPressed: isBusy ? null : _pickXArchive,
+                  ),
+                  extra: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          const _XMark(),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              'X / Twitter',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          const _LocalBadge(),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _xUsernameController,
-                        enabled: !isBusy,
-                        autocorrect: false,
-                        textCapitalization: TextCapitalization.none,
-                        decoration: const InputDecoration(
-                          labelText: 'X kullanıcı adın',
-                          hintText: 'kullanici_adi',
-                          prefixIcon: Icon(Icons.alternate_email),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const _XLocalInfo(),
-                      if (xState case AsyncError(:final error)) ...[
-                        const SizedBox(height: 14),
-                        _ErrorMessage(message: xImportErrorMessage(error)),
-                      ],
-                      const SizedBox(height: 18),
-                      _ImportButton(
-                        loading: xState.isLoading,
-                        label: 'X Arşivini İçe Aktar',
-                        onPressed: isBusy ? null : _pickXArchive,
-                      ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
                         onPressed: isBusy ? null : _pickXRelationshipFiles,
@@ -186,6 +134,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(color: AppColors.muted),
                       ),
                     ],
+                  ),
+                  footer: TextButton.icon(
+                    onPressed: isBusy ? null : () => context.push('/x-guide'),
+                    icon: const Icon(Icons.help_outline_rounded),
+                    label: const Text('X arşivi nasıl alınır?'),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -207,10 +160,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
-                        onPressed:
-                            isBusy ? null : () => context.push('/ignored-accounts'),
+                        onPressed: isBusy
+                            ? null
+                            : () => context.push('/ignored-accounts'),
                         icon: const Icon(Icons.visibility_off_outlined),
                         label: const Text('Yok Sayılan Hesaplar'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: isBusy
+                            ? null
+                            : () => context.push('/data-management'),
+                        icon: const Icon(Icons.storage_outlined),
+                        label: const Text('Yerel Veri Yönetimi'),
                       ),
                     ],
                   ),
@@ -231,9 +193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       SocialPlatform.x => _xUsernameController,
     };
     controller.text = item.account.username;
-    controller.selection = TextSelection.collapsed(
-      offset: controller.text.length,
-    );
+    controller.selection = TextSelection.collapsed(offset: controller.text.length);
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
@@ -241,7 +201,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final result = await ref
         .read(instagramImportControllerProvider.notifier)
         .pickAndAnalyze(_instagramUsernameController.text);
-
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
   }
@@ -250,7 +209,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final result = await ref
         .read(xImportControllerProvider.notifier)
         .pickAndAnalyze(_xUsernameController.text);
-
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
   }
@@ -259,9 +217,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final result = await ref
         .read(xImportControllerProvider.notifier)
         .pickRelationshipFiles(_xUsernameController.text);
-
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
+  }
+}
+
+class _PlatformCard extends StatelessWidget {
+  const _PlatformCard({
+    required this.mark,
+    required this.title,
+    required this.controller,
+    required this.enabled,
+    required this.labelText,
+    required this.hintText,
+    required this.info,
+    required this.importButton,
+    required this.footer,
+    this.error,
+    this.extra,
+  });
+
+  final Widget mark;
+  final String title;
+  final TextEditingController controller;
+  final bool enabled;
+  final String labelText;
+  final String hintText;
+  final Widget info;
+  final Widget importButton;
+  final Widget footer;
+  final String? error;
+  final Widget? extra;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              mark,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+              ),
+              const _LocalBadge(),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: controller,
+            enabled: enabled,
+            autocorrect: false,
+            textCapitalization: TextCapitalization.none,
+            decoration: InputDecoration(
+              labelText: labelText,
+              hintText: hintText,
+              prefixIcon: const Icon(Icons.alternate_email),
+            ),
+          ),
+          const SizedBox(height: 14),
+          info,
+          if (error != null) ...[
+            const SizedBox(height: 14),
+            _ErrorMessage(message: error!),
+          ],
+          const SizedBox(height: 18),
+          importButton,
+          if (extra != null) extra!,
+          const SizedBox(height: 4),
+          footer,
+        ],
+      ),
+    );
   }
 }
 
@@ -318,10 +347,7 @@ class _RecentAccountsCard extends StatelessWidget {
 }
 
 class _RecentAccountTile extends StatelessWidget {
-  const _RecentAccountTile({
-    required this.item,
-    required this.onTap,
-  });
+  const _RecentAccountTile({required this.item, required this.onTap});
 
   final FollowSnapshotHistoryItem item;
   final VoidCallback onTap;
@@ -467,10 +493,7 @@ class _InstagramMark extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(15),
       ),
-      child: const Icon(
-        Icons.camera_alt_outlined,
-        color: Colors.white,
-      ),
+      child: const Icon(Icons.camera_alt_outlined, color: Colors.white),
     );
   }
 }
@@ -513,10 +536,7 @@ class _SafetyMark extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Icon(
-        Icons.shield_outlined,
-        color: AppColors.primary,
-      ),
+      child: const Icon(Icons.shield_outlined, color: AppColors.primary),
     );
   }
 }
@@ -610,10 +630,7 @@ class _LocalInfo extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),
@@ -663,10 +680,7 @@ class _ImportButton extends StatelessWidget {
                       ),
                     )
                   else
-                    const Icon(
-                      Icons.folder_open_outlined,
-                      color: Colors.white,
-                    ),
+                    const Icon(Icons.folder_open_outlined, color: Colors.white),
                   const SizedBox(width: 10),
                   Text(
                     loading ? 'Analiz ediliyor…' : label,
