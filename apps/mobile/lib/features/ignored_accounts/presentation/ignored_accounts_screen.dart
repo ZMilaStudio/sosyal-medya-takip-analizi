@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:follow_core/follow_core.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/presentation/monogram_avatar.dart';
@@ -33,6 +34,7 @@ class _IgnoredAccountsScreenState extends State<IgnoredAccountsScreen> {
 
   Future<void> _restore(IgnoredAccountRecord record) async {
     await _store.restore(
+      platform: record.platform,
       ownerUsername: record.ownerUsername,
       ignoredUsername: record.ignoredUsername,
     );
@@ -108,7 +110,9 @@ class _IgnoredAccountsScreenState extends State<IgnoredAccountsScreen> {
                             color: AppColors.ink,
                           ),
                         ),
-                        subtitle: Text('@${record.ownerUsername} hesabında'),
+                        subtitle: Text(
+                          '${_platformLabel(record.platform)} • @${record.ownerUsername}',
+                        ),
                         trailing: IconButton(
                           tooltip: 'Yok saymayı kaldır',
                           onPressed: () => _restore(record),
@@ -121,6 +125,11 @@ class _IgnoredAccountsScreenState extends State<IgnoredAccountsScreen> {
     );
   }
 }
+
+String _platformLabel(SocialPlatform platform) => switch (platform) {
+      SocialPlatform.instagram => 'Instagram',
+      SocialPlatform.x => 'X',
+    };
 
 class _EmptyIgnoredState extends StatelessWidget {
   const _EmptyIgnoredState();
