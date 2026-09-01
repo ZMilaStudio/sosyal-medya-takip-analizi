@@ -6,7 +6,8 @@
         android:roundIcon="@drawable/takip_launcher_user"
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
-        android:dataExtractionRules="@xml/data_extraction_rules">
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
