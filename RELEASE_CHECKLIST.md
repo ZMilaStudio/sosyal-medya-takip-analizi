@@ -71,10 +71,14 @@ Bu checklist, v2-38 CI baseline’dan Google Play production yayınına geçerke
 - [x] Önerilen kategori: `Araçlar / Tools`.
 - [x] Metadata yanıltıcılık ve resmi Instagram/X ilişkisi ima etmeme guardrail’leri yazıldı.
 - [x] Store listing contact alanları gerçek privacy/support URL ve e-posta ile doldurulmaya hazır.
-- [x] Mağaza görsel içerik planı ve ekran görüntüsü adayları yazıldı.
+- [x] `STORE_VISUAL_CAPTURE_PLAN.md`: 8 gerçek uygulama screenshot’ı için çekim ve privacy planı hazır.
+- [x] Sentetik Instagram/X store-demo snapshot ZIP’leri hazır; gerçek kişi verisi kullanılmayacak.
+- [x] **512×512 mağaza simgesi hazırlandı**; exact orijinal kullanıcı rasterından yalnız Lanczos resize ile türetildi.
+  - PNG: 512×512 RGB, 169.565 byte.
+  - SHA-256: `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
+  - Türetme kaydı: `STORE_ICON_DERIVATION.md`.
 - [ ] Telefon ekran görüntüleri production RC’den alınacak.
 - [ ] Gerekirse 7 inç / 10 inç tablet ekran görüntüleri hazırlanacak.
-- [ ] 512×512 mağaza simgesi hazırlanacak; exact launcher tasarımından türetilecek.
 - [ ] 1024×500 feature graphic hazırlanacak.
 - [ ] Play Console’daki mevcut tag listesinden en fazla 5 gerçekten ilgili etiket seçilecek.
 
@@ -119,5 +123,5 @@ Aşağıdaki dört madde tamamlanmadan production rollout yapılmayacak:
 
 1. Private Play upload signing tamamlanmış olmalı.
 2. Play Data Safety / IARC / target audience / app access formları Console’da tamamlanmış olmalı.
-3. Store görselleri tamamlanmış olmalı.
+3. Store screenshot’ları + feature graphic tamamlanmış olmalı.
 4. Production RC tek kritik fiziksel testten PASS almalı.
