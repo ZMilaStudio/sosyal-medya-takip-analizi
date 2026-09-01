@@ -18,7 +18,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Yok sayılan hesaplar hesap bazında cihazda tutulur; ham snapshot sayılarını değiştirmez, yalnız analiz listelerini filtreler.
 - Kullanıcı satırına dokununca resmi Instagram profil URL'si harici uygulamada açılır.
 - Final analiz hedefi 5 sekmedir: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
-- Launcher hedefi kullanıcının onayladığı **4. seçeneğin koyu versiyonu**; henüz fiziksel doğrulanmadı.
+- Launcher hedefi kullanıcının onayladığı **4. seçeneğin koyu versiyonu**; v2-25 fiziksel doğrulama adayıdır.
 
 ## Gerçek Meta export
 - 569 takipçi
@@ -67,23 +67,52 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - backup `backup/device-v2-23-five-tabs-working`
 
 ## v2-23 model ve test notları
-Model:
 - `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
 - `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
 - previous snapshot yoksa iki sekme `(0)` gösterir; bu normal davranıştır.
 - previous snapshot varsa farklar iki snapshot üzerinden hesaplanır.
+- previous yok testi ✅
+- sentetik previous/current `@left` unfollower testi ✅
+- sentetik previous/current `@newcomer` new follower testi ✅
+- liste / arama / sıralama / Yok say regresyon testleri ✅
 
-Regresyon testleri:
-- previous snapshot yokken iki yeni sekme `(0)` ✅
-- sentetik previous/current ile `@left` -> Takibi Bırakanlar ✅
-- sentetik previous/current ile `@newcomer` -> Yeni Takipçiler ✅
-- mevcut liste/sekme testi ✅
-- arama ✅
-- A-Z/Z-A sıralama ✅
-- Yok say ✅
-- Analyze / Test / APK build / paket / VersionCode / imza doğrulama ✅
+## Launcher simgesi teşhisi ve v2-25
+Önceki fiziksel sürümlerde yanlış simgenin görünmesinin sebebi bulundu:
+- v2-14 döneminde manifest yanlışlıkla `@drawable/takip_launcher` adlı sonradan oluşturulmuş kişi+büyüteç vektörüne bağlanmıştı.
+- Bu dosya kullanıcının daha önce onayladığı **4. seçeneğin koyu versiyonu değildi**.
+- Onaylı koyu launcher kaynakları Git geçmişindeki `863eb72e703151b71f151509aa46e12d6fb7fbf1` ve tam Android wiring'i sağlayan `6294a348448f8bfa28ac6e547c06e4383adfa2c8` commitlerinde bulundu.
 
-Not: workflow release açıklama metni eski render/launcher denemesinden kalmadır ve v2-23 gerçek kod durumunu temsil etmez. Gerçek kaynak commit + bu proje özeti esas alınır.
+v2-25 için geri getirilen doğru Android zinciri:
+- Manifest `android:icon="@mipmap/ic_launcher"`
+- Manifest `android:roundIcon="@mipmap/ic_launcher_round"`
+- Android 26+ adaptive foreground: `@drawable/ic_launcher_foreground`
+- adaptive normal + round kaynakları mevcut
+- legacy normal + round fallback mevcut
+- arka plan `#07152F`
+- foreground ana renkleri `#35C2B1`, `#EEF4FF`, `#8A8FD1`
+- v2-23 uygulama/analiz koduna dokunulmadı.
+
+### v2-24 — yayınlanmadı
+- launcher kaynak kodu ve tüm uygulama testleri geçti ✅
+- APK build geçti ✅
+- VersionCode 300024
+- son APK doğrulama adımı yanlış negatif verdi: workflow `aapt dump badging` çıktısını `head -40` ile kesiyor, `application-icon-*` satırı 40. satırdan sonra kaldığı için grep başarısız oluyordu.
+- APK prerelease yayınlanmadı; **v2-24 kullanılmayacak**.
+
+### v2-25 — launcher fiziksel doğrulama adayı
+- launcher kaynak commit zinciri: `52513e14b1805f1ad865f15bb62d72241b6b40a3`
+- CI doğrulama düzeltme commit: `d3ec866bbf943d997001c021f8807ef372500ddc`
+- workflow run `33479549756`
+- VersionCode `300025`
+- Analyze ✅
+- 15 test ✅
+- manifest/adaptive/round/legacy launcher wiring ✅
+- APK build ✅
+- APK package/version/launcher resource/signing certificate doğrulaması ✅
+- prerelease publish ✅
+- APK SHA-256 `0917c494733399b6e25acb2f1284fe00d01efbafeac987238ad1217531f1593b`
+- prerelease `device-test-v2-25`
+- fiziksel Samsung launcher doğrulaması ⏳
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -104,9 +133,9 @@ Not: workflow release açıklama metni eski render/launcher denemesinden kalmad�
 - [x] fiziksel Instagram profil bağlantısı
 - [x] Yok sayılan hesaplar fiziksel doğrulandı
 - [x] arama/sıralama fiziksel doğrulandı
-- [x] **5 sekme fiziksel Samsung'da doğrulandı**
+- [x] 5 sekme fiziksel Samsung'da doğrulandı
+- [ ] **v2-25 koyu seçenek 4 launcher simgesini fiziksel Samsung'da doğrulama**
 - [ ] gerçek geçmiş snapshot akışının son iki sekmeyi otomatik doldurduğunu fiziksel olarak doğrulama
-- [ ] koyu seçenek 4 launcher simgesini fiziksel doğrulama
 - [ ] iki keyfi snapshot'ı elle karşılaştırma
 
 ### X
@@ -116,4 +145,4 @@ Not: workflow release açıklama metni eski render/launcher denemesinden kalmad�
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-v2-23 artık yeni çalışan fiziksel baseline'dır. Sıradaki kontrollü adım, kullanıcının onayladığı **4. seçeneğin koyu launcher simgesini** tek başına uygulayıp fiziksel cihazda doğrulamaktır. Gerçek geçmiş snapshot akışının Takibi Bırakanlar / Yeni Takipçiler sekmelerini otomatik doldurması ayrı bir test olarak açık kalır.
+`device-test-v2-25` mevcut v2-23 uygulamasının üzerine `Güncelle` olarak kurulacak. Bu tur yalnız launcher simgesi fiziksel olarak kontrol edilecek; uygulama açılıp v2-23'te PASS olan listelerin hâlâ yerinde olduğu hızlıca doğrulanacak. Simge kullanıcı tarafından doğru görülmeden launcher işi tamamlanmış sayılmayacak.
