@@ -98,6 +98,23 @@ jobs:
           test ! -e android/key.properties
           ! grep -F 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
 
+          grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:fullBackupContent="@xml/backup_rules"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:dataExtractionRules="@xml/data_extraction_rules"' android/app/src/main/AndroidManifest.xml
+
+          LEGACY_BACKUP_RULES="android/app/src/main/res/xml/backup_rules.xml"
+          EXTRACTION_RULES="android/app/src/main/res/xml/data_extraction_rules.xml"
+          test -f "$LEGACY_BACKUP_RULES"
+          test -f "$EXTRACTION_RULES"
+          grep -F '<full-backup-content>' "$LEGACY_BACKUP_RULES"
+          grep -F '<cloud-backup>' "$EXTRACTION_RULES"
+          grep -F '<device-transfer>' "$EXTRACTION_RULES"
+
+          for domain in root file database sharedpref external; do
+            grep -F "<exclude domain=\"$domain\" path=\".\" />" "$LEGACY_BACKUP_RULES"
+            test "$(grep -F -c "<exclude domain=\"$domain\" path=\".\" />" "$EXTRACTION_RULES")" -eq 2
+          done
+
           USER_ICON="android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp"
           test -f "$USER_ICON"
           ICON_SHA256="$(sha256sum "$USER_ICON" | awk '{print $1}')"
@@ -132,6 +149,7 @@ jobs:
           echo "Merged release manifest: $RELEASE_MANIFEST"
           grep -F '<manifest' "$RELEASE_MANIFEST"
           grep -F "android:targetSdkVersion=\"$EXPECTED_TARGET_SDK\"" "$RELEASE_MANIFEST"
+          grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
           ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
 
       - name: Verify signed AAB
