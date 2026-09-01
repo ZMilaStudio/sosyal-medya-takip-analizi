@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../data/local/follow_history_database.dart';
+import '../../../data/local/follow_history_provider.dart';
 import '../../instagram_import/application/instagram_import_controller.dart';
 import '../../x_import/application/x_import_controller.dart';
 
@@ -28,6 +31,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final instagramState = ref.watch(instagramImportControllerProvider);
     final xState = ref.watch(xImportControllerProvider);
+    final recentAccounts = ref.watch(recentFollowAccountsProvider);
     final isBusy = instagramState.isLoading || xState.isLoading;
 
     return Scaffold(
@@ -64,6 +68,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 26),
+                if (recentAccounts case AsyncData(:final value)
+                    when value.isNotEmpty) ...[
+                  _RecentAccountsCard(
+                    accounts: value,
+                    onSelected: _selectRecentAccount,
+                  ),
+                  const SizedBox(height: 18),
+                ],
                 _SurfaceCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -213,6 +225,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _selectRecentAccount(FollowSnapshotHistoryItem item) {
+    final controller = switch (item.account.platform) {
+      SocialPlatform.instagram => _instagramUsernameController,
+      SocialPlatform.x => _xUsernameController,
+    };
+    controller.text = item.account.username;
+    controller.selection = TextSelection.collapsed(
+      offset: controller.text.length,
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   Future<void> _pickInstagramArchive() async {
     final result = await ref
         .read(instagramImportControllerProvider.notifier)
@@ -239,6 +263,166 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (!mounted || result == null) return;
     context.push('/analysis', extra: result);
   }
+}
+
+class _RecentAccountsCard extends StatelessWidget {
+  const _RecentAccountsCard({
+    required this.accounts,
+    required this.onSelected,
+  });
+
+  final List<FollowSnapshotHistoryItem> accounts;
+  final ValueChanged<FollowSnapshotHistoryItem> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Son hesaplar',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/history'),
+                child: const Text('Tümü'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Daha önce analiz ettiğin hesabı seç; kullanıcı adı otomatik dolsun.',
+            style: TextStyle(color: AppColors.muted),
+          ),
+          const SizedBox(height: 12),
+          for (var index = 0; index < accounts.length; index++) ...[
+            _RecentAccountTile(
+              item: accounts[index],
+              onTap: () => onSelected(accounts[index]),
+            ),
+            if (index != accounts.length - 1) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentAccountTile extends StatelessWidget {
+  const _RecentAccountTile({
+    required this.item,
+    required this.onTap,
+  });
+
+  final FollowSnapshotHistoryItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final platformLabel = switch (item.account.platform) {
+      SocialPlatform.instagram => 'Instagram',
+      SocialPlatform.x => 'X',
+    };
+
+    return Material(
+      color: const Color(0xFFFAFBFC),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              _RecentPlatformMark(platform: item.account.platform),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$platformLabel  @${item.account.username}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${item.followersCount} takipçi • '
+                      '${item.followingCount} takip edilen • '
+                      '${_shortDate(item.capturedAt)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.north_east_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentPlatformMark extends StatelessWidget {
+  const _RecentPlatformMark({required this.platform});
+
+  final SocialPlatform platform;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: platform == SocialPlatform.x ? AppColors.ink : AppColors.softPurple,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: platform == SocialPlatform.x
+          ? const Text(
+              'X',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          : const Icon(
+              Icons.camera_alt_outlined,
+              size: 20,
+              color: AppColors.primary,
+            ),
+    );
+  }
+}
+
+String _shortDate(DateTime value) {
+  final local = value.toLocal();
+  String two(int part) => part.toString().padLeft(2, '0');
+  return '${two(local.day)}.${two(local.month)}.${local.year}';
 }
 
 class _SurfaceCard extends StatelessWidget {
