@@ -13,7 +13,7 @@ class AnalysisScreen extends StatefulWidget {
     super.key,
   });
 
-  final InstagramFollowAnalysisResult result;
+  final FollowAnalysisResult result;
 
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
@@ -67,6 +67,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             _snackBarTimer?.cancel();
             _snackBarTimer = null;
             await _ignoredStore.restore(
+              platform: widget.result.snapshot.account.platform,
               ownerUsername: widget.result.snapshot.account.username,
               ignoredUsername: user.username,
             );
@@ -88,6 +89,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     final result = widget.result;
+    final platform = result.snapshot.account.platform;
     final tabs = [
       _AnalysisTabData(
         title: 'Takip Etmeyenler',
@@ -120,7 +122,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Instagram Analizi'),
+          title: Text(
+            platform == SocialPlatform.x ? 'X Analizi' : 'Instagram Analizi',
+          ),
           actions: [
             IconButton(
               tooltip: 'Yok sayılan hesaplar',
@@ -149,6 +153,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                   for (final tab in tabs)
                     _UserList(
                       data: tab,
+                      platform: platform,
                       onIgnore: _ignoreUser,
                     ),
                 ],
@@ -164,7 +169,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 class _Summary extends StatelessWidget {
   const _Summary({required this.result});
 
-  final InstagramFollowAnalysisResult result;
+  final FollowAnalysisResult result;
 
   @override
   Widget build(BuildContext context) {
@@ -236,10 +241,12 @@ class _AnalysisTabData {
 class _UserList extends StatefulWidget {
   const _UserList({
     required this.data,
+    required this.platform,
     required this.onIgnore,
   });
 
   final _AnalysisTabData data;
+  final SocialPlatform platform;
   final Future<void> Function(SocialUser user) onIgnore;
 
   @override
@@ -344,7 +351,7 @@ class _UserListState extends State<_UserList> {
                         ? '?'
                         : user.username.characters.first.toUpperCase();
                     return ListTile(
-                      onTap: () => _openInstagramProfile(context, user),
+                      onTap: () => _openProfile(context, user),
                       leading: CircleAvatar(child: Text(firstCharacter)),
                       title: Text('@${user.username}'),
                       subtitle: user.displayName == null
@@ -385,15 +392,22 @@ class _UserListState extends State<_UserList> {
     );
   }
 
-  Future<void> _openInstagramProfile(
+  Future<void> _openProfile(
     BuildContext context,
     SocialUser user,
   ) async {
-    final uri = Uri.https('www.instagram.com', '/${user.username}/');
+    final uri = user.profileUrl ??
+        switch (widget.platform) {
+          SocialPlatform.instagram =>
+            Uri.https('www.instagram.com', '/${user.username}/'),
+          SocialPlatform.x => Uri.https('x.com', '/${user.username}'),
+        };
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
+      final platformName =
+          widget.platform == SocialPlatform.x ? 'X' : 'Instagram';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Instagram profili açılamadı.')),
+        SnackBar(content: Text('$platformName profili açılamadı.')),
       );
     }
   }
