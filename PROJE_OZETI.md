@@ -4,145 +4,142 @@ Son güncelleme: 1 Eylül 2026
 
 ## Çalışma protokolü
 - Her yeni sohbet başlangıcında bu dosya okunarak proje devralınır.
-- Her kullanıcı mesajından sonra önemli kararlar, tamamlanan işler, açık sorunlar ve güncel durum buraya işlenir.
 - Bu dosya + canlı GitHub repo proje gerçeklik kaynağıdır.
-- Fiziksel cihazda doğrulanmayan kritik sürüm değişikliği “çözüldü” sayılmaz.
-- Çalışan fiziksel baseline korunur.
-- Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek APK üzerinden ilerlenir.
-- **1 Eylül 2026 yeni çalışma kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler mümkün olduğunca toplu ilerletilecek; yalnız kritik sürüm noktalarında tek fiziksel doğrulama istenecek.
+- Çalışan fiziksel baseline korunur; kritik regressions olursa rollback branch kullanılır.
+- Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek uygulama üzerinden ilerlenir.
+- **1 Eylül 2026 kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler toplu ilerletilecek; yalnız kritik sürüm noktalarında tek fiziksel doğrulama yapılacak.
+- GitHub Actions kotasını korumak için büyük geliştirmeler ayrı dev branch’lerinde hazırlanıp `test/device-apk` branch’ine tek seferde alınacak.
 
 ## Proje amacı ve sabit kararlar
-Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması. Instagram resmi Meta veri dışa aktarma ZIP/JSON/HTML dosyalarını cihaz üzerinde analiz eder.
+Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması.
 
+### Instagram
+- Yalnız resmi Meta veri dışa aktarma ZIP/JSON/HTML dosyaları cihaz üzerinde analiz edilir.
 - Scraping/private API/Instagram şifresi/otomatik follow-unfollow yok.
 - `following.json` üst seviye `title` varyasyonu desteklenir.
-- Yok sayılan hesaplar hesap bazında cihazda tutulur; ham snapshot sayılarını değiştirmez, yalnız analiz listelerini filtreler.
-- Kullanıcı satırına dokununca resmi Instagram profil URL'si harici uygulamada açılır.
-- Final analiz hedefi 5 sekmedir: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
-- Launcher için kullanıcı 1 Eylül 2026'da exact görseli tekrar yükledi. Bundan sonra launcher görseli yeniden çizilmeyecek/üretilmeyecek; kullanıcının yüklediği raster görsel esas alınacak.
 
-## Gerçek Meta export
+### X / Twitter
+- İlk entegrasyon resmi X veri arşivi üzerinden local analizdir.
+- Canlı API/OAuth daha sonra maliyet ve politika uygunluğuna göre değerlendirilecek.
+- Küçük/orta X arşivi ZIP olarak; çok büyük arşivlerde yalnız `follower.js` + `following.js` dosyaları seçilerek analiz edilebilecek.
+
+### Ortak analiz
+- 5 ana kategori: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
+- Snapshot/geçmiş verisi cihazda tutulur.
+- Aynı hesabın yeni importu önceki snapshot ile otomatik karşılaştırılır.
+- Geçmişten aynı platformdaki aynı hesaba ait herhangi iki snapshot manuel seçilip karşılaştırılabilir.
+- Yok sayılan hesaplar platform + hesap bazında local tutulur; ham snapshot sayıları değiştirilmez.
+- Kullanıcı satırına dokununca platformun profil bağlantısı harici uygulamada açılır.
+
+## Gerçek Instagram export doğrulaması
+Ana gerçek Meta export doğrulaması:
 - 569 takipçi
 - 1053 takip edilen
 - 792 takip etmeyen
 - 261 karşılıklı
 - 308 yalnız takipçi
-- Instagram UI takip edilen sayısı 967; export ile UI arasında 86 hesap farkı var.
+- Instagram UI takip edilen sayısı 967; export ile UI arasında 86 hesap farkı görüldü.
+
+`gece02.19` gerçek geçmiş testi:
+- İlk snapshot: 75 takipçi, 53 takip edilen, 10 takip etmeyen, 43 karşılıklı.
+- İkinci snapshot: 74 takipçi, 46 takip edilen.
+- Uygulama `Takibi Bırakanlar (6)` + `Yeni Takipçiler (5)` hesapladı.
+- Net değişim tutarlı: `75 - 6 + 5 = 74`.
+- İki gerçek liste de fiziksel cihazda render edildi ve kullanıcı PASS verdi.
+- Sonuç: otomatik previous → current karşılaştırma → current snapshot kaydı akışı gerçek Meta arşivleriyle TAM PASS.
 
 ## Fiziksel çalışan baselines
 ### v2-16 — liste baseline
 - commit `90059b024cc844a101a84ac076e49a22d12b86b6`
-- VersionCode 300016
-- fiziksel Samsung: listeler ve 569/1053 kartları görünür ✅
 - backup `backup/device-v2-16-working-baseline`
+- fiziksel kullanıcı listesi + özet kartları PASS.
 
-### v2-17 — profil bağlantısı PASS
+### v2-17 — profil bağlantısı
 - commit `ac5cce4ac53cdc05b91a2db6b34765afc40a88e4`
-- profil bağlantısı fiziksel PASS ✅
 - backup `backup/device-v2-17-links-working`
+- Instagram profil bağlantısı fiziksel PASS.
 
-### v2-21 — Yok say PASS
+### v2-21 — Yok say
 - commit `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`
-- VersionCode 300021
-- liste / profil / Yok say / Geri al / ignored yönetimi / 3 sn SnackBar kapanışı fiziksel PASS ✅
 - backup `backup/device-v2-21-ignored-working`
+- Yok say / Geri al / yönetim fiziksel PASS.
 
-### v2-22 — Arama + sıralama PASS
+### v2-22 — arama + sıralama
 - commit `644549a224ca72d70746ddaada7d223ca9c4d2e0`
-- VersionCode 300022
 - APK SHA-256 `a1d442c81da5f2dc0dc57994eb577a944698cb315cd29b980a042c7d388f5d02`
-- prerelease `device-test-v2-22`
-- arama / A-Z-Z-A / listeler / profil / ignored akışı fiziksel PASS ✅
 - backup `backup/device-v2-22-search-sort-working`
+- arama + A-Z/Z-A fiziksel PASS.
 
-### v2-23 — 5 sekme PASS
+### v2-23 — 5 sekme
 - final kaynak commit `a0c96ecfd33b9c546c2a852aac3c2b4eee40b1d0`
 - workflow run `33449350608`
 - VersionCode `300023`
 - APK SHA-256 `91a7c93fa8484d92af3d50845375eab0f130f84a5a9c058c3f1185dfac39d21e`
-- prerelease `device-test-v2-23`
-- 5 sekmenin tamamı fiziksel Samsung'da görünür ✅
-- ilk 3 sekme ve mevcut çalışan işlevler bozulmadan korunuyor ✅
-- Takibi Bırakanlar + Yeni Takipçiler sekmeleri fiziksel PASS ✅
-- arama / A-Z-Z-A / profil / Yok say / ignored akışı fiziksel PASS durumunu koruyor ✅
 - backup `backup/device-v2-23-five-tabs-working`
+- 5 sekme + arama/sıralama/profil/Yok say fiziksel PASS.
 
-### v2-26 — exact launcher PASS
+### v2-26 — exact launcher
 - source commit `aa63720d49d97fd7f23de69549c307964c684fd5`
 - workflow run `33485074032`
 - VersionCode `300026`
-- prerelease `device-test-v2-26`
 - APK SHA-256 `9442a5a88c8136014ca1bc71f5565128b2d36fe47092e077aa0d9cf255f3c1f3`
-- kullanıcının sohbete yüklediği raster görsel doğrudan launcher olarak kullanılıyor ✅
-- fiziksel Samsung launcher görünümü kullanıcı tarafından PASS ✅
-- v2-23'te PASS olan analiz özellikleri korunuyor ✅
 - backup `backup/device-v2-26-exact-icon-working`
+- kullanıcının sohbete yüklediği raster görsel doğrudan launcher olarak kullanılıyor ve fiziksel Samsung’da PASS.
+- launcher asset: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`
+- asset SHA-256 `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
+- Manifest doğrudan `@drawable/takip_launcher_user` kullanıyor; eski vektör launcher çözümü final değildir.
 
-## v2-23 model ve test notları
-- `Takibi Bırakanlar` = `FollowAnalysis.unfollowers`
-- `Yeni Takipçiler` = `FollowAnalysis.newFollowers`
-- previous snapshot yoksa iki sekme `(0)` gösterir; bu normal davranıştır.
-- previous snapshot varsa farklar iki snapshot üzerinden hesaplanır.
-- previous yok testi ✅
-- sentetik previous/current `@left` unfollower testi ✅
-- sentetik previous/current `@newcomer` new follower testi ✅
-- liste / arama / sıralama / Yok say regresyon testleri ✅
+## Manuel iki snapshot karşılaştırma
+- `test/device-apk` kaynak commit: `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
+- workflow run: `33513457232`
+- CI tamamen success.
+- Analiz Geçmişi ekranında `Karşılaştır` modu eklendi.
+- Kullanıcı iki kayıt seçer; yalnız aynı platform + aynı hesap kabul edilir.
+- Kayıtlar tarihe göre eski/yeni sıralanır ve standart 5 sekmeli analiz ekranında farklar gösterilir.
+- Bu özellik için kullanıcıdan ayrı fiziksel PASS istenmeyecek; toplu sürüm içinde değerlendirilecek.
 
-## Launcher simgesi — son durum
-### v2-24 — yayınlanmadı
-- launcher kaynak kodu ve tüm uygulama testleri geçti ✅
-- APK build geçti ✅
-- VersionCode 300024
-- son APK doğrulama adımı yanlış negatif verdi: workflow `aapt dump badging` çıktısını `head -40` ile kesiyordu.
-- prerelease yayınlanmadı; **v2-24 kullanılmayacak**.
+## X arşiv geliştirme paketi — `dev/x-archive-import`
+Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
 
-### v2-25 — kullanıcı tarafından RED
-- eski Git geçmişindeki vektör/adaptive launcher zinciri geri getirilmişti.
-- teknik CI tamamen geçti ancak kullanıcı fiziksel sonucu istediği görsel olarak kabul etmedi ❌
-- bu nedenle v2-25 launcher çözümü geçersizdir; doğru simge olarak kabul edilmeyecek.
-- backup `backup/device-v2-25-before-exact-icon`
+### X parser/importer
+- `XRelationshipParser` eklendi.
+- `window.YTD.following.part0 = [...]` / `window.YTD.follower.part0 = [...]` JS assignment formatı okunur.
+- `accountId` stabil kullanıcı kimliği olarak kullanılır.
+- Arşiv doğrudan kullanıcı adını verirse handle tutulur.
+- `userLink` yalnız `intent/user?user_id=...` içeriyorsa sahte kullanıcı adı üretilmez; UI’da `X hesabı • ID ...` gösterilir ve gerçek intent profil linki korunur.
+- `XArchiveImporter` ZIP içinde `follower.js` / `following.js` dosyalarını bulur; medya ve tweet geçmişini yok sayar.
+- ZIP güvenlik limitleri ve unsafe path kontrolü vardır.
+- Büyük arşivler için `importRelationshipFiles(...)` ile çıkarılmış iki JS dosyası doğrudan okunabilir.
 
-### v2-26 — kullanıcının yüklediği exact raster simge PASS
-- kullanıcı istediği launcher görselini doğrudan sohbete yükledi.
-- görsel yeniden çizilmedi, AI ile yeniden üretilmedi, renk/kompozisyon değiştirilmedi.
-- Android launcher için yalnız 192×192'e LANCZOS ile küçültülüp WebP olarak paketlendi.
-- repo asset: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`
-- kaynak launcher asset SHA-256: `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
-- manifest doğrudan `android:icon="@drawable/takip_launcher_user"` ve `android:roundIcon="@drawable/takip_launcher_user"` kullanıyor.
-- eski `@mipmap/ic_launcher` / vektör zinciri launcher olarak artık kullanılmıyor.
-- source commit `aa63720d49d97fd7f23de69549c307964c684fd5`
-- workflow run `33485074032`
-- VersionCode `300026`
-- Analyze ✅
-- 15 test ✅
-- manifest exact raster wiring ✅
-- kaynak icon SHA kilidi ✅
-- APK build ✅
-- APK içinde `takip_launcher_user.webp` doğrulaması ✅
-- paket / VersionCode / signing certificate ✅
-- prerelease publish ✅
-- APK SHA-256 `9442a5a88c8136014ca1bc71f5565128b2d36fe47092e077aa0d9cf255f3c1f3`
-- prerelease `device-test-v2-26`
-- **fiziksel launcher görünümü PASS ✅**
+### X analiz + snapshot
+- `XFollowAnalysisUseCase` mevcut `FollowAnalysisEngine` motorunu kullanır.
+- ZIP ve direct JS dosya akışları desteklenir.
+- X snapshot’ları aynı Drift geçmiş veritabanına kaydedilir.
+- Previous snapshot varsa Takibi Bırakanlar/Yeni Takipçiler otomatik hesaplanır.
+- Ortak `FollowAnalysisResult` soyut modeli eklendi; analiz ekranı Instagram/X ortak hale getirildi.
 
-## Gerçek snapshot fiziksel doğrulama — gece02.19 — TAM PASS
-- Test v2-26 üzerinde yapıldı; yeni build çıkarılmadı.
-- İlk gerçek snapshot: 75 takipçi, 53 takip edilen, 10 takip etmeyen, 43 karşılıklı.
-- İkinci gerçek Meta arşivi aynı `gece02.19` hesap adıyla içe aktarıldı ✅
-- İkinci snapshot: 74 takipçi, 46 takip edilen.
-- Uygulama otomatik olarak `Takibi Bırakanlar (6)` ve `Yeni Takipçiler (5)` hesapladı ✅
-- Net takipçi değişimi matematiksel olarak tutarlı: `75 - 6 + 5 = 74` ✅
-- `Takibi Bırakanlar` sekmesi gerçek cihazda 6 kullanıcıyla liste render etti ✅
-- `Yeni Takipçiler (5)` sekmesi gerçek cihazda 5 kullanıcıyla liste render etti ✅
-- Kullanıcı son fiziksel kontrolü PASS verdi ✅
-- Import controller zinciri gerçek cihazda uçtan uca doğrulandı: previous snapshot okunuyor → current previous ile karşılaştırılıyor → current snapshot kaydediliyor ✅
-- Sonuç: otomatik geçmiş snapshot karşılaştırma özelliği gerçek Meta arşivleriyle fiziksel olarak TAM PASS ✅
+### X mobil akış
+- Ana ekrandaki X `Yakında` durumu kaldırıldı.
+- X kullanıcı adı + `X Arşivini İçe Aktar` butonu eklendi.
+- Büyük arşiv fallback: `follower.js + following.js seç` butonu eklendi.
+- Analiz ekranı platforma göre `Instagram Analizi` / `X Analizi` başlığı gösterir.
+- X kullanıcı satırı profil linkini X/Twitter’da açar.
+- Handle içermeyen arşiv satırlarında kullanıcıya hesap ID’si açıkça gösterilir; sahte `@id_...` etiketi gösterilmez.
+- Analiz Geçmişi artık Instagram + X snapshot’larını birlikte listeler ve platform etiketini gösterir.
+- Yok sayılan hesaplar `ignored_accounts.<platform>.<owner>` anahtarıyla platform bazında ayrıldı; mevcut Instagram anahtar biçimi geriye uyumludur.
+
+### X test kapsamı hazırlandı
+- parser: direct profil URL, intent user ID, explicit handle, stabil ID dedupe, malformed JS.
+- importer: ZIP, nested data folder, multipart, direct iki JS dosyası, eksik dosya, invalid ZIP, unsafe path.
+- use case: ZIP analiz, direct JS analiz, previous snapshot farkı, yanlış platform guard.
+- mobil: X ID-only kullanıcı gösterimi, platform-scoped ignored store, Instagram + X ana ekran smoke kapsamı.
+- Bu dev branch henüz Actions ile çalıştırılmadı; tüm paket hazırlandıktan sonra `test/device-apk` branch’ine tek seferde alınacak.
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
 - sabit test sertifikası SHA-256 `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`
-- versionCode = 300000 + GitHub run number
-- mevcut v2 uygulamanın üzerine `Güncelle` olarak kurulmalı.
+- versionCode = 300000 + GitHub Actions run number.
+- Test sürümü mevcut v2 uygulamanın üzerine `Güncelle` olarak kurulabilir.
 
 ## MVP durumu
 ### Instagram
@@ -151,24 +148,25 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [x] `following.json title` desteği
 - [x] gerçek Meta export doğrulaması
 - [x] snapshot/geçmiş veri katmanı
-- [x] deterministic test signing
-- [x] fiziksel kullanıcı listesi
-- [x] fiziksel kategori sekmesi geçişi
-- [x] fiziksel Instagram profil bağlantısı
-- [x] Yok sayılan hesaplar fiziksel doğrulandı
-- [x] arama/sıralama fiziksel doğrulandı
-- [x] 5 sekme fiziksel Samsung'da doğrulandı
-- [x] kullanıcının exact launcher görseli fiziksel Samsung'da doğrulandı
-- [x] gerçek geçmiş snapshot akışı Takibi Bırakanlar/Yeni Takipçiler sayılarını otomatik dolduruyor
-- [x] gerçek Takibi Bırakanlar listesi fiziksel cihazda doğrulandı
-- [x] gerçek Yeni Takipçiler listesi fiziksel cihazda doğrulandı
-- [ ] iki keyfi snapshot'ı elle karşılaştırma
+- [x] fiziksel kategori/listeler
+- [x] profil bağlantısı
+- [x] Yok say
+- [x] arama/sıralama
+- [x] 5 sekme
+- [x] gerçek otomatik snapshot karşılaştırma
+- [x] iki keyfi snapshot’ı manuel seçip karşılaştırma — kod + CI success
 
 ### X
-- [ ] resmi X arşiv fixture doğrulaması
-- [ ] X importer
-- [ ] X snapshot/geçmiş
-- [ ] canlı API/OAuth maliyet değerlendirmesi
+- [x] X ilişki JS parser — dev branch
+- [x] X ZIP importer — dev branch
+- [x] büyük arşiv için direct `follower.js` + `following.js` importer — dev branch
+- [x] X analiz use case — dev branch
+- [x] X snapshot/geçmiş entegrasyonu — dev branch
+- [x] X ana ekran/import akışı — dev branch
+- [x] X profil/ID-only davranışı — dev branch
+- [ ] X geliştirme paketinin tek Actions run ile entegrasyon doğrulaması
+- [ ] gerçek kullanıcı X arşiviyle ileride tek kritik fiziksel doğrulama
+- [ ] canlı API/OAuth maliyet/politika değerlendirmesi
 
 ## Sıradaki iş
-Otomatik geçmiş snapshot karşılaştırma akışı artık gerçek Meta arşivleriyle TAM PASS. Sıradaki geliştirme, kullanıcının geçmişteki herhangi iki snapshot'ı seçip manuel olarak birbirleriyle karşılaştırabilmesini sağlayan **iki keyfi snapshot'ı elle karşılaştırma** akışıdır. Bu aşamadan itibaren her küçük değişiklik için ayrı fiziksel test istenmeyecek; geliştirme toplu ilerletilecek ve yalnız kritik sürüm noktasında tek fiziksel doğrulama yapılacak.
+`dev/x-archive-import` paketini tek seferde `test/device-apk` branch’ine fast-forward et, bir Actions run ile Analyze + tüm testler + APK build doğrulamasını al. CI geçerse X arşiv desteği test prerelease’e dahil edilmiş olacak. Kullanıcıdan küçük küçük PASS istenmeyecek; ardından doğrudan sonraki ürün geliştirmelerine devam edilecek.
