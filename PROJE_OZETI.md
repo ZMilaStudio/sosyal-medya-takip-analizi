@@ -4,195 +4,310 @@ Son güncelleme: 1 Eylül 2026
 
 ## Çalışma protokolü
 - Her yeni çalışma başlangıcında bu dosya okunur; bu dosya + canlı GitHub repo gerçeklik kaynağıdır.
-- Çalışan fiziksel/CI baseline korunur; riskli geliştirme öncesi backup kullanılır.
+- Çalışan fiziksel/CI baseline korunur; riskli değişiklik öncesi backup branch oluşturulur.
 - Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek uygulama üzerinden ilerlenir.
 - **1 Eylül 2026 kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler toplu ilerletilecek; yalnız kritik production RC noktasında tek fiziksel doğrulama yapılacak.
-- GitHub Actions kotasını korumak için dev branch’te paket hazırlanır, `test/device-apk` branch’ine toplu alınır.
+- GitHub Actions kotası korunacak; gereksiz workflow çalıştırılmayacak.
+- Exact launcher/logo kullanıcı tarafından onaylı rasterdır; **yeniden çizilmeyecek, image generation ile üretilmeyecek, yaklaşık/alternatif simgeyle değiştirilmeyecek**.
 
-## Proje amacı ve sabit kararlar
-Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması.
+## Proje amacı
+Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip analizi uygulaması.
 
 ### Instagram
-- Yalnız resmi Meta veri dışa aktarma ZIP içindeki JSON/HTML takip dosyaları cihaz üzerinde analiz edilir.
-- Scraping/private API/Instagram şifresi/otomatik follow-unfollow yok.
-- `following.json` üst seviye `title` varyasyonu desteklenir.
+- Yalnız resmi Meta veri dışa aktarma ZIP içindeki JSON/HTML takip ilişkisi dosyaları analiz edilir.
+- Scraping, private API, Instagram şifresi, otomatik follow/unfollow yok.
+- Multipart followers dosyaları ve `following.json` varyasyonları desteklenir.
 
 ### X / Twitter
 - Resmi X veri arşivi üzerinden local analiz.
-- Küçük/orta arşiv ZIP; çok büyük arşivde `follower.js` + `following.js` doğrudan seçilebilir.
-- X şifresi uygulamaya girilmez.
+- Küçük/orta arşiv ZIP; büyük arşivlerde `follower.js` + `following.js` doğrudan seçilebilir.
+- X şifresi istenmez.
+- X `window.YTD.*` JS formatları ve accountId tabanlı kimlik desteklenir.
+- Handle bulunmuyorsa sahte @handle üretilmez; ID açık gösterilir.
 - Canlı API/OAuth ancak ileride maliyet ve politika uygunluğu ayrıca değerlendirilirse eklenebilir.
 
-### Ortak analiz
+### Ortak analiz özellikleri
 - 5 kategori: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
 - Snapshot/geçmiş cihazda tutulur; yeni import önceki snapshot ile otomatik karşılaştırılır.
-- Aynı platform + aynı hesaptan iki keyfi snapshot manuel karşılaştırılabilir.
+- Aynı platform + aynı hesaptaki iki keyfi snapshot manuel karşılaştırılabilir.
 - Yok sayılan hesaplar platform + hesap bazında local tutulur; ham snapshot sayıları değişmez.
 - Kullanıcı satırına dokununca platform profil bağlantısı harici uygulamada açılır.
-- Arama, A-Z/Z-A, rapor kopyala/TXT kaydet, Son hesaplar, geçmiş filtreleri ve Yerel Veri Yönetimi vardır.
-
-## Gerçek Instagram fiziksel doğrulaması
-- Meta export örneği: 569 takipçi, 1053 takip edilen, 792 takip etmeyen, 261 karşılıklı, 308 yalnız takipçi.
-- Instagram UI takip edilen 967 iken export 1053 gösterdi; canlı UI ile export arasında 86 fark görüldü.
-- `gece02.19`: ilk snapshot 75 takipçi / 53 takip edilen; ikinci 74 / 46.
-- Gerçek sonuç: `Takibi Bırakanlar (6)` + `Yeni Takipçiler (5)`; `75 - 6 + 5 = 74`.
-- Gerçek listeler fiziksel Samsung cihazda render edildi ve kullanıcı PASS verdi.
-
-## Fiziksel / CI baseline’lar
-- v2-16 liste: `90059b024cc844a101a84ac076e49a22d12b86b6`, backup `backup/device-v2-16-working-baseline`, fiziksel PASS.
-- v2-17 profil linki: `ac5cce4ac53cdc05b91a2db6b34765afc40a88e4`, backup `backup/device-v2-17-links-working`, fiziksel PASS.
-- v2-21 Yok say: `91bf6a03405d79c57bfe9ccb80c146bfda4ea069`, backup `backup/device-v2-21-ignored-working`, fiziksel PASS.
-- v2-22 arama/sıralama: `644549a224ca72d70746ddaada7d223ca9c4d2e0`, backup `backup/device-v2-22-search-sort-working`, fiziksel PASS.
-- v2-23 5 sekme: `a0c96ecfd33b9c546c2a852aac3c2b4eee40b1d0`, run `33449350608`, backup `backup/device-v2-23-five-tabs-working`, fiziksel PASS.
-- v2-26 exact launcher: `aa63720d49d97fd7f23de69549c307964c684fd5`, run `33485074032`, backup `backup/device-v2-26-exact-icon-working`, fiziksel PASS.
-- Manuel snapshot karşılaştırma: `24d920815c9d1425b9fc933b474cc0c10b8dc55f`, run `33513457232`, CI success.
-- v2-28 X arşiv: `adebabb4eecca456d4af1efd289ab7324825c66b`, run `33516696991`, backup `backup/device-v2-28-x-archive-ci-working`, tam CI success.
-- v2-29 Son hesaplar + geçmiş filtreleri: `5695b525a729dc7cf316e17928b5c4534383012f`, run `33527062959`, backup `backup/device-v2-29-recent-history-filters-ci-working`, tam CI success.
-- v2-30 geçmiş veri yönetimi: `804fb57255231ca349d83443135d32747f74284b`, run `33527775313`, backup `backup/device-v2-30-history-data-management-ci-working`, tam CI success.
-- v2-32 rapor export: `0959d2775ef8454103f1eddaccd89d4627bf6788`, run `33528930054`, backup `backup/device-v2-32-report-export-ci-working`, tam CI success.
-- v2-37 product polish: `71fe29c4f95e97b03a13f8f0ba5e532584dccb0a`, run `33531313731`, backup `backup/device-v2-37-product-polish-ci-working`, tam CI success.
-- **v2-38 release polish:** `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe`, run `33543687577`, backup `backup/device-v2-38-release-polish-ci-working`, **TAM CI SUCCESS**.
-
-## v2-38 güvenli release bilgisi
-- Prerelease: `device-test-v2-38`.
-- Test package: `com.zmilastudio.takipanalizi.dev`.
-- VersionCode: `300038`.
-- APK SHA-256: `18161b24ba413123c8d53971d6f7dc2d9fe81c6b9b0e01b4c20b0a05db94b3f6`.
-- Boyut: 180,741,350 byte.
-- Exact launcher: `apps/mobile/android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp`.
-- Exact launcher source SHA-256: `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`.
-- Launcher **yeniden çizilmeyecek / image generation ile üretilmeyecek / alternatifle değiştirilmeyecek**.
-- Stable test sertifikası SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`.
-
-## CI doğrulanmış UX / yönetim — v2-38
-- 5 sekme ve gerçek satır render.
-- Profil açma.
-- Yok say / geri yükle / 3 sn Snackbar geri al.
-- Arama + A-Z/Z-A.
-- Instagram/X ortak geçmiş, platform + hesap filtreleri.
-- Otomatik ve manuel snapshot karşılaştırma.
-- Tek snapshot silme ve seçili hesap geçmişini silme.
+- Arama, A-Z/Z-A sıralama.
 - Son hesaplar hızlı seçim.
-- Analiz raporu: kopyala + TXT kaydet; yok sayılanlar rapordan çıkarılır.
-- Yerel Veri Yönetimi: tüm geçmiş / yok sayılanlar / tüm local veriyi onaylı silme.
-- Instagram arşiv rehberi.
-- X arşiv rehberi.
+- Geçmişte platform + hesap filtreleri.
+- Tek snapshot ve seçili hesap geçmişini silme.
+- Analiz raporu: `Raporu kopyala` + `TXT olarak kaydet`.
+- Yerel Veri Yönetimi: tüm analiz geçmişi, Yok say verisi veya tüm local app verisini onaylı silme.
+- Instagram ve X arşiv rehberleri.
 - `Gizlilik ve Hakkında` ekranı.
 
-## Production / Google Play hazırlığı
+## Gerçek Instagram fiziksel doğrulaması
+- Gerçek Meta export örneği: 569 takipçi, 1053 takip edilen, 792 takip etmeyen, 261 karşılıklı, 308 yalnız takipçi.
+- Instagram canlı UI takip edilen 967 iken export 1053 gösterdi; export/live UI farkının normal olabileceği görüldü.
+- `gece02.19`: ilk snapshot 75 takipçi / 53 takip edilen; ikinci 74 / 46.
+- Gerçek geçmiş sonucu: `Takibi Bırakanlar (6)` + `Yeni Takipçiler (5)`; matematik `75 - 6 + 5 = 74`.
+- Gerçek listeler Samsung fiziksel cihazda render edildi ve kullanıcı PASS verdi.
 
-### Production kimliği ve sürüm
+## Önemli eski baseline’lar
+- v2-16 liste: backup `backup/device-v2-16-working-baseline`, fiziksel PASS.
+- v2-17 profil linki: `backup/device-v2-17-links-working`, fiziksel PASS.
+- v2-21 Yok say: `backup/device-v2-21-ignored-working`, fiziksel PASS.
+- v2-22 arama/sıralama: `backup/device-v2-22-search-sort-working`, fiziksel PASS.
+- v2-23 5 sekme: `backup/device-v2-23-five-tabs-working`, fiziksel PASS.
+- v2-26 exact launcher: `backup/device-v2-26-exact-icon-working`, fiziksel PASS.
+- v2-28 X archive CI: `backup/device-v2-28-x-archive-ci-working`.
+- v2-29 recent/history filters: `backup/device-v2-29-recent-history-filters-ci-working`.
+- v2-30 history data management: `backup/device-v2-30-history-data-management-ci-working`.
+- v2-32 report export: `backup/device-v2-32-report-export-ci-working`.
+- v2-37 product polish: `backup/device-v2-37-product-polish-ci-working`.
+- v2-38 release polish: commit `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe`, run `33543687577`, backup `backup/device-v2-38-release-polish-ci-working`, TAM CI SUCCESS.
+
+# GÜNCEL GÜVENLİ CI BASELINE — v2-39
+
+Release-hardening batch tek Actions run ile doğrulandı.
+
+- Tested commit: `0816b8811aae6cf7aa2be67e63c524156093507b`.
+- Actions run: `33551771267`.
+- Run number: `39`.
+- Sonuç: **SUCCESS**.
+- Prerelease tag: `device-test-v2-39`.
+- Test package: `com.zmilastudio.takipanalizi.dev`.
+- versionName: `1.0.0-dev`.
+- VersionCode: `300039`.
+- compileSdkVersion: `36`.
+- targetSdkVersion: `36`.
+- APK: `takip-analizi-device-test.apk`.
+- APK boyutu: `180,743,127` byte.
+- APK SHA-256: `d18151fbc8c75897abd14934cc71b9ef29911b1d035cb6c1670a176fac9dde97`.
+- Test signing certificate SHA-256: `4735f6e6c0603ded3bfd6c236b625c08e116a8a38216088271997acdccc6d799`.
+- Exact launcher source SHA-256: `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`.
+- Release URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/releases/tag/device-test-v2-39`.
+- Backup: `backup/device-v2-39-release-hardening-ci-working`.
+- Pre-CI backup: `backup/pre-production-hardening-ci`.
+
+### v2-39’da PASS olan kapılar
+- Flutter dependencies resolve.
+- `flutter analyze`: **No issues found**.
+- `flutter test`: **23/23 PASS**.
+- Exact launcher wiring + SHA guard PASS.
+- Main source manifestte app-defined `<uses-permission>` bulunmaması PASS.
+- `android:allowBackup="false"` PASS.
+- `@xml/backup_rules` PASS.
+- `@xml/data_extraction_rules` PASS.
+- `root/file/database/sharedpref/external` exclusion kuralları PASS.
+- `android:usesCleartextTraffic="false"` PASS.
+- Deterministic device-test signing PASS.
+- Signed debug APK build PASS.
+- Package/version/API36 PASS.
+- Exact launcher APK içinde PASS.
+- Stable test signer fingerprint PASS.
+- Prerelease publish PASS.
+
+### Debug APK permission notu
+v2-39 debug APK badging iki permission gösterdi:
+1. `android.permission.INTERNET` — Flutter debug tooling/hot reload nedeniyle beklenen development izni.
+2. `com.zmilastudio.takipanalizi.dev.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` — AndroidX Core’un eski Android sürümlerinde `RECEIVER_NOT_EXPORTED` güvenliğini emüle etmek için merged manifestte eklediği **app-scoped signature-level internal permission**.
+
+Bu AndroidX izni kullanıcıdan istenen runtime izni değildir, kullanıcı verisine erişim sağlamaz ve permission dialog oluşturmaz. AndroidX’in resmi Core manifestinde tanımlıdır.
+
+## Production Android privacy/security hardening
+
+### Production source manifest
+`apps/mobile/android/app/src/main/AndroidManifest.xml`:
+- app-defined `<uses-permission>` yok,
+- `INTERNET` yok,
+- `android:allowBackup="false"`,
+- `android:fullBackupContent="@xml/backup_rules"`,
+- `android:dataExtractionRules="@xml/data_extraction_rules"`,
+- `android:usesCleartextTraffic="false"`,
+- Impeller kapalı mevcut fiziksel uyumluluk kararı korunuyor.
+
+### Backup/data transfer kuralları
+`apps/mobile/android/app/src/main/res/xml/backup_rules.xml`:
+- Android 11 ve altı için `root/file/database/sharedpref/external` alanlarının tamamı exclude.
+
+`apps/mobile/android/app/src/main/res/xml/data_extraction_rules.xml`:
+- Android 12+ `cloud-backup` için aynı alanlar exclude.
+- Android 12+ `device-transfer` için aynı alanlar exclude.
+
+Amaç: Drift snapshot DB, SharedPreferences Yok say tercihleri ve app-managed local veriyi Android otomatik backup kapsamının dışında tutmak.
+
+### Production merged manifest izin sözleşmesi
+`.github/workflows/production-rc-aab.yml` artık:
+- targetSdk 36 doğrular,
+- `allowBackup=false` doğrular,
+- `usesCleartextTraffic=false` doğrular,
+- `android.permission.INTERNET` görülürse fail olur,
+- `debuggable=true` / `testOnly=true` görülürse fail olur,
+- merged `uses-permission` listesinde **yalnız** şu AndroidX internal signature iznine tolerans gösterir:
+  `com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`,
+- bunun dışında başka permission görülürse fail olur.
+
+Bu production merged-manifest guard’ı gerçek private signing olmadığı için henüz gerçek production AAB üzerinde çalıştırılmadı.
+
+## Uygulama içi gizlilik güncellemesi
+`Gizlilik ve Hakkında` ekranı artık açıkça anlatır:
+- production analiz mimarisi local-first,
+- debug/profile INTERNET ile production davranışı ayrıdır,
+- sosyal medya şifresi istenmez,
+- yalnız kullanıcı seçtiği dosyalar okunur,
+- local snapshot geçmişi vardır,
+- production Android automatic backup kapalıdır,
+- `Raporu kopyala` sistem panosuna, `TXT olarak kaydet` kullanıcının seçtiği konuma yazar,
+- bu export kullanıcı tarafından başlatılır ve geliştirici sunucusuna gönderilmez,
+- harici profil linkleri üçüncü taraf uygulamaya devredilir,
+- destek: `zmilastudio@gmail.com`.
+
+Privacy widget testi v2-39 CI’da PASS aldı.
+
+## Rapor export privacy sınırı
+- `Raporu kopyala` → Android system clipboard.
+- `TXT olarak kaydet` → `FilePicker.saveFile` ile kullanıcının seçtiği hedef.
+- Rapor analiz hesap adını, kategori sonuçlarını ve sosyal kullanıcı adlarını içerebilir.
+- ZMila Studio sunucusuna gönderilmez.
+- Kullanıcı harici bir hedefe TXT kaydederse veya clipboard’a kopyalarsa bu veri app private sandbox dışında olabilir.
+- `Yerel Veri Yönetimi`, daha önce dışa aktarılmış TXT dosyasını veya sistem panosundaki içeriği otomatik silemez.
+
+## Production kimliği ve sürüm
 - Production applicationId: `com.zmilastudio.takipanalizi`.
 - Device-test applicationId: `com.zmilastudio.takipanalizi.dev`.
-- İlk production sürümü **`1.0.0+1`** olarak sabitlendi (`versionName 1.0.0`, `versionCode 1`).
-- `apps/mobile/pubspec.yaml` dev branch’te `version: 1.0.0+1` olarak güncel.
-- v2-38 CI badging: compileSdk 36 / targetSdk 36 / Android 16.
-- 31 Ağustos 2026 sonrası yeni Play uygulamaları için API 36 şartı karşılanıyor; gerçek production AAB’de tekrar doğrulanacak.
+- İlk production sürümü: **`1.0.0+1`**.
+- versionName: `1.0.0`.
+- versionCode: `1`.
+- API hedefi: 36 / Android 16.
 
-### Debug / production INTERNET ayrımı
-- `src/debug/AndroidManifest.xml` ve `src/profile/AndroidManifest.xml` Flutter hot reload/debugger için `android.permission.INTERNET` ekler.
-- `src/main/AndroidManifest.xml` INTERNET izni içermez.
-- Debug APK’da INTERNET görünmesi beklenen development davranışıdır; production hakkında “debug dahil her build internetsiz” denmeyecek.
-- Production RC workflow’u build sonrası merged release manifestte `android.permission.INTERNET` görülürse fail edecek.
-- Aynı guard merged release manifestte targetSdk 36’yı da doğrular.
+### İlk production install testi hakkında kritik düzeltme
+`.dev` ile production package farklı applicationId olduğu için production 1.0.0, v2-39 `.dev` uygulamasının üstüne upgrade **değildir** ve `.dev` verisini devralmaz.
 
-### Production signing scaffold
-- `.gitignore` private `*.jks`, `*.keystore`, `*.p12`, `*.pem`, `*.key`, `key.properties`, `.env*` dosyalarını engeller.
-- Gradle release signing yalnız `PLAY_UPLOAD_*` secure environment değerleriyle `playUpload` config kullanır; public device-test key’e fallback yoktur.
-- `SIGNING_SETUP.md` Google’ın güncel Play App Signing modeline göre yenilendi.
-- Yeni uygulamada geliştiricide private **upload key**, Google Play’de ayrı **app signing key** bulunur; bu iki rol karıştırılmayacak.
-- Upload key Java `.jks/.keystore`, RSA en az 2048 bit olmalı; kayıp/compromise durumunda Play App Signing altında upload-key reset süreci vardır.
-- Upload certificate PEM dışa aktarma ve fingerprint doğrulama/recovery akışı dokümante edildi.
-- `.github/workflows/production-rc-aab.yml` yalnız manuel `workflow_dispatch` çalışır.
-- Varsayılan input: `1.0.0 / 1`.
-- Private key secret/fingerprint doğrulaması, Analyze, test, signed AAB, exact launcher, release merged manifest INTERNET/targetSdk guard, signer fingerprint ve 1 günlük artifact retention içerir.
-- Bu workflow gerçek private Play upload key olmadığı için **henüz çalıştırılmadı**; kasıtlıdır.
+İlk production RC:
+- temiz production kurulum olarak test edilecek,
+- aynı production kurulumda demo snapshot import → app kapat/aç → local persistence doğrulanacak.
 
-### Privacy / support — TAMAMLANDI
-Public `main` branch’te yayınlandı:
+Gerçek production upgrade/veri-koruma testi ancak production 1.0.0 yayımlandıktan sonra versionCode>1 aynı `com.zmilastudio.takipanalizi` package üzerinde yapılabilir.
+
+## Production signing
+- Device-test public key production için kullanılmaz.
+- Private production upload key henüz oluşturulmadı/bağlanmadı.
+- Google Play App Signing modelinde:
+  - geliştiricide private **upload key**,
+  - Google Play’de ayrı **app signing key** bulunur.
+- `SIGNING_SETUP.md` bu ayrımı, SHA fingerprint kontrolünü, PEM certificate export ve upload-key reset/recovery akışını açıklar.
+- Upload key Java `.jks/.keystore`, RSA en az 2048 bit.
+- Production workflow beklenen secrets:
+  - `PLAY_UPLOAD_KEYSTORE_B64`
+  - `PLAY_UPLOAD_STORE_PASSWORD`
+  - `PLAY_UPLOAD_KEY_ALIAS`
+  - `PLAY_UPLOAD_KEY_PASSWORD`
+  - `PLAY_UPLOAD_CERT_SHA256`
+- Kullanıcının açık onayı olmadan private key oluşturma veya production signing workflow çalıştırma.
+
+## Privacy / support — TAMAMLANDI
+Public `main`:
 - Privacy: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
 - Support: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
-- Support / privacy email: `zmilastudio@gmail.com`.
-- Policy Türkçe + İngilizce; ZMila Studio/Takip Analizi kimliği, local processing, veri silme, saklama, dış bağlantılar, debug-production ağ ayrımı ve iletişimi açıklar.
-- `PRIVACY_SUPPORT_PUBLISH_PLAN.md` artık blocker değil; yayın durumu TAMAMLANDI.
-- Uygulama içindeki privacy özeti offline kalır; sırf privacy sayfası için production INTERNET izni eklenmez.
+- Support/privacy e-mail: `zmilastudio@gmail.com`.
 
-### Play Console cevap paketi
-- `PLAY_STORE_DATA_SAFETY.md` güncel teknik taslak.
-- `PLAY_CONSOLE_FORM_ANSWERS.md` hazır.
-- Mevcut local-first mimariye göre önerilen Data Safety temel cevabı: geliştiriciye/üçüncü taraf sunucuya veri gönderilmediği için collection/sharing yok.
-- Profil açma kullanıcı tarafından başlatılan harici transfer olarak değerlendirilir.
-- Ads: Hayır.
-- App access / özel login: Hayır.
-- Uygulama kendi hesabını oluşturmaz; server account deletion gereksinimi yok, local silme vardır.
-- Target audience önerisi: 18+.
-- News / government / health / financial features: Hayır.
-- IARC sonucu uydurulmayacak; Console questionnaire üzerinden alınacak.
+Public privacy policy TR+EN şu davranışlarla güncel:
+- local-first processing,
+- `INTERNET`/debug-production ayrımı,
+- AndroidX internal signature receiver permission açıklaması,
+- backup exclusions,
+- cleartext=false,
+- report clipboard/TXT export,
+- external export dosyasının app silme alanı dışında kalabilmesi,
+- harici profil/dosya sağlayıcısı third-party behavior.
 
-### Play Store listing
-- `PLAY_STORE_LISTING_TR.md` ve `PLAY_STORE_LISTING_EN.md` hazır.
-- Ad: `Takip Analizi` — 13/30.
-- TR kısa açıklama: `Instagram ve X takip ilişkilerini arşivlerinden cihazında analiz et.` — 68/80.
-- EN kısa açıklama: 77/80.
-- Kategori: **Araçlar / Tools**.
-- Store contact alanları gerçek privacy/support URL ve e-posta ile hazır.
-- Kesin Play tag adları uydurulmayacak; Console’dan en fazla 5 gerçekten ilgili tag seçilecek.
+## Play Console hazırlığı
+Hazır belgeler:
+- `PRIVACY_POLICY.md`
+- `SUPPORT.md`
+- `PLAY_STORE_DATA_SAFETY.md`
+- `PLAY_CONSOLE_FORM_ANSWERS.md`
+- `PLAY_STORE_LISTING_TR.md`
+- `PLAY_STORE_LISTING_EN.md`
+- `RELEASE_CHECKLIST.md`
+- `SIGNING_SETUP.md`
+- `PRIVACY_SUPPORT_PUBLISH_PLAN.md`
+- `STORE_VISUAL_CAPTURE_PLAN.md`
+- `STORE_ICON_DERIVATION.md`
 
-## Mağaza görsel hazırlığı
-- `STORE_VISUAL_CAPTURE_PLAN.md` hazır.
-- Telefon hedefi: 8 gerçek uygulama screenshot’ı, 1080×1920, 9:16, 24-bit PNG/JPEG, alfa yok.
-- İlk 3 screenshot doğrudan core UI’ye öncelik verecek.
-- S25 Ultra 1440×3120 ham ekran görüntüsü uzun/kısa oranı >2 olduğu için doğrudan Play’e yüklenmeyecek; 9:16 / 1080×1920 gerçek UI çıktısı hazırlanacak.
-- Kişisel hesap/takipçi verisi mağaza görsellerinde kullanılmayacak.
+Mevcut öneriler:
+- Data Safety collection/sharing: current local-only architecture için **No**.
+- Ads: No.
+- App access / özel login: No.
+- Uygulama kendi user account’unu oluşturmaz.
+- Target audience: 18+.
+- Category: Araçlar / Tools.
+- News/government/health/financial: No.
+- IARC sonucu Console tarafından üretilecek; yaş derecesi uydurulmayacak.
+- Final form cevapları **gerçek production AAB merged manifest** ile son kez karşılaştırılmadan gönderilmeyecek.
+
+## Play Store listing
+- App name: `Takip Analizi` — 13/30.
+- TR short: `Instagram ve X takip ilişkilerini arşivlerinden cihazında analiz et.` — 68/80.
+- EN short: 77/80.
+- Kategori: Araçlar / Tools.
+- Kesin tag adları uydurulmayacak; Console’un sunduğu listeden en fazla 5 gerçek ilgili tag seçilecek.
+
+## Store görselleri
+### Screenshot planı
+`STORE_VISUAL_CAPTURE_PLAN.md`:
+- hedef 8 gerçek-app telefon screenshot’ı,
+- 1080×1920,
+- 9:16,
+- 24-bit PNG/JPEG, alfa yok,
+- gerçek kişisel takipçi verisi kullanılmayacak.
+
+S25 Ultra ham screenshot 1440×3120 olduğu için ratio>2; Play’e doğrudan yüklenmeyecek. Gerçek UI 9:16 / 1080×1920 çıktıya esnetmeden hazırlanacak.
 
 ### Sentetik store demo arşivleri
-Repo yolu: `store_assets/demo_archives/`.
+Repo: `store_assets/demo_archives/`.
 
 Instagram demo username: `demo_analiz_2026`.
-- `instagram/snapshot_1.zip`: 10 takipçi / 11 takip edilen; SHA-256 `9f9938022e3a25b6463c86090439da877412ac96f9c230547368c54904c1a10d`.
-- `instagram/snapshot_2.zip`: 11 / 12; **2 Takibi Bırakan + 3 Yeni Takipçi**; SHA-256 `cbc1271712f37b5e1fe02c87ef97b5f6a1bfe868dc1a525a531de901a1be44ab`.
+- snapshot1: 10 takipçi / 11 takip edilen.
+- snapshot2: 11 / 12; **2 Takibi Bırakan + 3 Yeni Takipçi**.
 
 X demo username: `demo_x_analiz_2026`.
-- `x/snapshot_1.zip`: 8 takipçi / 9 takip edilen; SHA-256 `2aaa0c99237c6f1e0a685fd69181b345fd1705f6a184e5b5f60a5dc5f0c78937`.
-- `x/snapshot_2.zip`: 9 / 10; **1 Takibi Bırakan + 2 Yeni Takipçi**; SHA-256 `cda0e451b5f79c6ab830b195b90fb4475627c07f6765534cb72c03c6a8d7f038`.
-- Kullanıcı adları yalnız `demo_*` sentetik değerlerdir; gerçek kişi verisi yok.
-- ZIP’ler APK/AAB asset’i değildir; yalnız controlled store screenshot / demo akışı içindir.
-- `store_assets/demo_archives/README.md` tüm beklenen sayıları ve kullanım sırasını açıklar.
+- snapshot1: 8 takipçi / 9 takip edilen.
+- snapshot2: 9 / 10; **1 Takibi Bırakan + 2 Yeni Takipçi**.
 
-### Exact 512×512 store icon — HAZIR
-- Orijinal kullanıcı rasterı `92065.png`: 1536×1536 RGB, SHA-256 `ebada937553521ffcff3a92f6a8ff88d040c11ccc289f826de8fd91020b14c90`.
-- Bu kaynak 192×192 Lanczos + WebP quality 95/method 6 ile işlendiğinde kilitli Android launcher’ın **exact** SHA-256 `7543b623...` değeri elde edildi; kaynak ilişkisi byte-for-byte doğrulandı.
-- Store icon yalnız 512×512 Lanczos resize + RGB PNG optimize ile üretildi; logo yeniden çizilmedi.
+Tüm demo isimleri sentetiktir; gerçek kişi verisi yok. ZIP’ler APK/AAB içine asset olarak girmez; store screenshot kontrollü demo içindir.
+
+### Exact store icon
+- Orijinal kullanıcı rasterı: `92065.png`, 1536×1536 RGB, SHA-256 `ebada937553521ffcff3a92f6a8ff88d040c11ccc289f826de8fd91020b14c90`.
+- Bu kaynak 192×192 Lanczos + WebP quality95/method6 ile işlendiğinde final Android launcher hash’i byte-for-byte üretildi.
+- 512×512 store icon sadece resize ile üretildi; logo yeniden çizilmedi.
 - `takip-analizi-store-icon-512.png`: 512×512 RGB PNG, 169.565 byte.
-- Store PNG SHA-256: `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
-- `STORE_ICON_DERIVATION.md` exact türetme ve hash kaydını içerir.
-- Binary PNG aktif çalışma artifact’i olarak hazır; connector text-first sınırı nedeniyle branch’e binary olarak eklenmedi. Final Play upload öncesi hash yukarıdaki değerle eşleşmeli.
+- Store icon SHA-256: `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
+- `STORE_ICON_DERIVATION.md` kayıtlı.
 
 ### Feature graphic
-- 1024×500 feature graphic açık iş.
-- Resmi Instagram/X ilişkisi ima etmeyecek.
-- User onayı olmadan final yayın materyali olarak kilitlenmeyecek.
+- 1024×500 feature graphic halen açık iş.
+- Instagram/X ile resmi ilişki ima etmeyecek.
+- Exact launcher yeniden çizilmeyecek.
+- Kullanıcı onayı olmadan final yayın materyali olarak kilitlenmeyecek.
 
 ## Branch durumu
-- `test/device-apk`: `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe` — v2-38 TAM CI SUCCESS, değiştirilmedi.
-- **Güncel güvenli rollback:** `backup/device-v2-38-release-polish-ci-working` → `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe`.
-- `backup/device-v2-37-product-polish-ci-working` korunuyor.
-- `dev/release-polish-v1`: v2-38 üstünde production hazırlığı. `pubspec.yaml` 1.0.0+1 değişikliği + production workflow guard’ları + docs/store demo assets içerir; **bu dev başı v2-38 sonrası Device Test CI ile henüz doğrulanmadı**.
-- Bu dev branch `test/device-apk` üzerine taşınırsa `apps/mobile/pubspec.yaml` değişikliği nedeniyle Device Test Actions tetiklenir; yalnız yeterli kod paketi oluştuğunda tek seferde yapılacak.
-- Public `main`: privacy/support sayfaları docs-only yayınlandı.
+- `test/device-apk` → **tested v2-39 commit** `0816b8811aae6cf7aa2be67e63c524156093507b`.
+- `backup/device-v2-39-release-hardening-ci-working` → aynı tested commit.
+- `backup/pre-production-hardening-ci` → aynı pre/post-batch tested head `0816b881...`.
+- `backup/device-v2-38-release-polish-ci-working` önceki güvenli baseline olarak korunuyor.
+- `dev/release-polish-v1` v2-39 tested commitin ilerisinde yalnız production workflow/docs düzeltmeleri içeriyor; son v2-39 sonrası düzeltmeler yeni Device Test run gerektirmiyor çünkü app runtime kodu değişmedi.
+- Public `main` privacy/support yayın belgelerini içeriyor.
 
 ## Production’a kalan ana kapılar
-1. Google Play App Signing durumunu belirle; gerçek private upload key oluştur/kullan.
-2. `PLAY_UPLOAD_*` GitHub Secrets değerlerini güvenli biçimde tanımla.
-3. Gerçek private key ile manuel production RC AAB `1.0.0 / 1` workflow’unu çalıştır ve AAB doğrulamalarını PASS kapat.
-4. Play Console Data Safety / IARC / target audience 18+ / app access ve ilgili deklarasyonları gir.
-5. **1024×500 feature graphic** hazırla.
-6. Production RC’den sentetik demo arşivleriyle 8 mağaza screenshot’ı al.
-7. Tek kritik production RC fiziksel PASS yap; bu turda gerçek X arşiv doğrulamasını da tamamla.
+1. Google Play App Signing durumunu Play Console’da doğrula.
+2. Kullanıcı onayıyla doğru private upload key oluştur/kullan.
+3. `PLAY_UPLOAD_*` GitHub Secrets değerlerini güvenli biçimde tanımla.
+4. Manuel production RC AAB workflow’unu `1.0.0 / 1` ile çalıştır.
+5. Gerçek production AAB’de package/version/API36/signing/merged manifest permission-backup-cleartext guard’larını PASS kapat.
+6. Play Console Data Safety / IARC / target audience / app access alanlarını tamamla.
+7. 1024×500 feature graphic’i kullanıcı onayıyla hazırla.
+8. Production RC ile sentetik demo arşivlerinden store screenshot’larını al.
+9. Production RC temiz kurulum + persistence + gerçek X arşivi tek kritik fiziksel PASS.
 
 ## Sıradaki iş
-- Küçük fiziksel test isteme.
-- Gereksiz Actions çalıştırma.
-- Actions harcamadan yapılabilecek Play docs/store hazırlığı büyük ölçüde tamamlandı.
-- Sonraki gerçek teknik blocker private Play upload signing’dir; kullanıcı açıkça anahtar/secrets aşamasına geçmeden private key üretme veya production workflow çalıştırma.
-- Exact launcher iconu regenerate etme; store icon yalnız doğrulanmış orijinal rasterdan türetilir.
+- v2-39 CI başarılı; **yeni Device Test Actions çalıştırma**.
+- Sonraki gerçek teknik blocker private Play upload signing’dir.
+- Kullanıcı onayı olmadan private key/secrets üretme veya production workflow çalıştırma.
+- Production signing aşamasına geçilene kadar doküman/görsel plan dışındaki runtime geliştirmeyi gereksiz yere açma.
