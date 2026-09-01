@@ -96,11 +96,12 @@ jobs:
           grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
           grep -F 'version: 1.0.0+1' pubspec.yaml
           test ! -e android/key.properties
-          ! grep -F 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
+          ! grep -F '<uses-permission' android/app/src/main/AndroidManifest.xml
 
           grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
           grep -F 'android:fullBackupContent="@xml/backup_rules"' android/app/src/main/AndroidManifest.xml
           grep -F 'android:dataExtractionRules="@xml/data_extraction_rules"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:usesCleartextTraffic="false"' android/app/src/main/AndroidManifest.xml
 
           LEGACY_BACKUP_RULES="android/app/src/main/res/xml/backup_rules.xml"
           EXTRACTION_RULES="android/app/src/main/res/xml/data_extraction_rules.xml"
@@ -150,7 +151,20 @@ jobs:
           grep -F '<manifest' "$RELEASE_MANIFEST"
           grep -F "android:targetSdkVersion=\"$EXPECTED_TARGET_SDK\"" "$RELEASE_MANIFEST"
           grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
-          ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
+          grep -F 'android:usesCleartextTraffic="false"' "$RELEASE_MANIFEST"
+
+          if grep -F '<uses-permission' "$RELEASE_MANIFEST"; then
+            echo "Production release unexpectedly requests Android permissions." >&2
+            exit 1
+          fi
+          if grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"; then
+            echo "Production release is debuggable." >&2
+            exit 1
+          fi
+          if grep -F 'android:testOnly="true"' "$RELEASE_MANIFEST"; then
+            echo "Production release is testOnly." >&2
+            exit 1
+          fi
 
       - name: Verify signed AAB
         run: |
