@@ -25,7 +25,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final pageList = find.byType(ListView);
+    final pageScroll = find.descendant(
+      of: pageList,
+      matching: find.byType(Scrollable),
+    );
     expect(pageList, findsOneWidget);
+    expect(pageScroll, findsOneWidget);
 
     expect(find.text('Yerel Veri Yönetimi'), findsOneWidget);
     expect(find.text('Analiz'), findsOneWidget);
@@ -37,7 +42,7 @@ void main() {
     await tester.scrollUntilVisible(
       historyFinder,
       250,
-      scrollable: pageList,
+      scrollable: pageScroll,
     );
     expect(tester.widget<OutlinedButton>(historyFinder).onPressed, isNull);
 
@@ -46,7 +51,7 @@ void main() {
     await tester.scrollUntilVisible(
       ignoredFinder,
       250,
-      scrollable: pageList,
+      scrollable: pageScroll,
     );
     expect(tester.widget<OutlinedButton>(ignoredFinder).onPressed, isNull);
 
@@ -55,7 +60,7 @@ void main() {
     await tester.scrollUntilVisible(
       everythingFinder,
       250,
-      scrollable: pageList,
+      scrollable: pageScroll,
     );
     expect(tester.widget<OutlinedButton>(everythingFinder).onPressed, isNull);
   });
