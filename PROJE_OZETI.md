@@ -6,9 +6,10 @@ Son güncelleme: 1 Eylül 2026
 - Her yeni sohbet başlangıcında bu dosya okunarak proje devralınır.
 - Her kullanıcı mesajından sonra önemli kararlar, tamamlanan işler, açık sorunlar ve güncel durum buraya işlenir.
 - Bu dosya + canlı GitHub repo proje gerçeklik kaynağıdır.
-- Fiziksel cihazda doğrulanmayan değişiklik “çözüldü” sayılmaz.
-- Çalışan fiziksel baseline korunur; özellikler tek tek geri eklenir.
+- Fiziksel cihazda doğrulanmayan kritik sürüm değişikliği “çözüldü” sayılmaz.
+- Çalışan fiziksel baseline korunur.
 - Kullanıcı istemedikçe görsel mockup gönderilmez; gerçek APK üzerinden ilerlenir.
+- **1 Eylül 2026 yeni çalışma kararı:** her küçük değişiklik için ayrı fiziksel test/PASS turu yapılmayacak. Geliştirmeler mümkün olduğunca toplu ilerletilecek; yalnız kritik sürüm noktalarında tek fiziksel doğrulama istenecek.
 
 ## Proje amacı ve sabit kararlar
 Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygulaması. Instagram resmi Meta veri dışa aktarma ZIP/JSON/HTML dosyalarını cihaz üzerinde analiz eder.
@@ -132,7 +133,6 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - Uygulama otomatik olarak `Takibi Bırakanlar (6)` ve `Yeni Takipçiler (5)` hesapladı ✅
 - Net takipçi değişimi matematiksel olarak tutarlı: `75 - 6 + 5 = 74` ✅
 - `Takibi Bırakanlar` sekmesi gerçek cihazda 6 kullanıcıyla liste render etti ✅
-- Görülen hesaplar: `@2tuba6`, `@erbaamasigi`, `@kmbujiteri_34`, `@nurcandan2026`, `@tugba_blogg1`, `@velora_nail.atelier`.
 - `Yeni Takipçiler (5)` sekmesi gerçek cihazda 5 kullanıcıyla liste render etti ✅
 - Kullanıcı son fiziksel kontrolü PASS verdi ✅
 - Import controller zinciri gerçek cihazda uçtan uca doğrulandı: previous snapshot okunuyor → current previous ile karşılaştırılıyor → current snapshot kaydediliyor ✅
@@ -171,4 +171,4 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 - [ ] canlı API/OAuth maliyet değerlendirmesi
 
 ## Sıradaki iş
-Otomatik geçmiş snapshot karşılaştırma akışı artık gerçek Meta arşivleriyle TAM PASS. Sıradaki kontrollü adım, kullanıcının geçmişteki herhangi iki snapshot'ı seçip manuel olarak birbirleriyle karşılaştırabilmesini sağlayan **iki keyfi snapshot'ı elle karşılaştırma** akışını tasarlayıp uygulamaktır.
+Otomatik geçmiş snapshot karşılaştırma akışı artık gerçek Meta arşivleriyle TAM PASS. Sıradaki geliştirme, kullanıcının geçmişteki herhangi iki snapshot'ı seçip manuel olarak birbirleriyle karşılaştırabilmesini sağlayan **iki keyfi snapshot'ı elle karşılaştırma** akışıdır. Bu aşamadan itibaren her küçük değişiklik için ayrı fiziksel test istenmeyecek; geliştirme toplu ilerletilecek ve yalnız kritik sürüm noktasında tek fiziksel doğrulama yapılacak.
