@@ -36,11 +36,13 @@ Kullanıcı uygulamaya bir sosyal medya arşivi seçtiğinde aşağıdaki verile
 
 X arşivinde takip ilişkisi analizi için gerekli olmayan medya, gönderi ve doğrudan mesaj geçmişi analiz amacıyla kullanılmaz.
 
-## 3. Veri toplama, ağ erişimi ve paylaşma
+## 3. Veri toplama, ağ erişimi ve izinler
 
-Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen bir sunucuya gönderilmez ve üçüncü taraflarla paylaşılmaz.
+Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen bir sunucuya gönderilmez ve uygulama tarafından üçüncü taraflarla paylaşılmaz.
 
-Production kaynak manifesti analiz için herhangi bir Android `uses-permission` istemeyecek şekilde hazırlanmıştır. Flutter’ın debug/profile geliştirme build’leri; hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir. Google Play’e gönderilecek production AAB, release merged manifestinde herhangi bir Android permission bulunmaması için otomatik kontrol edilecektir.
+Production kaynak manifesti uygulama tarafından tanımlanmış Android `uses-permission` girdisi içermez ve `INTERNET` izni istemez. Flutter’ın debug/profile geliştirme build’leri hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir; bu production davranışı değildir.
+
+AndroidX Core, eski Android sürümlerinde dışa aktarılmamış dinamik alıcıları güvenli biçimde desteklemek için merged manifestte uygulama paket adına bağlı `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı **signature-level internal permission** ekleyebilir. Bu izin kullanıcıdan istenen bir runtime izni değildir, kullanıcı verisine erişim sağlamaz ve Android permission istemi göstermez. Production CI yalnız bu AndroidX internal iznine tolerans gösterir; `INTERNET` ve başka merged `uses-permission` girdileri production adayı için reddedilir.
 
 Production Android yapılandırması `android:usesCleartextTraffic="false"` kullanır. Ayrıca uygulama verileri için `android:allowBackup="false"` kullanır ve eski/yeni Android backup kurallarında yerel uygulama verilerini cloud backup ile cihazlar arası veri aktarımından hariç tutar. Bu yapılandırma, analiz geçmişi ve uygulama tercihlerini Android’in otomatik yedekleme altyapısına dahil etmemeyi amaçlar. Bazı cihaz üreticilerinin sistem seviyesindeki doğrudan cihaz taşıma davranışları Android tarafından kontrol edilebilir ve uygulamanın tam denetimi dışında olabilir.
 
@@ -89,7 +91,7 @@ Takip Analizi çocuklara yönelik olarak tasarlanmamıştır ve bilerek çocukla
 
 ## 8. Güvenlik
 
-Uygulamanın temel güvenlik yaklaşımı; sosyal medya kimlik bilgilerini hiç toplamamak, analizi cihaz üzerinde tutmak, production build’de Android permission istememek, cleartext trafiği kapatmak ve uygulama tarafından yönetilen yerel analiz verisini Android otomatik backup kapsamının dışında tutmaktır. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
+Uygulamanın temel güvenlik yaklaşımı; sosyal medya kimlik bilgilerini hiç toplamamak, analizi cihaz üzerinde tutmak, production sürümünde `INTERNET` veya kullanıcı verisine erişen runtime Android izinları istememek, cleartext trafiği kapatmak ve uygulama tarafından yönetilen yerel analiz verisini Android otomatik backup kapsamının dışında tutmaktır. AndroidX’in paket-kapsamlı signature-level internal receiver izni bu veri erişim sınırlarını değiştirmez. Bununla birlikte hiçbir cihaz veya yazılım ortamı mutlak güvenlik garantisi veremez.
 
 ## 9. Üçüncü taraf hizmetler ve dış bağlantılar
 
@@ -150,11 +152,13 @@ Depending on the selected archive, the app may process on the device:
 
 X archive content unrelated to follow-relationship analysis, such as media, posts, or direct-message history, is not used for follow analysis.
 
-## 3. Collection, network access, and sharing
+## 3. Collection, network access, and permissions
 
 Under the current architecture, analysis data is not sent to a server operated by ZMila Studio and is not shared with third parties by the app.
 
-The production source manifest is designed to request no Android `uses-permission` entries. Flutter debug/profile development builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling. The production AAB workflow will automatically reject a merged release manifest containing any Android permission.
+The production source manifest declares no app-defined Android `uses-permission` entries and does not request `INTERNET`. Flutter debug/profile builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling; this is not production behavior.
+
+AndroidX Core can merge an application-scoped `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` **signature-level internal permission** to safely emulate non-exported dynamic receivers on older Android versions. This is not a user-granted runtime permission, does not grant access to user data, and does not display a permission prompt. Production CI allows only this AndroidX internal permission and rejects `INTERNET` or any other merged `uses-permission` entry.
 
 The production Android configuration sets `android:usesCleartextTraffic="false"`. It also sets `android:allowBackup="false"` and defines legacy/current Android backup rules that exclude app-managed local data from cloud backup and device-transfer extraction. This is intended to keep analysis history and app preferences out of Android automatic backup infrastructure. Some system-level direct device migration behavior can be controlled by Android or the device manufacturer and may be outside the app’s complete control.
 
@@ -199,7 +203,7 @@ Takip Analizi is not designed for children and does not intentionally seek to co
 
 ## 8. Security
 
-The app’s security approach is to avoid collecting social-media credentials, keep analysis on the device, request no Android permissions in the production release, disable cleartext traffic, and exclude app-managed local analysis data from Android automatic backup rules. No device or software environment can provide an absolute security guarantee.
+The app’s security approach is to avoid collecting social-media credentials, keep analysis on the device, request no `INTERNET` or user-data runtime permissions in production, disable cleartext traffic, and exclude app-managed local analysis data from Android automatic backup rules. AndroidX’s application-scoped signature-level internal receiver permission does not change these data-access boundaries. No device or software environment can provide an absolute security guarantee.
 
 ## 9. Third-party services and external links
 
