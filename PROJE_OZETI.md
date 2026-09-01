@@ -92,14 +92,17 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 ### Debug / production INTERNET ayrımı
 - `src/debug/AndroidManifest.xml` ve `src/profile/AndroidManifest.xml` Flutter hot reload/debugger için `android.permission.INTERNET` ekler.
 - `src/main/AndroidManifest.xml` INTERNET izni içermez.
-- Bu nedenle debug APK’da INTERNET görünmesi beklenen development davranışıdır; production hakkında “debug dahil her build internetsiz” denmeyecek.
+- Debug APK’da INTERNET görünmesi beklenen development davranışıdır; production hakkında “debug dahil her build internetsiz” denmeyecek.
 - Production RC workflow’u build sonrası merged release manifestte `android.permission.INTERNET` görülürse fail edecek.
 - Aynı guard merged release manifestte targetSdk 36’yı da doğrular.
 
 ### Production signing scaffold
 - `.gitignore` private `*.jks`, `*.keystore`, `*.p12`, `*.pem`, `*.key`, `key.properties`, `.env*` dosyalarını engeller.
 - Gradle release signing yalnız `PLAY_UPLOAD_*` secure environment değerleriyle `playUpload` config kullanır; public device-test key’e fallback yoktur.
-- `SIGNING_SETUP.md` private upload key ve fingerprint recovery prosedürünü açıklar.
+- `SIGNING_SETUP.md` Google’ın güncel Play App Signing modeline göre yenilendi.
+- Yeni uygulamada geliştiricide private **upload key**, Google Play’de ayrı **app signing key** bulunur; bu iki rol karıştırılmayacak.
+- Upload key Java `.jks/.keystore`, RSA en az 2048 bit olmalı; kayıp/compromise durumunda Play App Signing altında upload-key reset süreci vardır.
+- Upload certificate PEM dışa aktarma ve fingerprint doğrulama/recovery akışı dokümante edildi.
 - `.github/workflows/production-rc-aab.yml` yalnız manuel `workflow_dispatch` çalışır.
 - Varsayılan input: `1.0.0 / 1`.
 - Private key secret/fingerprint doğrulaması, Analyze, test, signed AAB, exact launcher, release merged manifest INTERNET/targetSdk guard, signer fingerprint ve 1 günlük artifact retention içerir.
@@ -111,7 +114,7 @@ Public `main` branch’te yayınlandı:
 - Support: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
 - Support / privacy email: `zmilastudio@gmail.com`.
 - Policy Türkçe + İngilizce; ZMila Studio/Takip Analizi kimliği, local processing, veri silme, saklama, dış bağlantılar, debug-production ağ ayrımı ve iletişimi açıklar.
-- `PRIVACY_SUPPORT_PUBLISH_PLAN.md` artık blocker değil; yayın durumu TAMAMLANDI olarak güncellendi.
+- `PRIVACY_SUPPORT_PUBLISH_PLAN.md` artık blocker değil; yayın durumu TAMAMLANDI.
 - Uygulama içindeki privacy özeti offline kalır; sırf privacy sayfası için production INTERNET izni eklenmez.
 
 ### Play Console cevap paketi
@@ -153,13 +156,22 @@ X demo username: `demo_x_analiz_2026`.
 - `x/snapshot_1.zip`: 8 takipçi / 9 takip edilen; SHA-256 `2aaa0c99237c6f1e0a685fd69181b345fd1705f6a184e5b5f60a5dc5f0c78937`.
 - `x/snapshot_2.zip`: 9 / 10; **1 Takibi Bırakan + 2 Yeni Takipçi**; SHA-256 `cda0e451b5f79c6ab830b195b90fb4475627c07f6765534cb72c03c6a8d7f038`.
 - Kullanıcı adları yalnız `demo_*` sentetik değerlerdir; gerçek kişi verisi yok.
-- Bu ZIP’ler APK/AAB asset’i değildir; yalnız controlled store screenshot / demo akışı içindir.
-- `store_assets/demo_archives/README.md` beklenen tüm sayıları ve kullanım sırasını açıklar.
+- ZIP’ler APK/AAB asset’i değildir; yalnız controlled store screenshot / demo akışı içindir.
+- `store_assets/demo_archives/README.md` tüm beklenen sayıları ve kullanım sırasını açıklar.
 
-### Store icon / feature graphic
-- 512×512 store icon **yeni logo olarak üretilmeyecek**; exact kilitli launcher rasterından birebir türetilecek.
-- Binary source otomatik çıkarma/ölçekleme hattı henüz tamamlanmadığı için 512 PNG açık iş.
-- 1024×500 feature graphic açık iş; resmi Instagram/X ilişkisi ima etmeyecek ve user onayı olmadan kilitlenmeyecek.
+### Exact 512×512 store icon — HAZIR
+- Orijinal kullanıcı rasterı `92065.png`: 1536×1536 RGB, SHA-256 `ebada937553521ffcff3a92f6a8ff88d040c11ccc289f826de8fd91020b14c90`.
+- Bu kaynak 192×192 Lanczos + WebP quality 95/method 6 ile işlendiğinde kilitli Android launcher’ın **exact** SHA-256 `7543b623...` değeri elde edildi; kaynak ilişkisi byte-for-byte doğrulandı.
+- Store icon yalnız 512×512 Lanczos resize + RGB PNG optimize ile üretildi; logo yeniden çizilmedi.
+- `takip-analizi-store-icon-512.png`: 512×512 RGB PNG, 169.565 byte.
+- Store PNG SHA-256: `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
+- `STORE_ICON_DERIVATION.md` exact türetme ve hash kaydını içerir.
+- Binary PNG aktif çalışma artifact’i olarak hazır; connector text-first sınırı nedeniyle branch’e binary olarak eklenmedi. Final Play upload öncesi hash yukarıdaki değerle eşleşmeli.
+
+### Feature graphic
+- 1024×500 feature graphic açık iş.
+- Resmi Instagram/X ilişkisi ima etmeyecek.
+- User onayı olmadan final yayın materyali olarak kilitlenmeyecek.
 
 ## Branch durumu
 - `test/device-apk`: `e79355e5b7a21e19825f55c8f5f51ac79d2d5ebe` — v2-38 TAM CI SUCCESS, değiştirilmedi.
@@ -174,13 +186,13 @@ X demo username: `demo_x_analiz_2026`.
 2. `PLAY_UPLOAD_*` GitHub Secrets değerlerini güvenli biçimde tanımla.
 3. Gerçek private key ile manuel production RC AAB `1.0.0 / 1` workflow’unu çalıştır ve AAB doğrulamalarını PASS kapat.
 4. Play Console Data Safety / IARC / target audience 18+ / app access ve ilgili deklarasyonları gir.
-5. 512×512 exact store icon türevi + 1024×500 feature graphic hazırla.
+5. **1024×500 feature graphic** hazırla.
 6. Production RC’den sentetik demo arşivleriyle 8 mağaza screenshot’ı al.
-7. Tek kritik production RC fiziksel PASS yap; bu turda gerçek X arşivi doğrulamasını da tamamla.
+7. Tek kritik production RC fiziksel PASS yap; bu turda gerçek X arşiv doğrulamasını da tamamla.
 
 ## Sıradaki iş
 - Küçük fiziksel test isteme.
 - Gereksiz Actions çalıştırma.
 - Actions harcamadan yapılabilecek Play docs/store hazırlığı büyük ölçüde tamamlandı.
-- Sonraki gerçek teknik blocker private Play upload signing’dir; key/secrets hazır olmadan production workflow’u çalıştırma.
-- Görsel üretimde exact launcher iconu regenerate etme; store icon yalnız mevcut rasterdan türetilir.
+- Sonraki gerçek teknik blocker private Play upload signing’dir; kullanıcı açıkça anahtar/secrets aşamasına geçmeden private key üretme veya production workflow çalıştırma.
+- Exact launcher iconu regenerate etme; store icon yalnız doğrulanmış orijinal rasterdan türetilir.
