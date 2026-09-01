@@ -1,20 +1,18 @@
 import '../analysis/follow_analysis_engine.dart';
 import '../importers/instagram/instagram_archive_importer.dart';
-import '../models/follow_analysis.dart';
 import '../models/follow_snapshot.dart';
 import '../models/social_account.dart';
 import '../models/social_platform.dart';
+import 'follow_analysis_result.dart';
 
-class InstagramFollowAnalysisResult {
+class InstagramFollowAnalysisResult extends FollowAnalysisResult {
   const InstagramFollowAnalysisResult({
-    required this.snapshot,
-    required this.analysis,
+    required super.snapshot,
+    required super.analysis,
     required this.followerSourceFiles,
     required this.followingSourceFiles,
   });
 
-  final FollowSnapshot snapshot;
-  final FollowAnalysis analysis;
   final List<String> followerSourceFiles;
   final List<String> followingSourceFiles;
 }
