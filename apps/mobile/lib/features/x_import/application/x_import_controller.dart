@@ -22,11 +22,7 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
     state = const AsyncLoading();
 
     try {
-      final username = _normalizeUsername(rawUsername);
-      final account = SocialAccount(
-        platform: SocialPlatform.x,
-        username: username,
-      );
+      final account = _account(rawUsername);
       final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: const ['zip'],
@@ -43,16 +39,15 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
       }
 
       final bytes = await file.readAsBytes();
-      final database = ref.read(followHistoryDatabaseProvider);
-      final previous = await database.latestSnapshot(account);
-      final result = _useCase.execute(
-        zipBytes: bytes,
-        account: account,
-        capturedAt: DateTime.now().toUtc(),
-        previous: previous,
+      final result = await _analyzeAndSave(
+        account,
+        (previous) => _useCase.execute(
+          zipBytes: bytes,
+          account: account,
+          capturedAt: DateTime.now().toUtc(),
+          previous: previous,
+        ),
       );
-
-      await database.saveSnapshot(result.snapshot);
       state = AsyncData(result);
       return result;
     } catch (error, stackTrace) {
@@ -60,6 +55,68 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
       return null;
     }
   }
+
+  Future<XFollowAnalysisResult?> pickRelationshipFiles(
+    String rawUsername,
+  ) async {
+    state = const AsyncLoading();
+
+    try {
+      final account = _account(rawUsername);
+      final selected = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['js'],
+      );
+
+      if (selected.isEmpty) {
+        state = const AsyncData(null);
+        return null;
+      }
+
+      final files = <String, List<int>>{};
+      for (final file in selected) {
+        final length = await file.length();
+        if (length > _useCase.archiveImporter.maxRelationshipFileBytes) {
+          throw XArchiveImportException(
+            XArchiveImportError.relationshipFileTooLarge,
+            path: file.name,
+          );
+        }
+        files[file.name] = await file.readAsBytes();
+      }
+
+      final result = await _analyzeAndSave(
+        account,
+        (previous) => _useCase.executeRelationshipFiles(
+          files: files,
+          account: account,
+          capturedAt: DateTime.now().toUtc(),
+          previous: previous,
+        ),
+      );
+      state = AsyncData(result);
+      return result;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return null;
+    }
+  }
+
+  Future<XFollowAnalysisResult> _analyzeAndSave(
+    SocialAccount account,
+    XFollowAnalysisResult Function(FollowSnapshot? previous) analyze,
+  ) async {
+    final database = ref.read(followHistoryDatabaseProvider);
+    final previous = await database.latestSnapshot(account);
+    final result = analyze(previous);
+    await database.saveSnapshot(result.snapshot);
+    return result;
+  }
+
+  SocialAccount _account(String rawUsername) => SocialAccount(
+        platform: SocialPlatform.x,
+        username: _normalizeUsername(rawUsername),
+      );
 
   String _normalizeUsername(String rawUsername) {
     final username = rawUsername.trim().replaceFirst(RegExp(r'^@'), '');
@@ -78,17 +135,17 @@ String xImportErrorMessage(Object error) {
   if (error is XArchiveImportException) {
     return switch (error.code) {
       XArchiveImportError.archiveTooLarge =>
-        'X arşivi bu sürümün cihaz içi işlem sınırını aşıyor.',
+        'X arşivi çok büyük. ZIP’i çıkarıp yalnız follower.js ve following.js dosyalarını seç.',
       XArchiveImportError.invalidArchive =>
         'Seçilen dosya geçerli bir X ZIP arşivi değil.',
       XArchiveImportError.tooManyEntries =>
-        'X arşivi beklenenden fazla dosya içeriyor.',
+        'X arşivi beklenenden fazla dosya içeriyor. Yalnız follower.js ve following.js dosyalarını seç.',
       XArchiveImportError.relationshipFileTooLarge =>
         'X takip ilişkisi dosyası güvenli işlem sınırını aşıyor.',
       XArchiveImportError.followersFileMissing =>
-        'Arşivde data/follower.js dosyası bulunamadı.',
+        'follower.js seçilmedi veya arşivde bulunamadı.',
       XArchiveImportError.followingFileMissing =>
-        'Arşivde data/following.js dosyası bulunamadı.',
+        'following.js seçilmedi veya arşivde bulunamadı.',
       XArchiveImportError.unsafeRelationshipPath =>
         'Arşivde güvenli olmayan bir dosya yolu tespit edildi.',
       XArchiveImportError.invalidRelationshipFile =>
