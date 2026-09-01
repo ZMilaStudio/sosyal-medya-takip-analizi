@@ -1,0 +1,68 @@
+import '../analysis/follow_analysis_engine.dart';
+import '../importers/x/x_archive_importer.dart';
+import '../models/follow_analysis.dart';
+import '../models/follow_snapshot.dart';
+import '../models/social_account.dart';
+import '../models/social_platform.dart';
+
+class XFollowAnalysisResult {
+  const XFollowAnalysisResult({
+    required this.snapshot,
+    required this.analysis,
+    required this.followerSourceFiles,
+    required this.followingSourceFiles,
+  });
+
+  final FollowSnapshot snapshot;
+  final FollowAnalysis analysis;
+  final List<String> followerSourceFiles;
+  final List<String> followingSourceFiles;
+}
+
+/// End-to-end analysis for one official X archive import.
+class XFollowAnalysisUseCase {
+  const XFollowAnalysisUseCase({
+    this.archiveImporter = const XArchiveImporter(),
+    this.analysisEngine = const FollowAnalysisEngine(),
+  });
+
+  final XArchiveImporter archiveImporter;
+  final FollowAnalysisEngine analysisEngine;
+
+  XFollowAnalysisResult execute({
+    required List<int> zipBytes,
+    required SocialAccount account,
+    required DateTime capturedAt,
+    FollowSnapshot? previous,
+  }) {
+    if (account.platform != SocialPlatform.x) {
+      throw ArgumentError.value(
+        account.platform,
+        'account.platform',
+        'XFollowAnalysisUseCase requires an X account.',
+      );
+    }
+
+    final imported = archiveImporter.importBytes(zipBytes);
+    final snapshot = FollowSnapshot(
+      account: account,
+      capturedAt: capturedAt,
+      followers: imported.followers,
+      following: imported.following,
+      sourceType: SnapshotSourceType.archive,
+      sourceFormat: 'x-archive-js',
+    );
+
+    final analysis = analysisEngine.analyze(
+      current: snapshot,
+      previous: previous,
+    );
+
+    return XFollowAnalysisResult(
+      snapshot: snapshot,
+      analysis: analysis,
+      followerSourceFiles: imported.followerFiles,
+      followingSourceFiles: imported.followingFiles,
+    );
+  }
+}
