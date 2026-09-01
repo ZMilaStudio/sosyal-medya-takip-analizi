@@ -24,23 +24,39 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final pageList = find.byType(ListView);
+    expect(pageList, findsOneWidget);
+
     expect(find.text('Yerel Veri Yönetimi'), findsOneWidget);
     expect(find.text('Analiz'), findsOneWidget);
     expect(find.text('Hesap'), findsOneWidget);
     expect(find.text('Yok sayılan'), findsOneWidget);
 
-    final historyButton = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, 'Tüm analiz geçmişini sil'),
+    final historyFinder =
+        find.widgetWithText(OutlinedButton, 'Tüm analiz geçmişini sil');
+    await tester.scrollUntilVisible(
+      historyFinder,
+      250,
+      scrollable: pageList,
     );
-    final ignoredButton = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, 'Yok sayılanları temizle'),
-    );
-    final everythingButton = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, 'Tüm yerel veriyi temizle'),
-    );
+    expect(tester.widget<OutlinedButton>(historyFinder).onPressed, isNull);
 
-    expect(historyButton.onPressed, isNull);
-    expect(ignoredButton.onPressed, isNull);
-    expect(everythingButton.onPressed, isNull);
+    final ignoredFinder =
+        find.widgetWithText(OutlinedButton, 'Yok sayılanları temizle');
+    await tester.scrollUntilVisible(
+      ignoredFinder,
+      250,
+      scrollable: pageList,
+    );
+    expect(tester.widget<OutlinedButton>(ignoredFinder).onPressed, isNull);
+
+    final everythingFinder =
+        find.widgetWithText(OutlinedButton, 'Tüm yerel veriyi temizle');
+    await tester.scrollUntilVisible(
+      everythingFinder,
+      250,
+      scrollable: pageList,
+    );
+    expect(tester.widget<OutlinedButton>(everythingFinder).onPressed, isNull);
   });
 }
