@@ -13,15 +13,49 @@ final snapshotHistoryProvider = FutureProvider.autoDispose((ref) async {
   return database.listHistory(platform: SocialPlatform.instagram);
 });
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  final List<int> _selectedIds = [];
+  bool _compareMode = false;
+
+  @override
+  Widget build(BuildContext context) {
     final history = ref.watch(snapshotHistoryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Analiz Geçmişi')),
+      appBar: AppBar(
+        title: Text(_compareMode ? 'İki Analizi Seç' : 'Analiz Geçmişi'),
+        actions: [
+          if (history.hasValue && (history.value?.length ?? 0) >= 2)
+            TextButton(
+              onPressed: _toggleCompareMode,
+              child: Text(_compareMode ? 'Vazgeç' : 'Karşılaştır'),
+            ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      bottomNavigationBar: _compareMode
+          ? SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: FilledButton.icon(
+                onPressed: _selectedIds.length == 2
+                    ? () => _compareSelected(history.value ?? const [])
+                    : null,
+                icon: const Icon(Icons.compare_arrows_rounded),
+                label: Text(
+                  _selectedIds.length == 2
+                      ? 'Seçilen Analizleri Karşılaştır'
+                      : '${_selectedIds.length}/2 analiz seçildi',
+                ),
+              ),
+            )
+          : null,
       body: history.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _HistoryError(
@@ -44,12 +78,18 @@ class HistoryScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  return const _RetentionInfo();
+                  return _compareMode
+                      ? const _CompareInfo()
+                      : const _RetentionInfo();
                 }
                 final item = items[index - 1];
                 return _HistoryCard(
                   item: item,
-                  onTap: () => _openSnapshot(context, ref, item),
+                  selectionMode: _compareMode,
+                  selected: _selectedIds.contains(item.snapshotId),
+                  onTap: () => _compareMode
+                      ? _toggleSnapshotSelection(items, item)
+                      : _openSnapshot(item),
                 );
               },
             ),
@@ -59,16 +99,86 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openSnapshot(
-    BuildContext context,
-    WidgetRef ref,
+  void _toggleCompareMode() {
+    setState(() {
+      _compareMode = !_compareMode;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSnapshotSelection(
+    List<FollowSnapshotHistoryItem> items,
     FollowSnapshotHistoryItem item,
-  ) async {
+  ) {
+    if (_selectedIds.contains(item.snapshotId)) {
+      setState(() => _selectedIds.remove(item.snapshotId));
+      return;
+    }
+
+    if (_selectedIds.length >= 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('En fazla iki analiz seçebilirsin.')),
+      );
+      return;
+    }
+
+    if (_selectedIds.isNotEmpty) {
+      final first = items.firstWhere(
+        (candidate) => candidate.snapshotId == _selectedIds.first,
+      );
+      if (!_sameAccount(first.account, item.account)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Karşılaştırmak için aynı hesaba ait iki analiz seç.'),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _selectedIds.add(item.snapshotId));
+  }
+
+  Future<void> _openSnapshot(FollowSnapshotHistoryItem item) async {
     final database = ref.read(followHistoryDatabaseProvider);
     final current = await database.snapshotById(item.snapshotId);
-    if (current == null || !context.mounted) return;
+    if (current == null || !mounted) return;
 
     final previous = await database.previousSnapshotBefore(item.snapshotId);
+    _openAnalysis(current: current, previous: previous);
+  }
+
+  Future<void> _compareSelected(List<FollowSnapshotHistoryItem> items) async {
+    if (_selectedIds.length != 2) return;
+
+    final selectedItems = items
+        .where((item) => _selectedIds.contains(item.snapshotId))
+        .toList();
+    if (selectedItems.length != 2 ||
+        !_sameAccount(selectedItems[0].account, selectedItems[1].account)) {
+      return;
+    }
+
+    final database = ref.read(followHistoryDatabaseProvider);
+    final first = await database.snapshotById(selectedItems[0].snapshotId);
+    final second = await database.snapshotById(selectedItems[1].snapshotId);
+    if (first == null || second == null || !mounted) return;
+
+    final older = first.capturedAt.isBefore(second.capturedAt) ? first : second;
+    final newer = identical(older, first) ? second : first;
+
+    await _openAnalysis(current: newer, previous: older);
+    if (!mounted) return;
+    setState(() {
+      _compareMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  Future<void> _openAnalysis({
+    required FollowSnapshot current,
+    required FollowSnapshot? previous,
+  }) async {
     final analysis = const FollowAnalysisEngine().analyze(
       current: current,
       previous: previous,
@@ -80,9 +190,14 @@ class HistoryScreen extends ConsumerWidget {
       followingSourceFiles: const [],
     );
 
-    if (context.mounted) {
-      context.push('/analysis', extra: result);
+    if (mounted) {
+      await context.push('/analysis', extra: result);
     }
+  }
+
+  bool _sameAccount(SocialAccount a, SocialAccount b) {
+    return a.platform == b.platform &&
+        a.username.trim().toLowerCase() == b.username.trim().toLowerCase();
   }
 }
 
@@ -90,15 +205,19 @@ class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
     required this.item,
     required this.onTap,
+    required this.selectionMode,
+    required this.selected,
   });
 
   final FollowSnapshotHistoryItem item;
   final VoidCallback onTap;
+  final bool selectionMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: selected ? AppColors.softPurple : Colors.white,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -107,7 +226,10 @@ class _HistoryCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+              width: selected ? 1.6 : 1,
+            ),
           ),
           child: Row(
             children: [
@@ -137,13 +259,49 @@ class _HistoryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.primary,
-              ),
+              if (selectionMode)
+                Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: selected ? AppColors.primary : AppColors.muted,
+                )
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.primary,
+                ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CompareInfo extends StatelessWidget {
+  const _CompareInfo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.softPurple,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.compare_arrows_rounded, color: AppColors.primary),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Aynı hesaba ait iki analiz seç. Uygulama eski ve yeni kaydı tarihe göre sıralayıp aradaki takip değişimlerini gösterecek.',
+              style: TextStyle(color: AppColors.primaryDark),
+            ),
+          ),
+        ],
       ),
     );
   }
