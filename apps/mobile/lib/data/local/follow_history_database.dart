@@ -266,6 +266,59 @@ class FollowHistoryDatabase extends _$FollowHistoryDatabase {
     return List.unmodifiable(result);
   }
 
+  Future<void> deleteSnapshot(int snapshotId) async {
+    await transaction(() async {
+      final snapshotQuery = select(storedSnapshots)
+        ..where((row) => row.id.equals(snapshotId))
+        ..limit(1);
+      final snapshot = await snapshotQuery.getSingleOrNull();
+      if (snapshot == null) return;
+
+      await (delete(storedSnapshotRelations)
+            ..where((row) => row.snapshotId.equals(snapshotId)))
+          .go();
+      await (delete(storedSnapshots)..where((row) => row.id.equals(snapshotId)))
+          .go();
+
+      final remainingQuery = select(storedSnapshots)
+        ..where((row) => row.accountId.equals(snapshot.accountId))
+        ..limit(1);
+      final hasRemaining = await remainingQuery.getSingleOrNull() != null;
+      if (!hasRemaining) {
+        await (delete(storedAccounts)
+              ..where((row) => row.id.equals(snapshot.accountId)))
+            .go();
+      }
+
+      await _deleteOrphanUsers();
+    });
+  }
+
+  Future<void> deleteAccountHistory(SocialAccount account) async {
+    final accountId = await _findAccountId(account);
+    if (accountId == null) return;
+
+    await transaction(() async {
+      final snapshotRows = await (select(storedSnapshots)
+            ..where((row) => row.accountId.equals(accountId)))
+          .get();
+      final snapshotIds = snapshotRows.map((row) => row.id).toList();
+
+      if (snapshotIds.isNotEmpty) {
+        await (delete(storedSnapshotRelations)
+              ..where((row) => row.snapshotId.isIn(snapshotIds)))
+            .go();
+        await (delete(storedSnapshots)
+              ..where((row) => row.id.isIn(snapshotIds)))
+            .go();
+      }
+
+      await (delete(storedAccounts)..where((row) => row.id.equals(accountId)))
+          .go();
+      await _deleteOrphanUsers();
+    });
+  }
+
   Future<void> pruneHistory(
     SocialAccount account, {
     required int keepLatest,
