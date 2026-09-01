@@ -21,7 +21,7 @@ Android öncelikli Flutter + Dart, local-first sosyal medya takip analizi uygula
 ### X / Twitter
 - İlk entegrasyon resmi X veri arşivi üzerinden local analizdir.
 - Canlı API/OAuth daha sonra maliyet ve politika uygunluğuna göre değerlendirilecek.
-- Küçük/orta X arşivi ZIP olarak; çok büyük arşivlerde yalnız `follower.js` + `following.js` dosyaları seçilerek analiz edilebilecek.
+- Küçük/orta X arşivi ZIP olarak; çok büyük arşivlerde yalnız `follower.js` + `following.js` dosyaları seçilerek analiz edilebilir.
 
 ### Ortak analiz
 - 5 ana kategori: Takip Etmeyenler, Karşılıklı, Seni Takip Edenler, Takibi Bırakanlar, Yeni Takipçiler.
@@ -89,18 +89,24 @@ Ana gerçek Meta export doğrulaması:
 - asset SHA-256 `7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0`
 - Manifest doğrudan `@drawable/takip_launcher_user` kullanıyor; eski vektör launcher çözümü final değildir.
 
+### v2-28 — X arşiv entegrasyon baseline
+- `test/device-apk` kaynak commit `adebabb4eecca456d4af1efd289ab7324825c66b`
+- workflow run `33516696991`
+- Analyze + tüm testler + APK build + imza + exact launcher doğrulaması tamamen success.
+- backup `backup/device-v2-28-x-archive-ci-working`
+- Bu baseline X arşiv desteğinin toplu CI doğrulanmış geri dönüş noktasıdır.
+- Kullanıcı kararı gereği bu özellik için küçük küçük fiziksel PASS turu yapılmadı.
+
 ## Manuel iki snapshot karşılaştırma
-- `test/device-apk` kaynak commit: `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
-- workflow run: `33513457232`
+- kaynak commit `24d920815c9d1425b9fc933b474cc0c10b8dc55f`
+- workflow run `33513457232`
 - CI tamamen success.
 - Analiz Geçmişi ekranında `Karşılaştır` modu eklendi.
 - Kullanıcı iki kayıt seçer; yalnız aynı platform + aynı hesap kabul edilir.
 - Kayıtlar tarihe göre eski/yeni sıralanır ve standart 5 sekmeli analiz ekranında farklar gösterilir.
 - Bu özellik için kullanıcıdan ayrı fiziksel PASS istenmeyecek; toplu sürüm içinde değerlendirilecek.
 
-## X arşiv geliştirme paketi — `dev/x-archive-import`
-Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
-
+## X arşiv desteği — CI doğrulanmış
 ### X parser/importer
 - `XRelationshipParser` eklendi.
 - `window.YTD.following.part0 = [...]` / `window.YTD.follower.part0 = [...]` JS assignment formatı okunur.
@@ -125,15 +131,21 @@ Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
 - Analiz ekranı platforma göre `Instagram Analizi` / `X Analizi` başlığı gösterir.
 - X kullanıcı satırı profil linkini X/Twitter’da açar.
 - Handle içermeyen arşiv satırlarında kullanıcıya hesap ID’si açıkça gösterilir; sahte `@id_...` etiketi gösterilmez.
-- Analiz Geçmişi artık Instagram + X snapshot’larını birlikte listeler ve platform etiketini gösterir.
+- Analiz Geçmişi Instagram + X snapshot’larını birlikte listeler ve platform etiketini gösterir.
 - Yok sayılan hesaplar `ignored_accounts.<platform>.<owner>` anahtarıyla platform bazında ayrıldı; mevcut Instagram anahtar biçimi geriye uyumludur.
 
-### X test kapsamı hazırlandı
-- parser: direct profil URL, intent user ID, explicit handle, stabil ID dedupe, malformed JS.
-- importer: ZIP, nested data folder, multipart, direct iki JS dosyası, eksik dosya, invalid ZIP, unsafe path.
-- use case: ZIP analiz, direct JS analiz, previous snapshot farkı, yanlış platform guard.
-- mobil: X ID-only kullanıcı gösterimi, platform-scoped ignored store, Instagram + X ana ekran smoke kapsamı.
-- Bu dev branch henüz Actions ile çalıştırılmadı; tüm paket hazırlandıktan sonra `test/device-apk` branch’ine tek seferde alınacak.
+## Ana ekran + geçmiş UX geliştirme paketi — `dev/recent-accounts-home`
+- X CI baseline’ı üzerinden açıldı; Actions tetiklemeden toplu hazırlanıyor.
+- `recentFollowAccountsProvider` cihaz geçmişinden platform+hesap bazında en son kayıtları çıkarır; en fazla 6 hesap gösterilir.
+- Ana ekrana `Son hesaplar` kartı eklendi.
+- Son hesap satırında platform, kullanıcı adı, takipçi/takip edilen sayısı ve son analiz tarihi gösterilir.
+- Satıra dokununca ilgili Instagram/X kullanıcı adı alanı otomatik doldurulur.
+- Yeni Instagram/X snapshot kaydı sonrası recent provider invalidate edilir; kart güncel kalır.
+- Analiz Geçmişi ekranına platform filtresi (`Tümü / Instagram / X`) eklendi.
+- Aynı ekranda kayıtlı hesaplara göre ikinci filtre eklendi.
+- Filtre değiştiğinde görünmeyen manuel karşılaştırma seçimleri temizlenir.
+- Filtre sonucu kayıt yoksa ayrı boş durum gösterilir.
+- Son kod commit: `c492f375f4c28f5276beccb01e4f075dcc4e3053` (özet commitinden önce).
 
 ## Test APK imza sistemi
 - paket `com.zmilastudio.takipanalizi.dev`
@@ -157,16 +169,25 @@ Bu branch Actions tetiklemeden toplu geliştirme için oluşturuldu.
 - [x] iki keyfi snapshot’ı manuel seçip karşılaştırma — kod + CI success
 
 ### X
-- [x] X ilişki JS parser — dev branch
-- [x] X ZIP importer — dev branch
-- [x] büyük arşiv için direct `follower.js` + `following.js` importer — dev branch
-- [x] X analiz use case — dev branch
-- [x] X snapshot/geçmiş entegrasyonu — dev branch
-- [x] X ana ekran/import akışı — dev branch
-- [x] X profil/ID-only davranışı — dev branch
-- [ ] X geliştirme paketinin tek Actions run ile entegrasyon doğrulaması
+- [x] X ilişki JS parser
+- [x] X ZIP importer
+- [x] büyük arşiv için direct `follower.js` + `following.js` importer
+- [x] X analiz use case
+- [x] X snapshot/geçmiş entegrasyonu
+- [x] X ana ekran/import akışı
+- [x] X profil/ID-only davranışı
+- [x] X geliştirme paketinin tek Actions run ile entegrasyon doğrulaması — run `33516696991` success
 - [ ] gerçek kullanıcı X arşiviyle ileride tek kritik fiziksel doğrulama
 - [ ] canlı API/OAuth maliyet/politika değerlendirmesi
 
+### UX / yönetim
+- [x] platformlar arası ortak geçmiş
+- [x] manuel snapshot karşılaştırma
+- [x] Son hesaplar hızlı kullanıcı adı doldurma — dev branch
+- [x] geçmişte platform filtresi — dev branch
+- [x] geçmişte hesap filtresi — dev branch
+- [ ] analiz geçmişinden kayıt silme / hesap geçmişini temizleme
+- [ ] uygulama içi veri yönetimi ve dışa aktarma seçenekleri
+
 ## Sıradaki iş
-`dev/x-archive-import` paketini tek seferde `test/device-apk` branch’ine fast-forward et, bir Actions run ile Analyze + tüm testler + APK build doğrulamasını al. CI geçerse X arşiv desteği test prerelease’e dahil edilmiş olacak. Kullanıcıdan küçük küçük PASS istenmeyecek; ardından doğrudan sonraki ürün geliştirmelerine devam edilecek.
+`dev/recent-accounts-home` paketini `test/device-apk` branch’ine tek seferde fast-forward et ve tek Actions run ile derleme doğrulamasını al. CI geçince bu UX paketi yeni test prerelease’e dahil edilmiş olacak. Ardından küçük PASS döngüsüne dönmeden veri yönetimi (snapshot silme / hesap geçmişini temizleme) geliştirmesine geç.
