@@ -23,6 +23,8 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   final List<int> _selectedIds = [];
   bool _compareMode = false;
+  SocialPlatform? _platformFilter;
+  String? _accountFilterKey;
 
   @override
   Widget build(BuildContext context) {
@@ -66,37 +68,109 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             return const _EmptyHistory();
           }
 
+          final filteredItems = _filterItems(items);
+          final accounts = _filterAccounts(items);
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(snapshotHistoryProvider);
               await ref.read(snapshotHistoryProvider.future);
             },
-            child: ListView.separated(
+            child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: items.length + 1,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _compareMode
-                      ? const _CompareInfo()
-                      : const _RetentionInfo();
-                }
-                final item = items[index - 1];
-                return _HistoryCard(
-                  item: item,
-                  selectionMode: _compareMode,
-                  selected: _selectedIds.contains(item.snapshotId),
-                  onTap: () => _compareMode
-                      ? _toggleSnapshotSelection(items, item)
-                      : _openSnapshot(item),
-                );
-              },
+              children: [
+                _HistoryFilters(
+                  platform: _platformFilter,
+                  accountKey: _accountFilterKey,
+                  accounts: accounts,
+                  visibleCount: filteredItems.length,
+                  totalCount: items.length,
+                  onPlatformChanged: (platform) =>
+                      _setPlatformFilter(items, platform),
+                  onAccountChanged: _setAccountFilter,
+                ),
+                const SizedBox(height: 10),
+                _compareMode ? const _CompareInfo() : const _RetentionInfo(),
+                const SizedBox(height: 10),
+                if (filteredItems.isEmpty)
+                  const _FilteredHistoryEmpty()
+                else
+                  for (var index = 0;
+                      index < filteredItems.length;
+                      index++) ...[
+                    _HistoryCard(
+                      item: filteredItems[index],
+                      selectionMode: _compareMode,
+                      selected:
+                          _selectedIds.contains(filteredItems[index].snapshotId),
+                      onTap: () => _compareMode
+                          ? _toggleSnapshotSelection(items, filteredItems[index])
+                          : _openSnapshot(filteredItems[index]),
+                    ),
+                    if (index != filteredItems.length - 1)
+                      const SizedBox(height: 10),
+                  ],
+              ],
             ),
           );
         },
       ),
     );
+  }
+
+  List<FollowSnapshotHistoryItem> _filterItems(
+    List<FollowSnapshotHistoryItem> items,
+  ) {
+    return items.where((item) {
+      if (_platformFilter != null &&
+          item.account.platform != _platformFilter) {
+        return false;
+      }
+      if (_accountFilterKey != null &&
+          _accountKey(item.account) != _accountFilterKey) {
+        return false;
+      }
+      return true;
+    }).toList(growable: false);
+  }
+
+  List<SocialAccount> _filterAccounts(
+    List<FollowSnapshotHistoryItem> items,
+  ) {
+    final accounts = <String, SocialAccount>{};
+    for (final item in items) {
+      if (_platformFilter != null &&
+          item.account.platform != _platformFilter) {
+        continue;
+      }
+      accounts.putIfAbsent(_accountKey(item.account), () => item.account);
+    }
+    return List.unmodifiable(accounts.values);
+  }
+
+  void _setPlatformFilter(
+    List<FollowSnapshotHistoryItem> items,
+    SocialPlatform? platform,
+  ) {
+    setState(() {
+      _platformFilter = platform;
+      _selectedIds.clear();
+      if (_accountFilterKey == null) return;
+
+      final stillVisible = items.any(
+        (item) =>
+            _accountKey(item.account) == _accountFilterKey &&
+            (platform == null || item.account.platform == platform),
+      );
+      if (!stillVisible) _accountFilterKey = null;
+    });
+  }
+
+  void _setAccountFilter(String? key) {
+    setState(() {
+      _accountFilterKey = key;
+      _selectedIds.clear();
+    });
   }
 
   void _toggleCompareMode() {
@@ -206,8 +280,113 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   bool _sameAccount(SocialAccount a, SocialAccount b) {
-    return a.platform == b.platform &&
-        a.username.trim().toLowerCase() == b.username.trim().toLowerCase();
+    return _accountKey(a) == _accountKey(b);
+  }
+}
+
+class _HistoryFilters extends StatelessWidget {
+  const _HistoryFilters({
+    required this.platform,
+    required this.accountKey,
+    required this.accounts,
+    required this.visibleCount,
+    required this.totalCount,
+    required this.onPlatformChanged,
+    required this.onAccountChanged,
+  });
+
+  final SocialPlatform? platform;
+  final String? accountKey;
+  final List<SocialAccount> accounts;
+  final int visibleCount;
+  final int totalCount;
+  final ValueChanged<SocialPlatform?> onPlatformChanged;
+  final ValueChanged<String?> onAccountChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.filter_alt_outlined, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Geçmişi filtrele',
+                  style: TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                visibleCount == totalCount
+                    ? '$totalCount kayıt'
+                    : '$visibleCount / $totalCount',
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Tümü'),
+                selected: platform == null,
+                onSelected: (_) => onPlatformChanged(null),
+              ),
+              ChoiceChip(
+                label: const Text('Instagram'),
+                selected: platform == SocialPlatform.instagram,
+                onSelected: (_) => onPlatformChanged(SocialPlatform.instagram),
+              ),
+              ChoiceChip(
+                label: const Text('X'),
+                selected: platform == SocialPlatform.x,
+                onSelected: (_) => onPlatformChanged(SocialPlatform.x),
+              ),
+            ],
+          ),
+          if (accounts.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('Tüm hesaplar'),
+                    selected: accountKey == null,
+                    onSelected: (_) => onAccountChanged(null),
+                  ),
+                  for (final account in accounts) ...[
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text('@${account.username}'),
+                      selected: accountKey == _accountKey(account),
+                      onSelected: (_) => onAccountChanged(_accountKey(account)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
@@ -347,6 +526,35 @@ class _RetentionInfo extends StatelessWidget {
   }
 }
 
+class _FilteredHistoryEmpty extends StatelessWidget {
+  const _FilteredHistoryEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.filter_alt_off_outlined, color: AppColors.muted, size: 32),
+          SizedBox(height: 10),
+          Text(
+            'Bu filtrede kayıt yok.',
+            style: TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyHistory extends StatelessWidget {
   const _EmptyHistory();
 
@@ -418,6 +626,9 @@ class _HistoryError extends StatelessWidget {
     );
   }
 }
+
+String _accountKey(SocialAccount account) =>
+    '${account.platform.name}:${account.username.trim().toLowerCase()}';
 
 String _platformLabel(SocialPlatform platform) => switch (platform) {
       SocialPlatform.instagram => 'Instagram',
