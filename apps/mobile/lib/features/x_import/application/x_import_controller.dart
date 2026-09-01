@@ -110,6 +110,7 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
     final previous = await database.latestSnapshot(account);
     final result = analyze(previous);
     await database.saveSnapshot(result.snapshot);
+    ref.invalidate(recentFollowAccountsProvider);
     return result;
   }
 
