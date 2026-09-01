@@ -23,16 +23,50 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   final List<int> _selectedIds = [];
   bool _compareMode = false;
+  _HistoryPlatformFilter _platformFilter = _HistoryPlatformFilter.all;
 
   @override
   Widget build(BuildContext context) {
     final history = ref.watch(snapshotHistoryProvider);
+    final visibleHistory = history.valueOrNull
+            ?.where(_matchesPlatformFilter)
+            .toList(growable: false) ??
+        const <FollowSnapshotHistoryItem>[];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_compareMode ? 'İki Analizi Seç' : 'Analiz Geçmişi'),
         actions: [
-          if (history.hasValue && (history.value?.length ?? 0) >= 2)
+          if (!_compareMode)
+            PopupMenuButton<_HistoryPlatformFilter>(
+              tooltip: 'Platform filtresi',
+              initialValue: _platformFilter,
+              icon: Badge(
+                isLabelVisible: _platformFilter != _HistoryPlatformFilter.all,
+                child: const Icon(Icons.filter_list_rounded),
+              ),
+              onSelected: (value) {
+                setState(() {
+                  _platformFilter = value;
+                  _selectedIds.clear();
+                });
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _HistoryPlatformFilter.all,
+                  child: Text('Tüm platformlar'),
+                ),
+                PopupMenuItem(
+                  value: _HistoryPlatformFilter.instagram,
+                  child: Text('Instagram'),
+                ),
+                PopupMenuItem(
+                  value: _HistoryPlatformFilter.x,
+                  child: Text('X / Twitter'),
+                ),
+              ],
+            ),
+          if (visibleHistory.length >= 2)
             TextButton(
               onPressed: _toggleCompareMode,
               child: Text(_compareMode ? 'Vazgeç' : 'Karşılaştır'),
@@ -45,7 +79,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: FilledButton.icon(
                 onPressed: _selectedIds.length == 2
-                    ? () => _compareSelected(history.value ?? const [])
+                    ? () => _compareSelected(visibleHistory)
                     : null,
                 icon: const Icon(Icons.compare_arrows_rounded),
                 label: Text(
@@ -66,6 +100,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             return const _EmptyHistory();
           }
 
+          final visibleItems =
+              items.where(_matchesPlatformFilter).toList(growable: false);
+          if (visibleItems.isEmpty) {
+            return _FilteredEmptyHistory(filter: _platformFilter);
+          }
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(snapshotHistoryProvider);
@@ -73,22 +113,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             },
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: items.length + 1,
+              itemCount: visibleItems.length + 1,
               separatorBuilder: (context, index) =>
                   const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _compareMode
                       ? const _CompareInfo()
-                      : const _RetentionInfo();
+                      : _RetentionInfo(filter: _platformFilter);
                 }
-                final item = items[index - 1];
+                final item = visibleItems[index - 1];
                 return _HistoryCard(
                   item: item,
                   selectionMode: _compareMode,
                   selected: _selectedIds.contains(item.snapshotId),
                   onTap: () => _compareMode
-                      ? _toggleSnapshotSelection(items, item)
+                      ? _toggleSnapshotSelection(visibleItems, item)
                       : _openSnapshot(item),
                 );
               },
@@ -97,6 +137,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         },
       ),
     );
+  }
+
+  bool _matchesPlatformFilter(FollowSnapshotHistoryItem item) {
+    return switch (_platformFilter) {
+      _HistoryPlatformFilter.all => true,
+      _HistoryPlatformFilter.instagram =>
+        item.account.platform == SocialPlatform.instagram,
+      _HistoryPlatformFilter.x => item.account.platform == SocialPlatform.x,
+    };
   }
 
   void _toggleCompareMode() {
@@ -318,10 +367,17 @@ class _CompareInfo extends StatelessWidget {
 }
 
 class _RetentionInfo extends StatelessWidget {
-  const _RetentionInfo();
+  const _RetentionInfo({required this.filter});
+
+  final _HistoryPlatformFilter filter;
 
   @override
   Widget build(BuildContext context) {
+    final filterLabel = switch (filter) {
+      _HistoryPlatformFilter.all => 'Tüm platformlar',
+      _HistoryPlatformFilter.instagram => 'Instagram',
+      _HistoryPlatformFilter.x => 'X / Twitter',
+    };
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -335,13 +391,53 @@ class _RetentionInfo extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Cihazda her hesap için son '
+              '$filterLabel gösteriliyor. Cihazda her hesap için son '
               '${FollowHistoryDatabase.defaultSnapshotRetention} analiz saklanır. '
               'En eski kayıtlar otomatik temizlenir.',
               style: const TextStyle(color: AppColors.primaryDark),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilteredEmptyHistory extends StatelessWidget {
+  const _FilteredEmptyHistory({required this.filter});
+
+  final _HistoryPlatformFilter filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (filter) {
+      _HistoryPlatformFilter.all => 'bu filtrede',
+      _HistoryPlatformFilter.instagram => 'Instagram için',
+      _HistoryPlatformFilter.x => 'X için',
+    };
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.filter_alt_off_outlined, size: 44),
+            const SizedBox(height: 12),
+            Text(
+              '$label kayıtlı analiz yok.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Sağ üstteki filtre düğmesinden başka bir platform seçebilirsin.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -418,6 +514,8 @@ class _HistoryError extends StatelessWidget {
     );
   }
 }
+
+enum _HistoryPlatformFilter { all, instagram, x }
 
 String _platformLabel(SocialPlatform platform) => switch (platform) {
       SocialPlatform.instagram => 'Instagram',
