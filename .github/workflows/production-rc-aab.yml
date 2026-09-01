@@ -115,6 +115,20 @@ jobs:
             --build-name="${{ inputs.version_name }}" \
             --build-number="${{ inputs.version_code }}"
 
+      - name: Verify merged release manifest
+        run: |
+          RELEASE_MANIFEST="$(find build/app/intermediates \
+            -type f \
+            -name AndroidManifest.xml \
+            -path '*release*' \
+            | grep -E '/merged_manifest(s)?/' \
+            | head -1)"
+
+          test -n "$RELEASE_MANIFEST"
+          echo "Merged release manifest: $RELEASE_MANIFEST"
+          grep -F '<manifest' "$RELEASE_MANIFEST"
+          ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
+
       - name: Verify signed AAB
         run: |
           AAB="build/app/outputs/bundle/release/app-release.aab"
