@@ -1,6 +1,6 @@
 # Takip Analizi — Production Release Checklist
 
-Son güncelleme: 1 Eylül 2026
+Son güncelleme: 2 Eylül 2026
 
 Bu checklist, **v2-39 release-hardening CI baseline** üzerinden Google Play production yayınına geçiş kapılarını izler.
 
@@ -61,8 +61,13 @@ Merged release sözleşmesi:
 - [x] Release signing yalnız `PLAY_UPLOAD_*` secure environment değerleriyle bağlanıyor; test key fallback yok.
 - [x] `SIGNING_SETUP.md` güncel Play App Signing / upload key modeline göre hazır.
 - [x] Manuel `production-rc-aab.yml` signing secret + fingerprint kontrolleriyle hazır.
+- [x] **Yeni private production upload key oluşturuldu — 2 Eylül 2026.**
+- [x] Keystore: JKS; alias `takip-upload`; RSA 3072; `SHA256withRSA`; validity 10000 gün.
+- [x] Upload certificate SHA-256: `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
+- [x] Keystore fingerprint ile export edilen PEM fingerprint’i bağımsız olarak eşleşti.
+- [x] Private key gerçek JAR imzalama self-testini geçti.
+- [x] Private keystore/parolalar repoya commit edilmedi; yalnız güvenli yerel signing paketi oluşturuldu.
 - [ ] Google Play App Signing durumu Console’da doğrulanacak.
-- [ ] Ayrı private upload key oluşturulacak veya doğru mevcut key kullanılacak.
 - [ ] `PLAY_UPLOAD_*` GitHub Secrets gerçek değerlerle tanımlanacak.
 - [ ] İlk signed production RC AAB workflow’u çalıştırılacak.
 
@@ -126,10 +131,11 @@ Not: v2-39 debug APK’da `INTERNET` Flutter debug tooling nedeniyle ve `${appli
 - [x] Exact launcher source guard var.
 - [x] Merged release manifest targetSdk / izin / backup / cleartext / debuggable/testOnly guard’ları var.
 - [x] AAB artifact retention 1 gün.
-- [ ] Gerçek private secrets sonrası signed production AAB üretilecek.
+- [x] Private upload key hazır ve locally self-tested.
+- [ ] GitHub repository secrets tanımlandıktan sonra signed production AAB üretilecek.
 - [ ] AAB package id = `com.zmilastudio.takipanalizi` doğrulanacak.
 - [ ] versionName/versionCode gerçek AAB üzerinde doğrulanacak.
-- [ ] Upload signer fingerprint PASS olacak.
+- [ ] Upload signer fingerprint `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65` olarak PASS olacak.
 - [ ] AAB boyutu ve native kütüphaneler kontrol edilecek.
 
 ## I. Son cihaz testi — ilk production 1.0.0
