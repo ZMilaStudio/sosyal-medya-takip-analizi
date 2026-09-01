@@ -152,6 +152,35 @@ void main() {
     expect(analysis.unfollowers.map((u) => u.username).toSet(), {'B'});
   });
 
+  test('deletes one snapshot and removes users no longer referenced', () async {
+    await database.saveSnapshot(
+      snapshot(
+        capturedAt: DateTime.utc(2026, 8, 1),
+        followers: [user('onlyOld'), user('shared')],
+        following: [user('shared')],
+      ),
+    );
+    await database.saveSnapshot(
+      snapshot(
+        capturedAt: DateTime.utc(2026, 8, 31),
+        followers: [user('shared'), user('current')],
+        following: [user('shared')],
+      ),
+    );
+
+    final history = await database.listHistory();
+    final oldItem = history.last;
+    await database.deleteSnapshot(oldItem.snapshotId);
+
+    final remaining = await database.listHistory();
+    expect(remaining, hasLength(1));
+    expect(remaining.single.capturedAt, DateTime.utc(2026, 8, 31));
+    expect(await database.snapshotById(oldItem.snapshotId), isNull);
+
+    final storedUsers = await database.select(database.storedSocialUsers).get();
+    expect(storedUsers.map((row) => row.username).toSet(), {'shared', 'current'});
+  });
+
   test('keeps only the configured number of newest snapshots', () async {
     for (var day = 1; day <= 4; day++) {
       await database.saveSnapshot(
