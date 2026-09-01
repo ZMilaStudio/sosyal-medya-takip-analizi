@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:archive/archive.dart';
 import 'package:follow_core/follow_core.dart';
 import 'package:test/test.dart';
@@ -24,16 +26,18 @@ ${users.map((user) => '  {"following":{"accountId":"${user.$2}","userLink":"http
 ]
 ''';
 
-  test('builds X snapshot and standard follow analysis', () {
+  const account = SocialAccount(
+    platform: SocialPlatform.x,
+    username: 'owner',
+  );
+
+  test('builds X snapshot and standard follow analysis from ZIP', () {
     final result = useCase.execute(
       zipBytes: zip(
         followerJs: follower([('alice', '1'), ('bob', '2')]),
         followingJs: following([('bob', '2'), ('carol', '3')]),
       ),
-      account: const SocialAccount(
-        platform: SocialPlatform.x,
-        username: 'owner',
-      ),
+      account: account,
       capturedAt: DateTime.utc(2026, 9, 1, 12),
     );
 
@@ -45,11 +49,22 @@ ${users.map((user) => '  {"following":{"accountId":"${user.$2}","userLink":"http
     expect(result.snapshot.sourceFormat, 'x-archive-js');
   });
 
-  test('compares X archive against previous snapshot', () {
-    final account = const SocialAccount(
-      platform: SocialPlatform.x,
-      username: 'owner',
+  test('builds the same analysis from extracted relationship files', () {
+    final result = useCase.executeRelationshipFiles(
+      files: {
+        'follower.js': utf8.encode(follower([('alice', '1'), ('bob', '2')])),
+        'following.js': utf8.encode(following([('bob', '2'), ('carol', '3')])),
+      },
+      account: account,
+      capturedAt: DateTime.utc(2026, 9, 1, 12),
     );
+
+    expect(result.analysis.mutual.map((user) => user.username).toSet(), {'bob'});
+    expect(result.analysis.nonFollowers.map((user) => user.username).toSet(), {'carol'});
+    expect(result.analysis.fans.map((user) => user.username).toSet(), {'alice'});
+  });
+
+  test('compares X archive against previous snapshot', () {
     final previous = FollowSnapshot(
       account: account,
       capturedAt: DateTime.utc(2026, 8, 1),
