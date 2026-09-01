@@ -7,3 +7,21 @@ final followHistoryDatabaseProvider = Provider<FollowHistoryDatabase>((ref) {
   ref.onDispose(database.close);
   return database;
 });
+
+final recentFollowAccountsProvider =
+    FutureProvider<List<FollowSnapshotHistoryItem>>((ref) async {
+  final database = ref.watch(followHistoryDatabaseProvider);
+  final history = await database.listHistory();
+  final seen = <String>{};
+  final recent = <FollowSnapshotHistoryItem>[];
+
+  for (final item in history) {
+    final key = '${item.account.platform.name}:'
+        '${item.account.username.trim().toLowerCase()}';
+    if (!seen.add(key)) continue;
+    recent.add(item);
+    if (recent.length == 6) break;
+  }
+
+  return List.unmodifiable(recent);
+});
