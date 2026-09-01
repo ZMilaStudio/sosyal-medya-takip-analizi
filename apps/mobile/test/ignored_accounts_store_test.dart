@@ -5,23 +5,33 @@ import 'package:sosyal_medya_takip_analizi/data/local/ignored_accounts_store.dar
 
 void main() {
   final store = IgnoredAccountsStore();
-  const account = SocialAccount(
+  const instagramAccount = SocialAccount(
     platform: SocialPlatform.instagram,
     username: 'Owner.Account',
   );
-  const user = SocialUser(
+  const instagramUser = SocialUser(
     platform: SocialPlatform.instagram,
     username: 'Ignored.User',
+  );
+  const xAccount = SocialAccount(
+    platform: SocialPlatform.x,
+    username: 'Owner_Account',
+  );
+  const xUser = SocialUser(
+    platform: SocialPlatform.x,
+    username: 'Ignored_User',
   );
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('stores ignored users per Instagram owner account', () async {
-    await store.ignore(account, user);
+  test('stores ignored users per owner and social platform', () async {
+    await store.ignore(instagramAccount, instagramUser);
+    await store.ignore(xAccount, xUser);
 
-    expect(await store.loadFor(account), {'ignored.user'});
+    expect(await store.loadFor(instagramAccount), {'ignored.user'});
+    expect(await store.loadFor(xAccount), {'ignored_user'});
     expect(
       await store.loadFor(
         const SocialAccount(
@@ -33,17 +43,38 @@ void main() {
     );
 
     final all = await store.loadAll();
-    expect(all.single.ownerUsername, 'owner.account');
-    expect(all.single.ignoredUsername, 'ignored.user');
+    expect(all, hasLength(2));
+    expect(
+      all.any(
+        (record) =>
+            record.platform == SocialPlatform.instagram &&
+            record.ownerUsername == 'owner.account' &&
+            record.ignoredUsername == 'ignored.user',
+      ),
+      isTrue,
+    );
+    expect(
+      all.any(
+        (record) =>
+            record.platform == SocialPlatform.x &&
+            record.ownerUsername == 'owner_account' &&
+            record.ignoredUsername == 'ignored_user',
+      ),
+      isTrue,
+    );
   });
 
-  test('restores an ignored user without touching other accounts', () async {
-    await store.ignore(account, user);
+  test('restores an ignored user without touching another platform', () async {
+    await store.ignore(instagramAccount, instagramUser);
+    await store.ignore(xAccount, xUser);
+
     await store.restore(
-      ownerUsername: account.username,
-      ignoredUsername: user.username,
+      platform: instagramAccount.platform,
+      ownerUsername: instagramAccount.username,
+      ignoredUsername: instagramUser.username,
     );
 
-    expect(await store.loadFor(account), isEmpty);
+    expect(await store.loadFor(instagramAccount), isEmpty);
+    expect(await store.loadFor(xAccount), {'ignored_user'});
   });
 }
