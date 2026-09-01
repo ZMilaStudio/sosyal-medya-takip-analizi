@@ -48,10 +48,31 @@ jobs:
 
       - name: Verify physical-device compatibility wiring
         run: |
-          grep -F 'android:icon="@drawable/takip_launcher_user"' android/app/src/main/AndroidManifest.xml
-          grep -F 'android:roundIcon="@drawable/takip_launcher_user"' android/app/src/main/AndroidManifest.xml
-          grep -F 'io.flutter.embedding.android.EnableImpeller' android/app/src/main/AndroidManifest.xml
-          grep -F 'android:value="false"' android/app/src/main/AndroidManifest.xml
+          MAIN_MANIFEST="android/app/src/main/AndroidManifest.xml"
+          grep -F 'android:icon="@drawable/takip_launcher_user"' "$MAIN_MANIFEST"
+          grep -F 'android:roundIcon="@drawable/takip_launcher_user"' "$MAIN_MANIFEST"
+          grep -F 'io.flutter.embedding.android.EnableImpeller' "$MAIN_MANIFEST"
+          grep -F 'android:value="false"' "$MAIN_MANIFEST"
+
+          # Local-first production source guards. Debug/profile manifests may add
+          # INTERNET only for Flutter development tooling.
+          ! grep -F '<uses-permission' "$MAIN_MANIFEST"
+          grep -F 'android:allowBackup="false"' "$MAIN_MANIFEST"
+          grep -F 'android:fullBackupContent="@xml/backup_rules"' "$MAIN_MANIFEST"
+          grep -F 'android:dataExtractionRules="@xml/data_extraction_rules"' "$MAIN_MANIFEST"
+          grep -F 'android:usesCleartextTraffic="false"' "$MAIN_MANIFEST"
+
+          LEGACY_BACKUP_RULES="android/app/src/main/res/xml/backup_rules.xml"
+          EXTRACTION_RULES="android/app/src/main/res/xml/data_extraction_rules.xml"
+          test -f "$LEGACY_BACKUP_RULES"
+          test -f "$EXTRACTION_RULES"
+          grep -F '<full-backup-content>' "$LEGACY_BACKUP_RULES"
+          grep -F '<cloud-backup>' "$EXTRACTION_RULES"
+          grep -F '<device-transfer>' "$EXTRACTION_RULES"
+          for domain in root file database sharedpref external; do
+            grep -F "<exclude domain=\"$domain\" path=\".\" />" "$LEGACY_BACKUP_RULES"
+            test "$(grep -F -c "<exclude domain=\"$domain\" path=\".\" />" "$EXTRACTION_RULES")" -eq 2
+          done
 
           USER_ICON="android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp"
           test -f "$USER_ICON"
