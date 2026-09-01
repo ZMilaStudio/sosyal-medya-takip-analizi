@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:archive/archive.dart';
 import 'package:follow_core/follow_core.dart';
 import 'package:test/test.dart';
@@ -41,6 +43,18 @@ window.YTD.follower.part0 = [
     expect(result.followingFiles, ['your-x-archive/data/following.js']);
   });
 
+  test('imports extracted follower.js and following.js without ZIP', () {
+    final result = importer.importRelationshipFiles({
+      'follower.js': utf8.encode(follower('alice', '1')),
+      'following.js': utf8.encode(following('bob', '2')),
+    });
+
+    expect(result.followers.map((user) => user.username), ['alice']);
+    expect(result.following.map((user) => user.username), ['bob']);
+    expect(result.followerFiles, ['follower.js']);
+    expect(result.followingFiles, ['following.js']);
+  });
+
   test('merges supported multipart relationship filenames', () {
     final bytes = zip({
       'data/follower-part0.js': follower('alice', '1'),
@@ -63,6 +77,21 @@ window.YTD.follower.part0 = [
           (error) => error.code,
           'code',
           XArchiveImportError.followingFileMissing,
+        ),
+      ),
+    );
+  });
+
+  test('direct import reports missing follower file', () {
+    expect(
+      () => importer.importRelationshipFiles({
+        'following.js': utf8.encode(following('bob', '2')),
+      }),
+      throwsA(
+        isA<XArchiveImportException>().having(
+          (error) => error.code,
+          'code',
+          XArchiveImportError.followersFileMissing,
         ),
       ),
     );
