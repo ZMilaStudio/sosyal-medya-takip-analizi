@@ -178,6 +178,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         icon: const Icon(Icons.storage_outlined),
                         label: const Text('Yerel Veri Yönetimi'),
                       ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: isBusy
+                            ? null
+                            : () => context.push('/about-privacy'),
+                        icon: const Icon(Icons.info_outline_rounded),
+                        label: const Text('Gizlilik ve Hakkında'),
+                      ),
                     ],
                   ),
                 ),
