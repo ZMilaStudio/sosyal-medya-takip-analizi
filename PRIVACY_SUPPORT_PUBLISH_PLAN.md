@@ -1,136 +1,120 @@
-# Takip Analizi — Privacy & Support Yayın Planı
+# Takip Analizi — Privacy & Support Yayın Durumu
 
 Son güncelleme: 1 Eylül 2026
 
-Amaç: Google Play production yayını öncesi kalıcı, herkese açık gizlilik politikası ve destek kanallarını güvenli biçimde tamamlamak.
+Amaç: Google Play production yayını için kalıcı, herkese açık gizlilik politikası ve destek kanallarını doğrulanabilir biçimde tutmak.
 
-## Production blocker’lar
+## Durum: TAMAMLANDI
 
-Şu üç alan kesinleşmeden production mağaza girişi tamamlanmış sayılmayacak:
+Play Store iletişim/gizlilik alanları için kullanılacak gerçek bilgiler:
 
-1. Kalıcı gizlilik politikası URL’si.
-2. Resmi destek e-postası.
-3. Tercihen resmi destek web sayfası / iletişim sayfası.
+- Gizlilik politikası: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
+- Destek sayfası: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
+- Destek / gizlilik e-postası: `zmilastudio@gmail.com`
 
-Google Play mağaza iletişim bilgilerinde e-posta zorunludur; website güçlü biçimde önerilir.
+Privacy ve support sayfaları public GitHub reposunun `main` branch’inde yayınlanmıştır. Uygulama hesabı veya özel erişim gerektirmez.
 
-## 1. Gizlilik politikası sayfası
+## 1. Gizlilik politikası
 
-Kaynak metin: `PRIVACY_POLICY.md`.
+`PRIVACY_POLICY.md` Türkçe ve İngilizce olarak şunları açıklar:
 
-Yayın hedefi:
-
-- HTTPS üzerinden herkese açık olmalı.
-- Giriş yapmadan erişilebilmeli.
-- Mobil tarayıcıda rahat okunmalı.
-- Kalıcı ve tahmin edilebilir bir URL kullanılmalı.
-- URL uygulama sürümleri arasında gereksiz yere değiştirilmemeli.
-
-Önerilen URL yolu örneği:
-
-`https://<resmi-zmila-studio-domaini>/privacy/takip-analizi`
-
-Bu yalnız yol önerisidir; gerçek domain production öncesi resmi web mülkü üzerinden teyit edilecektir.
-
-Sayfada bulunması gerekenler:
-
-- uygulama adı: Takip Analizi,
+- uygulama: Takip Analizi,
 - geliştirici: ZMila Studio,
-- hangi verilerin cihaz üzerinde işlendiği,
+- resmi destek/gizlilik iletişimi,
+- cihaz üzerinde işlenen takip verileri,
 - sosyal medya şifrelerinin alınmadığı,
-- mevcut mimaride analiz arşivlerinin geliştirici sunucusuna yüklenmediği,
-- yerel veri silme mekanizması,
-- dış profil bağlantılarının üçüncü taraf uygulamalara devredildiği,
-- politika güncelleme tarihi,
-- resmi destek iletişim kanalı.
+- analiz verilerinin mevcut mimaride geliştirici sunucusuna gönderilmediği,
+- Android sistem file picker üzerinden kullanıcı-seçimli dosya erişimi,
+- yerel snapshot ve Yok say verisinin saklanması,
+- uygulama içi yerel veri silme mekanizması,
+- kullanıcı tarafından başlatılan harici Instagram/X profil bağlantıları,
+- debug/profile ile production ağ izni ayrımı,
+- veri işleme davranışı değişirse politikanın güncelleneceği.
+
+Public policy PDF değildir ve normal HTTPS web sayfası olarak açılır.
 
 ## 2. Destek e-postası
 
-Google Play listing için zorunlu alan.
+Resmi adres:
 
-Kurallar:
+`zmilastudio@gmail.com`
 
-- ZMila Studio tarafından kontrol edilen kalıcı bir adres olmalı.
-- Kişisel/geçici test adresi kullanılmamalı.
-- Şifre, ZIP arşivi veya hassas sosyal medya verisi e-postayla istenmemeli.
-- Kullanıcıya hata raporunda yalnız gerekli teknik bilgileri paylaşması söylenmeli.
-- Production öncesi gönderme/alma testi yapılmalı.
+Destek yaklaşımı:
 
-Repo içine gerçek destek adresi ancak resmi olarak seçildikten sonra yazılacaktır.
-
-Durum: **BEKLİYOR**.
+- kullanıcıdan sosyal medya şifresi istenmez,
+- kişisel Instagram/X arşivinin e-postayla gönderilmesi istenmez,
+- hata bildirimi için yalnız gerekli teknik bilgiler talep edilir,
+- uygulanabilirliği doğrulanmamış bir yanıt süresi/SLA vaat edilmez.
 
 ## 3. Destek web sayfası
 
-Önerilen URL yolu örneği:
+Public sayfa:
 
-`https://<resmi-zmila-studio-domaini>/support/takip-analizi`
+`https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
 
-Önerilen içerik:
+Sayfa:
 
-### Hızlı yardım
+- ZMila Studio ve Takip Analizi kimliğini,
+- destek e-postasını,
+- arşiv/şifre göndermeme uyarısını,
+- gizlilik politikası bağlantısını,
+- Yerel Veri Yönetimi ile silme bilgisini
 
-- Instagram arşivi nasıl alınır?
-- X arşivi nasıl alınır?
-- ZIP neden okunmuyor?
-- Takipçi sayısı neden Instagram/X uygulamasındaki canlı sayıdan farklı olabilir?
-- Takibi Bırakanlar / Yeni Takipçiler nasıl hesaplanır?
-- Verilerimi nasıl silebilirim?
+içerir.
 
-### Gizlilik
+Özel bir ZMila Studio domaini kesinleşmediği için domain uydurulmamıştır. İleride doğrulanmış resmi domain hazır olursa privacy/support URL’leri kontrollü biçimde taşınabilir; Play Console ve policy dosyaları birlikte güncellenmelidir.
 
-- Uygulama şifre istemez.
-- Arşiv dosyalarını destek ekibine göndermeyin.
-- Yerel veriler uygulama içinden silinebilir.
+## 4. Uygulama içi gizlilik erişimi
 
-### İletişim
+v2-38’de `Gizlilik ve Hakkında` ekranı local-first yaklaşımı, şifre istememe, kullanıcı-seçimli dosya erişimi, yerel geçmiş ve dış bağlantıları uygulama içinde açıklar.
 
-- Resmi destek e-postası.
-- Beklenen yanıt süresi ancak gerçekten uygulanabilir bir destek süreci belirlendikten sonra yazılmalı; sahte SLA verilmemeli.
+Mevcut ürün kararı:
 
-## 4. Uygulama içi bağlantı
+- uygulama içi privacy özeti offline kalır,
+- public policy URL Play Store listing’de sunulur,
+- sırf privacy sayfasını açmak için uygulamanın production analiz akışına `INTERNET` izni eklenmez.
 
-Mevcut v2-38’de `Gizlilik ve Hakkında` ekranı kullanıcıya local-first yaklaşımı açıklar fakat henüz internet bağlantısı gerektirmeyen uygulama mimarisi nedeniyle public privacy URL’sine doğrudan ağ bağlantısı eklenmedi.
+Flutter debug/profile build’leri geliştirme araçları için kendi manifestlerinden `INTERNET` ekleyebilir. Production RC workflow’u merged release manifestte `android.permission.INTERNET` bulunursa build’i fail edecek şekilde hazırlanmıştır.
 
-Production öncesi iki güvenli seçenek var:
+## 5. Play Console’a girilecek değerler
 
-### Seçenek A — mevcut offline ekranı koru
+Store contact email:
 
-- Uygulama içi privacy özeti cihazda kalır.
-- Play Store listing’de public privacy URL bulunur.
-- Uygulamaya INTERNET izni eklenmez.
+`zmilastudio@gmail.com`
 
-### Seçenek B — public policy bağlantısını uygulamaya ekle
+Website / support:
 
-- Kullanıcı butona basınca sistem tarayıcısı açılır.
-- Bunun için Android manifest/network davranışı tekrar gözden geçirilir.
-- Veri Güvenliği ve `INTERNET` izni beyanı yeniden doğrulanır.
+`https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
 
-**Mevcut local-first ürün yaklaşımı için Seçenek A tercih edilir.** Public policy URL Play Store’da bulunur; uygulamanın analiz akışı internetsiz kalır.
+Privacy policy:
 
-## 5. Yayına alma kontrolü
+`https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
 
-Gizlilik/support sayfaları yayına alındıktan sonra:
+Bu değerler `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_CONSOLE_FORM_ANSWERS.md` ve `RELEASE_CHECKLIST.md` ile eşleştirilmiştir.
 
-- [ ] URL’leri anonim/incognito tarayıcıdan aç.
-- [ ] HTTPS sertifikasını kontrol et.
-- [ ] Mobil görünümü kontrol et.
-- [ ] Sayfada uygulama adı ve ZMila Studio doğru mu kontrol et.
-- [ ] Destek e-postasına test mesajı gönder ve alındığını doğrula.
-- [ ] Play Console Store settings → contact email alanına resmi destek adresini gir.
-- [ ] Main store listing → privacy policy alanına kalıcı URL’yi gir.
-- [ ] `PRIVACY_POLICY.md`, `PLAY_STORE_LISTING_TR.md`, `RELEASE_CHECKLIST.md` içindeki `BEKLİYOR` alanlarını gerçek bilgilerle güncelle.
-- [ ] Production RC öncesi Play Data safety ile policy metnini son kez karşılaştır.
+## 6. Production öncesi son operasyon kontrolleri
 
-## 6. Değişiklik yönetimi
+Privacy/support bilgi üretimi tamamlandı. Production gönderiminden hemen önce yalnız şu operasyon kontrolleri yapılacak:
 
-İleride aşağıdakilerden biri eklenirse privacy/support içeriği production yayını öncesi tekrar gözden geçirilecek:
+- [ ] Privacy URL’yi anonim/incognito tarayıcıdan aç.
+- [ ] Support URL’yi anonim/incognito tarayıcıdan aç.
+- [ ] Mobil görünümün okunabilir olduğunu kontrol et.
+- [ ] `zmilastudio@gmail.com` adresine test mesajı gönderip alındığını doğrula.
+- [ ] Play Console Store settings alanlarına yukarıdaki değerleri gir.
+- [ ] Production AAB sonrası Data Safety ile privacy policy metnini son kez karşılaştır.
 
-- reklam,
+Bunlar yeni içerik üretme blocker’ı değildir; final release operasyon kontrolüdür.
+
+## 7. Yeniden değerlendirme tetikleyicileri
+
+Aşağıdakilerden biri eklenirse privacy/support içeriği ve Play Data Safety production yayını öncesi yeniden gözden geçirilecek:
+
+- reklam / AdMob,
 - analytics veya crash reporting,
 - canlı Instagram/X API veya OAuth,
 - bulut senkronizasyonu,
 - kullanıcı hesabı,
 - push notification,
 - ödeme/abonelik,
-- geliştirici sunucusuna veri aktarımı.
+- geliştirici sunucusuna veri aktarımı,
+- production manifestine yeni ağ veya hassas veri izinleri eklenmesi.
