@@ -7,13 +7,15 @@ Bu dosya Play Console **Veri güvenliği** formunu doldururken kullanılacak tek
 ## Mevcut mimari için teknik gerçekler
 
 - Uygulama local-first çalışır.
-- Production `main` manifestinde `android.permission.INTERNET` yoktur.
+- Production kaynak manifestinde `android.permission.INTERNET` yoktur ve app-defined `<uses-permission>` girdisi bulunmaz.
 - Flutter debug/profile geliştirme build’leri hot reload/debugger için kendi manifestlerinden `INTERNET` izni ekler; bu development davranışıdır.
-- Production RC workflow’u gerçek merged release manifestte `INTERNET` görülürse build’i fail edecek şekilde hazırlanmıştır.
+- AndroidX Core merged manifestte `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı app-scoped signature-level internal permission ekleyebilir. Bu runtime/user-data izni değildir; eski Android sürümlerinde non-exported dynamic receiver güvenliği için kullanılır.
+- Production RC workflow’u yalnız bu AndroidX internal iznine tolerans gösterir; `INTERNET` veya başka merged `uses-permission` görülürse build’i fail eder.
 - Production manifestinde `android:allowBackup="false"` vardır.
 - Android 11 ve altı için `res/xml/backup_rules.xml` tüm app-managed backup domainlerini hariç tutar.
 - Android 12+ için `res/xml/data_extraction_rules.xml` hem `cloud-backup` hem `device-transfer` tarafında `root`, `file`, `database`, `sharedpref`, `external` domainlerini hariç tutar.
 - Production RC workflow’u backup policy dosyalarını ve merged release manifestte `allowBackup=false` değerini doğrular.
+- Production kaynak manifestinde `android:usesCleartextTraffic="false"` vardır.
 - Kullanıcının sosyal medya şifresi uygulamaya girilmez.
 - Dosyalar Android sistem dosya seçicisi üzerinden kullanıcı tarafından seçilir.
 - Analiz snapshot’ları ve “Yok say” tercihleri cihaz üzerinde saklanır.
@@ -34,12 +36,22 @@ Gerekçe:
 - ZMila Studio sunucusuna veya üçüncü taraf sunucuya aktarılmaz.
 - Google Play Data Safety kapsamındaki yalnız-cihazda erişim/işleme, veri cihaz dışına gönderilmiyorsa “collection” olarak beyan edilmek zorunda değildir.
 - Production Android yapılandırması app-managed yerel veriyi Android automatic backup kapsamı dışında bırakacak şekilde sertleştirilmiştir.
+- AndroidX’in internal signature receiver permission’ı kullanıcı verisi toplama/paylaşma yetkisi sağlamaz.
 
 ### Profil bağlantısı açma “sharing” midir?
 
 Kullanıcı bir hesap satırına dokunarak harici Instagram/X profilini açmayı kendisi başlatır. URL Android üzerinden ilgili sosyal uygulamaya veya tarayıcıya devredilir.
 
 Google Play Data Safety tanımında kullanıcı tarafından açıkça başlatılan ve kullanıcının paylaşım/aktarım beklediği third-party transferler “sharing” beyanı istisnası kapsamında olabilir. Mevcut profil-açma akışı bu user-initiated action istisnasına göre değerlendirilmiştir.
+
+### Raporu kopyala / TXT olarak kaydet
+
+Bu iki eylem kullanıcı tarafından açıkça başlatılır:
+
+- `Raporu kopyala`: analiz metnini sistem panosuna yazar.
+- `TXT olarak kaydet`: analiz metnini Android file picker üzerinden kullanıcının seçtiği hedefe yazar.
+
+Rapor sosyal medya kullanıcı adlarını ve kategori sonuçlarını içerebilir. Uygulama bu raporu ZMila Studio sunucusuna göndermez. Kullanıcının seçtiği harici hedefteki TXT dosyası veya sistem panosu app-private veri alanı dışında olabilir ve uygulama içi Yerel Veri Yönetimi tarafından sonradan otomatik silinemez.
 
 ### Hesap oluşturma var mı?
 
@@ -103,17 +115,29 @@ Flutter geliştirme manifestleri:
 
 hot reload ve debugging için `android.permission.INTERNET` ekler.
 
-v2-38 debug APK badging bu yüzden `INTERNET` iznini göstermiştir.
+v2-39 debug APK badging doğrulaması:
+
+- `android.permission.INTERNET` — debug tooling nedeniyle,
+- `com.zmilastudio.takipanalizi.dev.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` — AndroidX internal signature receiver permission.
+
+Bu debug APK production Data Safety beyanının doğrudan manifest kaynağı değildir.
 
 ### Production release
 
-`apps/mobile/android/app/src/main/AndroidManifest.xml` bu izni içermez.
+`apps/mobile/android/app/src/main/AndroidManifest.xml` `INTERNET` veya app-defined `uses-permission` içermez.
+
+AndroidX Core release merge sırasında şu internal signature permission’ı ekleyebilir:
+
+`com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
 
 Production RC workflow’u AAB build’inden sonra merged release manifesti bulur ve:
 
 - `android.permission.INTERNET` görülürse,
+- AndroidX internal receiver permission dışında başka `uses-permission` görülürse,
 - `android:allowBackup="false"` kaybolursa,
-- targetSdk 36 değilse
+- `android:usesCleartextTraffic="false"` kaybolursa,
+- targetSdk 36 değilse,
+- `debuggable=true` veya `testOnly=true` görülürse
 
 build’i başarısız sayar.
 
@@ -121,7 +145,7 @@ Böylece privacy/Data Safety beyanı gerçek release manifest üzerinden doğrul
 
 ## Target API
 
-v2-38 CI debug APK doğrulaması:
+v2-39 CI debug APK doğrulaması:
 
 - compileSdkVersion: 36
 - targetSdkVersion: 36
@@ -142,7 +166,7 @@ Aşağıdakilerden herhangi biri eklenirse Veri Güvenliği formu ve gizlilik po
 - push notification altyapısı,
 - ücretli üyelik / ödeme,
 - uzaktan hata loglama,
-- production release’e `INTERNET` veya başka veri erişim izni eklenmesi,
+- production release’e `INTERNET` veya kullanıcı verisine erişen başka Android izni eklenmesi,
 - `allowBackup`, `backup_rules` veya `data_extraction_rules` politikasının gevşetilmesi.
 
 ## Public privacy / support
@@ -173,6 +197,7 @@ Google Play:
 - https://support.google.com/googleplay/android-developer/answer/10144311
 - https://support.google.com/googleplay/android-developer/answer/11926878
 
-Android backup:
+Android / AndroidX:
 - https://developer.android.com/guide/topics/manifest/application-element
 - https://developer.android.com/about/versions/12/behavior-changes-12
+- https://android.googlesource.com/platform/prebuilts/sdk/+/fa1474c543bdd7eaa690ba935d9ea8249fd12880/current/androidx/manifests/androidx.core_core/AndroidManifest.xml
