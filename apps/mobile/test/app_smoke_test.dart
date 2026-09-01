@@ -11,7 +11,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final homeList = find.byType(ListView);
+    final homeScroll = find.descendant(
+      of: homeList,
+      matching: find.byType(Scrollable),
+    );
     expect(homeList, findsOneWidget);
+    expect(homeScroll, findsOneWidget);
 
     expect(find.text('Takip Analizi'), findsOneWidget);
     expect(find.text('Instagram'), findsOneWidget);
@@ -21,7 +26,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('X / Twitter'),
       300,
-      scrollable: homeList,
+      scrollable: homeScroll,
     );
     expect(find.text('X / Twitter'), findsOneWidget);
     expect(find.text('X Arşivini İçe Aktar'), findsOneWidget);
@@ -29,7 +34,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Büyük arşiv: follower.js + following.js seç'),
       300,
-      scrollable: homeList,
+      scrollable: homeScroll,
     );
     expect(
       find.text('Büyük arşiv: follower.js + following.js seç'),
@@ -39,14 +44,14 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('X arşivi nasıl alınır?'),
       300,
-      scrollable: homeList,
+      scrollable: homeScroll,
     );
     expect(find.text('X arşivi nasıl alınır?'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Yerel Veri Yönetimi'),
       300,
-      scrollable: homeList,
+      scrollable: homeScroll,
     );
     expect(find.text('Analiz Geçmişi'), findsOneWidget);
     expect(find.text('Yok Sayılan Hesaplar'), findsOneWidget);
