@@ -2,8 +2,8 @@
     <application
         android:label="Takip Analizi"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round">
+        android:icon="@drawable/takip_launcher_user"
+        android:roundIcon="@drawable/takip_launcher_user">
         <activity
             android:name=".MainActivity"
             android:exported="true"
