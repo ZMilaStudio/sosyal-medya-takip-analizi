@@ -36,13 +36,15 @@ Kullanıcı uygulamaya bir sosyal medya arşivi seçtiğinde aşağıdaki verile
 
 X arşivinde takip ilişkisi analizi için gerekli olmayan medya, gönderi ve doğrudan mesaj geçmişi analiz amacıyla kullanılmaz.
 
-## 3. Veri toplama ve paylaşma
+## 3. Veri toplama, ağ erişimi ve paylaşma
 
 Mevcut uygulama mimarisinde analiz verileri ZMila Studio tarafından işletilen bir sunucuya gönderilmez ve üçüncü taraflarla paylaşılmaz.
 
-Takip Analizi’nin mevcut Android build’i `INTERNET` izni istemez. Analiz, geçmiş ve kullanıcı tercihleri cihazın yerel depolamasında tutulur.
+Production kaynak manifesti analiz için `INTERNET` izni istemeyecek şekilde yapılandırılmıştır. Flutter’ın debug/profile geliştirme build’leri; hot reload, debugger ve geliştirme araçları için kendi geliştirme manifestlerinden `INTERNET` izni ekleyebilir. Google Play’e gönderilecek production AAB, release merged manifestinde bu iznin bulunmaması için otomatik kontrol edilecektir.
 
-Kullanıcı bir profil bağlantısını açmayı seçerse bağlantı cihazdaki harici tarayıcıya veya ilgili sosyal medya uygulamasına yönlendirilir. Bu noktadan sonraki veri işleme ilgili üçüncü taraf hizmetin kendi gizlilik politikasına tabidir.
+Analiz, geçmiş ve kullanıcı tercihleri cihazın yerel depolamasında tutulur.
+
+Kullanıcı bir profil bağlantısını açmayı seçerse bağlantı cihazdaki harici tarayıcıya veya ilgili sosyal medya uygulamasına yönlendirilir. Bu işlem kullanıcı tarafından açıkça başlatılır. Bu noktadan sonraki veri işleme ilgili üçüncü taraf hizmetin kendi gizlilik politikasına tabidir.
 
 ## 4. Dosya erişimi
 
@@ -131,13 +133,15 @@ Depending on the selected archive, the app may process on the device:
 
 X archive content unrelated to follow-relationship analysis, such as media, posts, or direct-message history, is not used for follow analysis.
 
-## 3. Collection and sharing
+## 3. Collection, network access, and sharing
 
 Under the current architecture, analysis data is not sent to a server operated by ZMila Studio and is not shared with third parties.
 
-The current Android build does not request the `INTERNET` permission. Analysis results, history, and user preferences are stored locally on the device.
+The production source manifest is configured so that analysis does not request the `INTERNET` permission. Flutter debug/profile development builds may add `INTERNET` through their development manifests for hot reload, debugging, and tooling. The production AAB workflow will automatically verify that the merged release manifest does not contain this permission before the package is accepted as a release candidate.
 
-If the user chooses to open a social profile, the link is handed off to an external browser or social-media application. Any subsequent processing is governed by that third party’s privacy policy.
+Analysis results, history, and user preferences are stored locally on the device.
+
+If the user chooses to open a social profile, the link is handed off to an external browser or social-media application as an explicit user-initiated action. Any subsequent processing is governed by that third party’s privacy policy.
 
 ## 4. File access
 
