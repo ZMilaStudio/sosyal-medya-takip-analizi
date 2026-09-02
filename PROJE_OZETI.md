@@ -166,6 +166,8 @@ Hazır:
 - `STORE_VISUAL_CAPTURE_PLAN.md`
 - `STORE_ICON_DERIVATION.md`
 - `FEATURE_GRAPHIC.md`
+- `PLAY_RELEASE_NOTES.md` — TR/EN ilk sürüm notları; 500 karakter/dil sınırının altında, Play language-tag formatı hazır.
+- `PLAY_CONSOLE_LAUNCH_PACK.md` — App Signing → App Content → Data Safety → Store Listing → Internal Testing → Production rollout sırasını tek checklistte toplar.
 
 Mevcut Console önerileri:
 - Data Safety collection/sharing: No — mevcut local-only mimari için.
@@ -177,6 +179,13 @@ Mevcut Console önerileri:
 - News/government/health/financial: No.
 - IARC sonucu Console’dan alınacak; yaş derecesi uydurulmayacak.
 - Final cevaplar gerçek production AAB merged manifest ile son kez karşılaştırılacak.
+
+### İlk release notes
+- Play release notes limiti: dil başına en fazla 500 Unicode karakter.
+- TR release notes: 277 karakter.
+- EN release notes: 269 karakter.
+- Önerilen internal release adı: `Takip Analizi 1.0.0 (1)`.
+- Release notes promosyon veya yorum/puan talebi içermez.
 
 ## Store listing
 - App name: `Takip Analizi` — 13/30.
@@ -245,4 +254,5 @@ English candidate:
 - Yeni Device Test Actions çalıştırma; v2-39 güvenli baseline yeterli.
 - Secret’lar girilmeden production workflow çalıştırma.
 - Secret blocker beklerken runtime geliştirmeyi gereksiz yere açma.
+- `PLAY_CONSOLE_LAUNCH_PACK.md` sayesinde secret sonrası Play Console işlemleri tek sıradan yürütülecek.
 - Feature graphic TR/EN adayları hazır; final kullanıcı görsel onayı bekliyor.
