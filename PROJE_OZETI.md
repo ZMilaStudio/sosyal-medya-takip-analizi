@@ -61,12 +61,46 @@ Kullanıcı GitHub Settings → Secrets and variables → Actions üzerinden man
 
 ## Production RC workflow
 - Workflow: `.github/workflows/production-rc-aab.yml`.
-- Dev branch sürümü son kontrolde sağlam: signing secret doğrulama, upload certificate fingerprint, source guards, analyze, 23 test, signed AAB build, merged manifest güvenlik guard, AAB signer doğrulama, exact launcher kontrolü, SHA256 üretimi, 1 gün artifact retention.
 - `workflow_dispatch` inputs: `version_name=1.0.0`, `version_code=1`.
-- GitHub manual workflow görünürlüğü için workflow aynı güvenli içerikle `main` branch’e eklendi.
-- `main` commit: `d20b6312660a9d94ac29074e224c3371cb208822`.
-- Production kodu/runtime hâlâ `dev/release-polish-v1` branch’te; workflow çalıştırılırken bu branch seçilecek.
-- Bu oturumdaki GitHub connector `workflow_dispatch` başlatma action’ı sunmuyor; workflow başlatmak için GitHub UI’da tek manuel `Run workflow` gerekir. Run oluştuktan sonra connector ile run/job/log/artifact takibi yapılabilir.
+- Manual workflow görünürlüğü için aynı tanım `main` branch’e eklendi; main commit `d20b6312660a9d94ac29074e224c3371cb208822`.
+- Production runtime `dev/release-polish-v1` branch’ten build edilir.
+
+### İlk production RC denemesi — run 33616493137
+- URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/actions/runs/33616493137`.
+- Run number: 29.
+- Event: `workflow_dispatch`.
+- Branch: `dev/release-polish-v1`.
+- Başlangıç head SHA: `45adbaa36a45445d1246fcdb93ebbc64901c0575`.
+- Sonuç: FAILURE; signing kaynaklı değil.
+- PASS olan adımlar:
+  - release inputs + 5 signing secret mevcutluğu,
+  - private upload JKS kurulumu,
+  - upload certificate fingerprint doğrulaması,
+  - production source guards,
+  - dependencies,
+  - `flutter analyze` — No issues,
+  - `flutter test` — 23/23 PASS.
+- Failure: `Build signed production RC AAB` → Gradle `:app:mergeReleaseResources`.
+- AAPT2 eski ve artık kullanılmayan launcher kaynaklarını compile ederken çöktü: `mipmap-hdpi/ic_launcher.png`, `mipmap-xhdpi/ic_launcher.png`, `mipmap-xhdpi/ic_launcher_foreground.png`.
+- Bu nedenle merged-manifest, signed-AAB verify ve artifact upload adımlarına ulaşılmadı.
+- JKS format warning’i failure değildir; key/fingerprint doğrulaması PASS olmuştur.
+
+### AAPT2 launcher cleanup — UYGULANDI
+- Failure öncesi head için backup: `backup/pre-production-rc-aapt-fix` → `45adbaa36a45445d1246fcdb93ebbc64901c0575`.
+- Production `AndroidManifest.xml` doğrulandı: `android:icon` ve `android:roundIcon` doğrudan `@drawable/takip_launcher_user` kullanıyor.
+- Exact launcher dosyası `drawable-nodpi/takip_launcher_user.webp`; eski `@mipmap/ic_launcher*` kaynakları manifestte kullanılmıyor.
+- Kullanılmayan legacy launcher kaynakları dev branch’ten kaldırıldı:
+  - `mipmap-hdpi/ic_launcher.png`,
+  - `mipmap-mdpi/ic_launcher.png`,
+  - `mipmap-xhdpi/ic_launcher.png`,
+  - `mipmap-xhdpi/ic_launcher_foreground.png`,
+  - `mipmap-anydpi/ic_launcher.xml`,
+  - `mipmap-anydpi/ic_launcher_round.xml`,
+  - `mipmap-anydpi-v26/ic_launcher.xml`,
+  - `mipmap-anydpi-v26/ic_launcher_round.xml`.
+- Exact kullanıcı launcherına dokunulmadı.
+- Cleanup sonrası dev head commit: `47311c1eec0195f7cce32e41e78ed9854611b0c5`.
+- Eski run için `Re-run failed jobs` kullanılmayacak; o run eski head SHA ile yeniden çalışır. Yeni workflow dispatch latest dev head üzerinden başlatılacak.
 
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
@@ -83,13 +117,15 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 ## Branch durumu
 - `test/device-apk` → tested v2-39 `0816b8811aae6cf7aa2be67e63c524156093507b`.
 - `backup/device-v2-39-release-hardening-ci-working` korunuyor.
-- `dev/release-polish-v1` → production workflow/docs/signing/store hazırlığı; runtime değişiklik yok.
+- `backup/pre-production-rc-aapt-fix` → ilk production run öncesi `45adbaa...`.
+- `dev/release-polish-v1` → legacy launcher cleanup dahil latest production hazırlığı.
 - `main` → privacy/support + production workflow dispatch tanımı.
 
 ## Sıradaki iş
-1. GitHub Actions → `Production RC AAB` → `Run workflow`.
-2. Branch olarak **`dev/release-polish-v1`** seç.
+1. GitHub Actions → `Production RC AAB` → yeni **Run workflow**.
+2. Branch: **`dev/release-polish-v1`**.
 3. `version_name`: **`1.0.0`**.
 4. `version_code`: **`1`**.
-5. Run başlayınca run/job/log/artifact durumunu connector ile doğrula.
-6. SUCCESS sonrası production AAB’yi indir; ardından Play App Signing, internal test ve tek kritik fiziksel production RC doğrulamasına geç.
+5. Yeni run latest dev head `47311c1e...` veya sonrasından başlamalı.
+6. SUCCESS olursa merged manifest + signer + exact launcher + artifact kontrollerini kapat ve production AAB’yi indir.
+7. Ardından Play App Signing, internal test ve tek kritik fiziksel production RC doğrulamasına geç.
