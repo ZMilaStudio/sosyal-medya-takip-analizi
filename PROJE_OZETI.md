@@ -61,52 +61,49 @@ Kullanıcı GitHub Settings → Secrets and variables → Actions üzerinden man
 
 ## Production RC workflow
 - Workflow: `.github/workflows/production-rc-aab.yml`.
-- `workflow_dispatch` inputs: `version_name=1.0.0`, `version_code=1`.
-- Manual workflow görünürlüğü için aynı tanım `main` branch’e eklendi; main commit `d20b6312660a9d94ac29074e224c3371cb208822`.
+- Normal durum: yalnız `workflow_dispatch`; inputs `version_name=1.0.0`, `version_code=1`.
+- Manual workflow görünürlüğü için aynı tanım `main` branch’te; main commit `d20b6312660a9d94ac29074e224c3371cb208822`.
 - Production runtime `dev/release-polish-v1` branch’ten build edilir.
 
 ### İlk production RC denemesi — run 33616493137
-- URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/actions/runs/33616493137`.
-- Run number: 29.
-- Event: `workflow_dispatch`.
-- Branch: `dev/release-polish-v1`.
-- Başlangıç head SHA: `45adbaa36a45445d1246fcdb93ebbc64901c0575`.
+- Run #29, `workflow_dispatch`, branch `dev/release-polish-v1`, head `45adbaa36a45445d1246fcdb93ebbc64901c0575`.
 - Sonuç: FAILURE; signing kaynaklı değil.
-- PASS olan adımlar: release inputs + 5 signing secret, private upload JKS, upload certificate fingerprint, production source guards, dependencies, analyze, 23/23 test.
-- Failure: `Build signed production RC AAB` → Gradle `:app:mergeReleaseResources`.
-- AAPT2 eski ve artık kullanılmayan launcher kaynaklarını compile ederken çöktü: `mipmap-hdpi/ic_launcher.png`, `mipmap-xhdpi/ic_launcher.png`, `mipmap-xhdpi/ic_launcher_foreground.png`.
-- Bu nedenle merged-manifest, signed-AAB verify ve artifact upload adımlarına ulaşılmadı.
-- JKS format warning’i failure değildir; key/fingerprint doğrulaması PASS olmuştur.
+- PASS: release inputs + 5 signing secret, private upload JKS, upload certificate fingerprint, production source guards, dependencies, analyze, 23/23 test.
+- Failure: `Build signed production RC AAB` → `:app:mergeReleaseResources`; AAPT2 artık kullanılmayan legacy `mipmap/ic_launcher*` kaynaklarında çöktü.
+- Backup: `backup/pre-production-rc-aapt-fix`.
 
 ### AAPT2 launcher cleanup — UYGULANDI
-- Failure öncesi head için backup: `backup/pre-production-rc-aapt-fix` → `45adbaa36a45445d1246fcdb93ebbc64901c0575`.
-- Production `AndroidManifest.xml` doğrulandı: `android:icon` ve `android:roundIcon` doğrudan `@drawable/takip_launcher_user` kullanıyor.
-- Exact launcher dosyası `drawable-nodpi/takip_launcher_user.webp`; eski `@mipmap/ic_launcher*` kaynakları manifestte kullanılmıyor.
-- Kullanılmayan legacy launcher kaynakları dev branch’ten kaldırıldı:
-  - `mipmap-hdpi/ic_launcher.png`,
-  - `mipmap-mdpi/ic_launcher.png`,
-  - `mipmap-xhdpi/ic_launcher.png`,
-  - `mipmap-xhdpi/ic_launcher_foreground.png`,
-  - `mipmap-anydpi/ic_launcher.xml`,
-  - `mipmap-anydpi/ic_launcher_round.xml`,
-  - `mipmap-anydpi-v26/ic_launcher.xml`,
-  - `mipmap-anydpi-v26/ic_launcher_round.xml`.
+- Production manifest yalnız exact `@drawable/takip_launcher_user` kullanıyor.
+- Exact launcher `drawable-nodpi/takip_launcher_user.webp`; SHA-256 kilidi değişmedi.
+- Kullanılmayan legacy `mipmap ic_launcher*` PNG/XML kaynakları kaldırıldı.
 - Exact kullanıcı launcherına dokunulmadı.
-- Cleanup sonrası dev head commit: `47311c1eec0195f7cce32e41e78ed9854611b0c5`.
+- Cleanup sonrası dev head `47311c1eec0195f7cce32e41e78ed9854611b0c5`.
 
-### İkinci production RC — run 33627604993 BAŞLATILDI
-- Kullanıcı `Sen başlat @GitHub` dedi.
-- Connector doğrudan `workflow_dispatch` sunmadığı için workflow’a geçici, yalnız kendi dosya commitini dinleyen push trigger eklendi.
-- Trigger commit: `93eec18cd6ee53ccc0eaca8fc9df20f921089bd5`.
-- Run number: 30.
+### İkinci production RC — SUCCESS
+- Run: `33627604993` / run #30.
 - URL: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/actions/runs/33627604993`.
-- Event: `push`.
 - Branch: `dev/release-polish-v1`.
-- Production değerleri fallback ile `1.0.0 / 1` olarak kilitlendi.
-- Run oluşur oluşmaz geçici push trigger kaldırıldı; workflow tekrar manual-only `workflow_dispatch` haline döndü.
-- Manual-only restore commit: `58f900ee3763c82a119a3ba212ec24dbe8233137`.
-- Restore commit çalışan run’ı etkilemez; run #30 trigger commit snapshot’ından devam eder.
-- İlk gözlem: secret/input validate PASS, private upload key install PASS, production source guards PASS, dependencies PASS, analyze PASS; test adımı çalışıyor.
+- Build snapshot head: `93eec18cd6ee53ccc0eaca8fc9df20f921089bd5`.
+- Event: geçici güvenli `push` trigger; production değerleri `1.0.0 / 1` olarak kilitliydi.
+- Sonuç: **SUCCESS**.
+- PASS olan tüm ana adımlar:
+  - signing secret/input validate,
+  - private Play upload key install + certificate fingerprint,
+  - production source guards,
+  - dependencies,
+  - analyze,
+  - 23/23 test,
+  - signed production RC AAB build,
+  - merged release manifest güvenlik doğrulaması,
+  - signed AAB doğrulaması + exact launcher kontrolü,
+  - production artifact upload.
+- Artifact adı: `takip-analizi-production-rc-1.0.0-1`.
+- Artifact ID: `9845630572`.
+- Artifact ZIP boyutu: `59,884,526` byte.
+- Artifact digest: `sha256:a51a24ca088af43ac6ef5b9e237e6b6ac58cef7c981f61f068c484fc5092df70`.
+- Artifact 1 günlük retention ile 3 Eylül 2026 12:06 UTC civarında expire olacak.
+- Geçici push trigger run oluşur oluşmaz kaldırıldı; workflow yeniden manual-only hale getirildi. Restore commit `58f900ee3763c82a119a3ba212ec24dbe8233137`.
+- Production AAB artık teknik olarak Play Console/internal test aşamasına hazır.
 
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
@@ -123,12 +120,14 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 ## Branch durumu
 - `test/device-apk` → tested v2-39 `0816b8811aae6cf7aa2be67e63c524156093507b`.
 - `backup/device-v2-39-release-hardening-ci-working` korunuyor.
-- `backup/pre-production-rc-aapt-fix` → ilk production run öncesi `45adbaa...`.
-- `dev/release-polish-v1` → legacy launcher cleanup + workflow manual-only restore + production run #30 takibi.
+- `backup/pre-production-rc-aapt-fix` → ilk production run öncesi güvenli yedek.
+- `dev/release-polish-v1` → legacy launcher cleanup + production RC SUCCESS + workflow manual-only restore.
 - `main` → privacy/support + production workflow dispatch tanımı.
 
 ## Sıradaki iş
-1. Production RC run #30 `33627604993` sonucunu izle.
-2. SUCCESS olursa merged manifest + signer + exact launcher + artifact kontrollerini kapat ve production AAB’yi indir.
-3. FAILURE olursa yalnız gerçek failing step/log üzerinden düzelt; signing/secretları tekrar kurcalama.
-4. Ardından Play App Signing, internal test ve tek kritik fiziksel production RC doğrulamasına geç.
+1. Production AAB artifact’ını indir / güvenli kopyasını al; artifact retention yalnız 1 gün.
+2. Play Console → App integrity / Play App Signing durumunu doğrula.
+3. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
+4. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
+5. Feature graphic finalini kullanıcı onayıyla kilitle ve production RC üzerinden sentetik demo verisiyle 8 store screenshot çek.
+6. Tek kritik production RC fiziksel doğrulaması: temiz production kurulum + local persistence + gerçek X arşivi + temel smoke rotaları.
