@@ -1,0 +1,148 @@
+name: Production RC APK
+
+on:
+  push:
+    branches:
+      - test/production-rc-apk-1.0.0-1
+    paths:
+      - .github/workflows/production-rc-apk.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-production-rc-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
+      EXPECTED_VERSION_NAME: '1.0.0'
+      EXPECTED_VERSION_CODE: '1'
+      EXPECTED_TARGET_SDK: '36'
+      EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
+      PLAY_UPLOAD_KEYSTORE_PATH: ${{ github.workspace }}/.github/production-signing/upload-keystore.jks
+      PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+      PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
+      PLAY_UPLOAD_KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+      PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+      PLAY_UPLOAD_CERT_SHA256: ${{ secrets.PLAY_UPLOAD_CERT_SHA256 }}
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Install and verify private Play upload key
+        run: |
+          test -n "$PLAY_UPLOAD_KEYSTORE_B64"
+          test -n "$PLAY_UPLOAD_STORE_PASSWORD"
+          test -n "$PLAY_UPLOAD_KEY_ALIAS"
+          test -n "$PLAY_UPLOAD_KEY_PASSWORD"
+          test -n "$PLAY_UPLOAD_CERT_SHA256"
+
+          mkdir -p "$(dirname "$PLAY_UPLOAD_KEYSTORE_PATH")"
+          printf '%s' "$PLAY_UPLOAD_KEYSTORE_B64" | base64 --decode > "$PLAY_UPLOAD_KEYSTORE_PATH"
+          chmod 600 "$PLAY_UPLOAD_KEYSTORE_PATH"
+
+          KEY_OUTPUT="$(keytool -list -v \
+            -keystore "$PLAY_UPLOAD_KEYSTORE_PATH" \
+            -storepass "$PLAY_UPLOAD_STORE_PASSWORD" \
+            -alias "$PLAY_UPLOAD_KEY_ALIAS")"
+          ACTUAL_CERT_SHA256="$(printf '%s\n' "$KEY_OUTPUT" \
+            | grep -i 'SHA256:' \
+            | head -1 \
+            | sed 's/.*SHA256:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+      - name: Verify production source identity
+        run: |
+          grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
+          grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
+          grep -F 'version: 1.0.0+1' pubspec.yaml
+          ! grep -F '<uses-permission' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:usesCleartextTraffic="false"' android/app/src/main/AndroidManifest.xml
+
+          USER_ICON="android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp"
+          test -f "$USER_ICON"
+          test "$(sha256sum "$USER_ICON" | awk '{print $1}')" = "$EXPECTED_USER_ICON_SHA256"
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build signed production RC APK
+        run: |
+          flutter build apk \
+            --release \
+            --build-name="$EXPECTED_VERSION_NAME" \
+            --build-number="$EXPECTED_VERSION_CODE"
+
+      - name: Verify production APK
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          test -f "$APK"
+          test -s "$APK"
+
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
+
+          SIGN_OUTPUT="$("$APKSIGNER" verify --print-certs "$APK")"
+          printf '%s\n' "$SIGN_OUTPUT"
+          APK_CERT_SHA256="$(printf '%s\n' "$SIGN_OUTPUT" \
+            | grep -i 'certificate SHA-256 digest:' \
+            | head -1 \
+            | sed 's/.*digest:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          test -n "$APK_CERT_SHA256"
+          test "$APK_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+          BADGING="$("$AAPT" dump badging "$APK")"
+          printf '%s\n' "$BADGING" | head -20
+          printf '%s\n' "$BADGING" | grep -F "package: name='$EXPECTED_PRODUCTION_PACKAGE_ID'"
+          printf '%s\n' "$BADGING" | grep -F "versionCode='$EXPECTED_VERSION_CODE'"
+          printf '%s\n' "$BADGING" | grep -F "versionName='$EXPECTED_VERSION_NAME'"
+          printf '%s\n' "$BADGING" | grep -F "targetSdkVersion:'$EXPECTED_TARGET_SDK'"
+
+          RELEASE_MANIFEST="$(find build/app/intermediates \
+            -type f \
+            -name AndroidManifest.xml \
+            -path '*release*' \
+            | grep -E '/merged_manifest(s)?/' \
+            | head -1)"
+          test -n "$RELEASE_MANIFEST"
+          grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
+          grep -F 'android:usesCleartextTraffic="false"' "$RELEASE_MANIFEST"
+          ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
+          ! grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"
+          ! grep -F 'android:testOnly="true"' "$RELEASE_MANIFEST"
+
+          unzip -l "$APK" | grep -F 'takip_launcher_user.webp'
+          sha256sum "$APK" > build/app/outputs/flutter-apk/app-release.apk.sha256
+
+      - name: Upload production RC APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: takip-analizi-production-rc-apk-1.0.0-1
+          path: |
+            apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+            apps/mobile/build/app/outputs/flutter-apk/app-release.apk.sha256
+          retention-days: 1
+          if-no-files-found: error
