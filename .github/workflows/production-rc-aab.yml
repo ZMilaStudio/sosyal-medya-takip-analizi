@@ -1,0 +1,214 @@
+name: Production RC AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Production versionName
+        required: true
+        default: '1.0.0'
+        type: string
+      version_code:
+        description: Production versionCode (positive integer)
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-production-rc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
+      EXPECTED_TARGET_SDK: '36'
+      EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
+      PLAY_UPLOAD_KEYSTORE_PATH: ${{ github.workspace }}/.github/production-signing/upload-keystore.jks
+      PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+      PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
+      PLAY_UPLOAD_KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+      PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+      PLAY_UPLOAD_CERT_SHA256: ${{ secrets.PLAY_UPLOAD_CERT_SHA256 }}
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Validate release inputs and signing secrets
+        run: |
+          case "${{ inputs.version_code }}" in
+            ''|*[!0-9]*)
+              echo "version_code must be a positive integer" >&2
+              exit 1
+              ;;
+          esac
+          test "${{ inputs.version_code }}" -gt 0
+          test -n "${{ inputs.version_name }}"
+
+          test -n "$PLAY_UPLOAD_KEYSTORE_B64"
+          test -n "$PLAY_UPLOAD_STORE_PASSWORD"
+          test -n "$PLAY_UPLOAD_KEY_ALIAS"
+          test -n "$PLAY_UPLOAD_KEY_PASSWORD"
+          test -n "$PLAY_UPLOAD_CERT_SHA256"
+
+      - name: Install private Play upload key
+        run: |
+          mkdir -p "$(dirname "$PLAY_UPLOAD_KEYSTORE_PATH")"
+          printf '%s' "$PLAY_UPLOAD_KEYSTORE_B64" | base64 --decode > "$PLAY_UPLOAD_KEYSTORE_PATH"
+          chmod 600 "$PLAY_UPLOAD_KEYSTORE_PATH"
+
+          keytool -list \
+            -keystore "$PLAY_UPLOAD_KEYSTORE_PATH" \
+            -storepass "$PLAY_UPLOAD_STORE_PASSWORD" \
+            -alias "$PLAY_UPLOAD_KEY_ALIAS" >/dev/null
+
+          KEY_OUTPUT="$(keytool -list -v \
+            -keystore "$PLAY_UPLOAD_KEYSTORE_PATH" \
+            -storepass "$PLAY_UPLOAD_STORE_PASSWORD" \
+            -alias "$PLAY_UPLOAD_KEY_ALIAS")"
+          ACTUAL_CERT_SHA256="$(printf '%s\n' "$KEY_OUTPUT" \
+            | grep -i 'SHA256:' \
+            | head -1 \
+            | sed 's/.*SHA256:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+
+          test -n "$ACTUAL_CERT_SHA256"
+          test "$ACTUAL_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+      - name: Verify production source guards
+        run: |
+          grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
+          grep -F 'applicationIdSuffix = ".dev"' android/app/build.gradle.kts
+          grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
+          grep -F 'version: 1.0.0+1' pubspec.yaml
+          test ! -e android/key.properties
+          ! grep -F '<uses-permission' android/app/src/main/AndroidManifest.xml
+
+          grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:fullBackupContent="@xml/backup_rules"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:dataExtractionRules="@xml/data_extraction_rules"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:usesCleartextTraffic="false"' android/app/src/main/AndroidManifest.xml
+
+          LEGACY_BACKUP_RULES="android/app/src/main/res/xml/backup_rules.xml"
+          EXTRACTION_RULES="android/app/src/main/res/xml/data_extraction_rules.xml"
+          test -f "$LEGACY_BACKUP_RULES"
+          test -f "$EXTRACTION_RULES"
+          grep -F '<full-backup-content>' "$LEGACY_BACKUP_RULES"
+          grep -F '<cloud-backup>' "$EXTRACTION_RULES"
+          grep -F '<device-transfer>' "$EXTRACTION_RULES"
+
+          for domain in root file database sharedpref external; do
+            grep -F "<exclude domain=\"$domain\" path=\".\" />" "$LEGACY_BACKUP_RULES"
+            test "$(grep -F -c "<exclude domain=\"$domain\" path=\".\" />" "$EXTRACTION_RULES")" -eq 2
+          done
+
+          USER_ICON="android/app/src/main/res/drawable-nodpi/takip_launcher_user.webp"
+          test -f "$USER_ICON"
+          ICON_SHA256="$(sha256sum "$USER_ICON" | awk '{print $1}')"
+          test "$ICON_SHA256" = "$EXPECTED_USER_ICON_SHA256"
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test --reporter expanded
+
+      - name: Build signed production RC AAB
+        run: |
+          flutter build appbundle \
+            --release \
+            --build-name="${{ inputs.version_name }}" \
+            --build-number="${{ inputs.version_code }}"
+
+      - name: Verify merged release manifest
+        run: |
+          RELEASE_MANIFEST="$(find build/app/intermediates \
+            -type f \
+            -name AndroidManifest.xml \
+            -path '*release*' \
+            | grep -E '/merged_manifest(s)?/' \
+            | head -1)"
+
+          test -n "$RELEASE_MANIFEST"
+          echo "Merged release manifest: $RELEASE_MANIFEST"
+          grep -F '<manifest' "$RELEASE_MANIFEST"
+          grep -F "android:targetSdkVersion=\"$EXPECTED_TARGET_SDK\"" "$RELEASE_MANIFEST"
+          grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
+          grep -F 'android:usesCleartextTraffic="false"' "$RELEASE_MANIFEST"
+
+          ALLOWED_INTERNAL_PERMISSION="$EXPECTED_PRODUCTION_PACKAGE_ID.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+          MERGED_PERMISSIONS="$(grep -oE '<uses-permission[^>]+android:name="[^"]+"' "$RELEASE_MANIFEST" \
+            | sed -E 's/.*android:name="([^"]+)".*/\1/' || true)"
+
+          if [ -n "$MERGED_PERMISSIONS" ]; then
+            printf 'Merged release permissions:\n%s\n' "$MERGED_PERMISSIONS"
+            while IFS= read -r permission; do
+              [ -z "$permission" ] && continue
+              if [ "$permission" != "$ALLOWED_INTERNAL_PERMISSION" ]; then
+                echo "Unexpected production permission: $permission" >&2
+                exit 1
+              fi
+            done <<< "$MERGED_PERMISSIONS"
+          fi
+
+          ! grep -F 'android.permission.INTERNET' "$RELEASE_MANIFEST"
+          if grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"; then
+            echo "Production release is debuggable." >&2
+            exit 1
+          fi
+          if grep -F 'android:testOnly="true"' "$RELEASE_MANIFEST"; then
+            echo "Production release is testOnly." >&2
+            exit 1
+          fi
+
+      - name: Verify signed AAB
+        run: |
+          AAB="build/app/outputs/bundle/release/app-release.aab"
+          test -f "$AAB"
+          test -s "$AAB"
+
+          jarsigner -verify "$AAB"
+
+          AAB_CERT_OUTPUT="$(keytool -printcert -jarfile "$AAB")"
+          AAB_CERT_SHA256="$(printf '%s\n' "$AAB_CERT_OUTPUT" \
+            | grep -i 'SHA256:' \
+            | head -1 \
+            | sed 's/.*SHA256:[[:space:]]*//' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_CERT_SHA256="$(printf '%s' "$PLAY_UPLOAD_CERT_SHA256" \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')"
+
+          test -n "$AAB_CERT_SHA256"
+          test "$AAB_CERT_SHA256" = "$EXPECTED_CERT_SHA256"
+
+          unzip -l "$AAB" | grep -F 'takip_launcher_user.webp'
+          sha256sum "$AAB" > build/app/outputs/bundle/release/app-release.aab.sha256
+
+      - name: Upload production RC package
+        uses: actions/upload-artifact@v4
+        with:
+          name: takip-analizi-production-rc-${{ inputs.version_name }}-${{ inputs.version_code }}
+          path: |
+            apps/mobile/build/app/outputs/bundle/release/app-release.aab
+            apps/mobile/build/app/outputs/bundle/release/app-release.aab.sha256
+          retention-days: 1
+          if-no-files-found: error
