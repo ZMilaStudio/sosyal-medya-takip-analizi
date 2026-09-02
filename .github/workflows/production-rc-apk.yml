@@ -134,7 +134,7 @@ jobs:
           ! grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"
           ! grep -F 'android:testOnly="true"' "$RELEASE_MANIFEST"
 
-          unzip -l "$APK" | grep -F 'takip_launcher_user.webp'
+          "$AAPT" dump resources "$APK" | grep -F 'takip_launcher_user'
           sha256sum "$APK" > build/app/outputs/flutter-apk/app-release.apk.sha256
 
       - name: Upload production RC APK
