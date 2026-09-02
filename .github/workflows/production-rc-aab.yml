@@ -13,6 +13,11 @@ on:
         required: true
         default: '1'
         type: string
+  push:
+    branches:
+      - dev/release-polish-v1
+    paths:
+      - '.github/workflows/production-rc-aab.yml'
 
 permissions:
   contents: read
@@ -25,6 +30,8 @@ jobs:
       EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
       EXPECTED_TARGET_SDK: '36'
       EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
+      RELEASE_VERSION_NAME: ${{ inputs.version_name || '1.0.0' }}
+      RELEASE_VERSION_CODE: ${{ inputs.version_code || '1' }}
       PLAY_UPLOAD_KEYSTORE_PATH: ${{ github.workspace }}/.github/production-signing/upload-keystore.jks
       PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
       PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
@@ -46,14 +53,14 @@ jobs:
 
       - name: Validate release inputs and signing secrets
         run: |
-          case "${{ inputs.version_code }}" in
+          case "$RELEASE_VERSION_CODE" in
             ''|*[!0-9]*)
               echo "version_code must be a positive integer" >&2
               exit 1
               ;;
           esac
-          test "${{ inputs.version_code }}" -gt 0
-          test -n "${{ inputs.version_name }}"
+          test "$RELEASE_VERSION_CODE" -gt 0
+          test -n "$RELEASE_VERSION_NAME"
 
           test -n "$PLAY_UPLOAD_KEYSTORE_B64"
           test -n "$PLAY_UPLOAD_STORE_PASSWORD"
@@ -134,8 +141,8 @@ jobs:
         run: |
           flutter build appbundle \
             --release \
-            --build-name="${{ inputs.version_name }}" \
-            --build-number="${{ inputs.version_code }}"
+            --build-name="$RELEASE_VERSION_NAME" \
+            --build-number="$RELEASE_VERSION_CODE"
 
       - name: Verify merged release manifest
         run: |
@@ -153,10 +160,6 @@ jobs:
           grep -F 'android:allowBackup="false"' "$RELEASE_MANIFEST"
           grep -F 'android:usesCleartextTraffic="false"' "$RELEASE_MANIFEST"
 
-          # AndroidX Core intentionally merges this app-scoped signature permission
-          # to emulate RECEIVER_NOT_EXPORTED safely on older Android versions.
-          # It is not a runtime/data-access permission. Allow only this one library
-          # permission; reject INTERNET and every other merged uses-permission.
           ALLOWED_INTERNAL_PERMISSION="$EXPECTED_PRODUCTION_PACKAGE_ID.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
           MERGED_PERMISSIONS="$(grep -oE '<uses-permission[^>]+android:name="[^"]+"' "$RELEASE_MANIFEST" \
             | sed -E 's/.*android:name="([^"]+)".*/\1/' || true)"
@@ -210,7 +213,7 @@ jobs:
       - name: Upload production RC package
         uses: actions/upload-artifact@v4
         with:
-          name: takip-analizi-production-rc-${{ inputs.version_name }}-${{ inputs.version_code }}
+          name: takip-analizi-production-rc-${{ env.RELEASE_VERSION_NAME }}-${{ env.RELEASE_VERSION_CODE }}
           path: |
             apps/mobile/build/app/outputs/bundle/release/app-release.aab
             apps/mobile/build/app/outputs/bundle/release/app-release.aab.sha256
