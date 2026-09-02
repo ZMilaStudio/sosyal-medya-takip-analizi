@@ -95,6 +95,7 @@ Kullanıcı GitHub Settings → Secrets and variables → Actions üzerinden man
 - Geçici push trigger kaldırıldı; workflow yeniden manual-only. Restore commit `58f900ee3763c82a119a3ba212ec24dbe8233137`.
 - Production AAB teknik olarak Play Console/internal test aşamasına hazır.
 - 2 Eylül 2026: ilk sohbet içi indirme bağlantısı kullanıcıda süre doldu uyarısı verdi. Artifact GitHub’dan yeniden indirildi ve taze sohbet kopyası `takip-analizi-production-rc-1.0.0-1-fresh.zip` olarak hazırlandı.
+- 2 Eylül 2026: kullanıcı taze Production RC ZIP paketini cihazına başarıyla indirdi. Artifact indirme kapısı TAMAM.
 
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
@@ -116,9 +117,8 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - `main` → privacy/support + production workflow dispatch tanımı.
 
 ## Sıradaki iş
-1. Production AAB ZIP’inin taze kopyasını kullanıcı cihazına indirip kalıcı sakla; ZIP içindeki `.aab` Play Console için kullanılacak.
-2. Play Console → App integrity / Play App Signing durumunu doğrula.
-3. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
-4. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
-5. Feature graphic finalini kullanıcı onayıyla kilitle ve production RC üzerinden sentetik demo verisiyle 8 store screenshot çek.
-6. Tek kritik production RC fiziksel doğrulaması: temiz production kurulum + local persistence + gerçek X arşivi + temel smoke rotaları.
+1. Play Console → App integrity / Play App Signing durumunu doğrula.
+2. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
+3. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
+4. Feature graphic finalini kullanıcı onayıyla kilitle ve production RC üzerinden sentetik demo verisiyle 8 store screenshot çek.
+5. Tek kritik production RC fiziksel doğrulaması: temiz production kurulum + local persistence + gerçek X arşivi + temel smoke rotaları.
