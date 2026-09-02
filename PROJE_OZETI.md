@@ -97,6 +97,13 @@ Kullanıcı GitHub Settings → Secrets and variables → Actions üzerinden man
 - 2 Eylül 2026: ilk sohbet içi indirme bağlantısı kullanıcıda süre doldu uyarısı verdi. Artifact GitHub’dan yeniden indirildi ve taze sohbet kopyası `takip-analizi-production-rc-1.0.0-1-fresh.zip` olarak hazırlandı.
 - 2 Eylül 2026: kullanıcı taze Production RC ZIP paketini cihazına başarıyla indirdi. Artifact indirme kapısı TAMAM.
 
+## Play Console / Play App Signing — sıradaki aktif kapı
+- Google’ın güncel Play Console yardımına göre eski `App integrity / Uygulama bütünlüğü` merkezi görünümü büyük ölçüde `Protected with Play / Google Play ile korunanlar` sayfasına taşındı.
+- Güncel yol: uygulamayı aç → sol menü `Google Play ile korunanlar` (bazı hesaplarda `Test edin ve yayınlayın > Uygulama bütünlüğü` adı hâlâ görülebilir) → `Google Play Store koruması` → `Play Uygulama İmzalama` → Yönet/Ayarlar.
+- Yeni uygulamalarda AAB ilk yüklemede Play App Signing varsayılan olarak etkinleştirilir; Google uygulama imzalama anahtarını yönetir, geliştirici ayrı upload key ile yükler.
+- Doğrulanacak upload certificate SHA-256: `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
+- Play Console’da upload certificate fingerprint bu değerle aynı olmalı.
+
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
 - Data Safety önerisi mevcut local-only mimari için collection/sharing No.
@@ -117,8 +124,9 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - `main` → privacy/support + production workflow dispatch tanımı.
 
 ## Sıradaki iş
-1. Play Console → App integrity / Play App Signing durumunu doğrula.
-2. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
-3. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
-4. Feature graphic finalini kullanıcı onayıyla kilitle ve production RC üzerinden sentetik demo verisiyle 8 store screenshot çek.
-5. Tek kritik production RC fiziksel doğrulaması: temiz production kurulum + local persistence + gerçek X arşivi + temel smoke rotaları.
+1. Play Console → Google Play ile korunanlar / Uygulama bütünlüğü → Play App Signing durumunu doğrula.
+2. Upload certificate SHA-256 fingerprint’in `def6c59b...cca65` ile eşleştiğini doğrula.
+3. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
+4. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
+5. Feature graphic finalini kullanıcı onayıyla kilitle ve production RC üzerinden sentetik demo verisiyle 8 store screenshot çek.
+6. Tek kritik production RC fiziksel doğrulaması: temiz production kurulum + local persistence + gerçek X arşivi + temel smoke rotaları.
