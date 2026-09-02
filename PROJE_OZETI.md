@@ -145,6 +145,14 @@ Production workflow secrets:
 
 Önemli: Bu oturumdaki GitHub connector repository secrets yazma endpoint’i sunmuyor. Secret değerleri repoya/sohbete yazılmayacak; kullanıcı güvenli dosyadan GitHub Settings → Actions secrets alanına girecek. Secret’lar girilmeden production workflow çalıştırılmayacak.
 
+## Secret giriş oturumu — BAŞLADI
+- 2 Eylül 2026: kullanıcı `Secret girelim` diyerek repository secrets kurulumuna geçmeyi onayladı.
+- Manuel giriş yolu: GitHub repo → Settings → Secrets and variables → Actions → Repository secrets.
+- Değer kaynağı: güvenli `GITHUB_SECRETS.txt`; secret değerleri sohbet metnine veya repoya yazılmayacak.
+- Giriş sırası: `PLAY_UPLOAD_KEYSTORE_B64` → `PLAY_UPLOAD_STORE_PASSWORD` → `PLAY_UPLOAD_KEY_ALIAS` → `PLAY_UPLOAD_KEY_PASSWORD` → `PLAY_UPLOAD_CERT_SHA256`.
+- İlk adım: `PLAY_UPLOAD_KEYSTORE_B64` ekleniyor.
+- Beş secret tamamlanmadan production workflow çalıştırılmayacak.
+
 ## Privacy / support — TAMAMLANDI
 Public `main`:
 - Privacy: `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
