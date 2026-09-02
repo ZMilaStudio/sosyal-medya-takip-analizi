@@ -86,24 +86,15 @@ Kullanıcı GitHub Settings → Secrets and variables → Actions üzerinden man
 - Build snapshot head: `93eec18cd6ee53ccc0eaca8fc9df20f921089bd5`.
 - Event: geçici güvenli `push` trigger; production değerleri `1.0.0 / 1` olarak kilitliydi.
 - Sonuç: **SUCCESS**.
-- PASS olan tüm ana adımlar:
-  - signing secret/input validate,
-  - private Play upload key install + certificate fingerprint,
-  - production source guards,
-  - dependencies,
-  - analyze,
-  - 23/23 test,
-  - signed production RC AAB build,
-  - merged release manifest güvenlik doğrulaması,
-  - signed AAB doğrulaması + exact launcher kontrolü,
-  - production artifact upload.
+- PASS olan tüm ana adımlar: signing secret/input validate, private Play upload key install + certificate fingerprint, production source guards, dependencies, analyze, 23/23 test, signed production RC AAB build, merged release manifest güvenlik doğrulaması, signed AAB doğrulaması + exact launcher kontrolü, production artifact upload.
 - Artifact adı: `takip-analizi-production-rc-1.0.0-1`.
 - Artifact ID: `9845630572`.
 - Artifact ZIP boyutu: `59,884,526` byte.
 - Artifact digest: `sha256:a51a24ca088af43ac6ef5b9e237e6b6ac58cef7c981f61f068c484fc5092df70`.
 - Artifact 1 günlük retention ile 3 Eylül 2026 12:06 UTC civarında expire olacak.
-- Geçici push trigger run oluşur oluşmaz kaldırıldı; workflow yeniden manual-only hale getirildi. Restore commit `58f900ee3763c82a119a3ba212ec24dbe8233137`.
-- Production AAB artık teknik olarak Play Console/internal test aşamasına hazır.
+- Geçici push trigger kaldırıldı; workflow yeniden manual-only. Restore commit `58f900ee3763c82a119a3ba212ec24dbe8233137`.
+- Production AAB teknik olarak Play Console/internal test aşamasına hazır.
+- 2 Eylül 2026: ilk sohbet içi indirme bağlantısı kullanıcıda süre doldu uyarısı verdi. Artifact GitHub’dan yeniden indirildi ve taze sohbet kopyası `takip-analizi-production-rc-1.0.0-1-fresh.zip` olarak hazırlandı.
 
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
@@ -125,7 +116,7 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - `main` → privacy/support + production workflow dispatch tanımı.
 
 ## Sıradaki iş
-1. Production AAB artifact’ını indir / güvenli kopyasını al; artifact retention yalnız 1 gün.
+1. Production AAB ZIP’inin taze kopyasını kullanıcı cihazına indirip kalıcı sakla; ZIP içindeki `.aab` Play Console için kullanılacak.
 2. Play Console → App integrity / Play App Signing durumunu doğrula.
 3. AAB `1.0.0 (1)` ile Internal testing sürümü oluştur.
 4. Play Console Data Safety / IARC / 18+ / app access alanlarını hazır cevaplarla tamamla.
