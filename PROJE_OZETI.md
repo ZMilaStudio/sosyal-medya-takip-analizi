@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 3 Eylül 2026
+Son güncelleme: 4 Eylül 2026
 
 ## Çalışma protokolü
 - Her yeni iş başlangıcında bu dosya + canlı GitHub repo okunur.
@@ -8,6 +8,7 @@ Son güncelleme: 3 Eylül 2026
 - Küçük değişiklikler için ayrı fiziksel PASS turu yapılmaz; production RC noktasında tek kritik cihaz doğrulaması yapılır.
 - Exact launcher/logo kullanıcı onaylı rasterdır; yeniden çizilmez veya regenerate edilmez.
 - CI success fiziksel PASS sayılmaz; fiziksel başarı yalnız kullanıcı cihaz doğrulamasıyla yazılır.
+- Kullanıcı gereksiz Codex/Actions tüketimi istemiyor; büyük ve mantıklı paketler halinde ilerlenir.
 
 ## Ürün
 Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip analizi.
@@ -31,30 +32,120 @@ Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip anal
 - Manifest `android:icon` + `android:roundIcon` doğrudan `@drawable/takip_launcher_user` kullanıyor.
 - Eski kullanılmayan `mipmap/ic_launcher*` PNG/XML kaynakları production AAPT2 hatası sonrası kaldırıldı; exact launcher değişmedi.
 
-## Production privacy/security
-- Production source manifest: app-defined permission yok, INTERNET yok, `allowBackup=false`, `usesCleartextTraffic=false`.
-- Android backup/data-transfer app-managed local veri alanları exclude.
-- Merged release manifest: targetSdk36, backup=false, cleartext=false, INTERNET yok, debuggable/testOnly yok.
-- Yalnız `com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` AndroidX internal signature izni toleranslı.
-- Impeller kapalı mevcut fiziksel uyumluluk kararı korunur.
+## Reklam / monetizasyon — KİLİTLİ MODEL
+3–4 Eylül 2026 kararları:
+- Google Mobile Ads / AdMob kullanılacak.
+- Model: **dengeli reklam modeli**.
+- App Open reklamı yok.
+- Rewarded reklam yok.
+- Banner uygun olan mümkün olduğunca çok ekranda olacak.
+- Takipçi listelerinde banner liste satırlarının arasına girmeyecek; ekranın altında anchored/adaptive banner olacak.
+- Dosya seçme, ZIP/JS okuma ve analiz yükleme sırasında banner bastırılacak.
+- İlk analiz sonucu görülmeden interstitial gösterilmeyecek.
+- Interstitial yalnız analizden doğal çıkışta değerlendirilecek.
+- Interstitial minimum aralık: **10 dakika**.
+- Oturum başına maksimum interstitial: **2**.
+- Sosyal medya arşiv içeriği, takipçi listeleri ve analiz snapshot’ları reklam amacıyla Google’a gönderilmeyecek; reklam SDK trafiği analiz verisinden ayrı tutulacak.
 
-## Reklam / monetizasyon — KARAR AŞAMASI
-- 3 Eylül 2026: kullanıcı uygulamaya reklam eklemeyi gündeme aldı; henüz koda reklam SDK'sı eklenmedi.
-- Model yönü: **dengeli reklam modeli**. App Open ve rewarded başlangıçta yok; interstitial yalnız doğal geçişlerde ve seyrek olacak.
-- Banner kararı KİLİTLENDİ: **uygun olan mümkün olduğunca çok ekranda adaptive banner** kullanılabilir.
-- Takipçi listelerinde de banner olacak; liste öğelerinin arasına sokulmayacak, **ekranın altına sabit/anchored adaptive banner** olarak konumlanacak. Böylece liste kaydırması ve satır seçimi bölünmeyecek.
-- Banner; ana ekran, analiz özeti, takipçi kategorisi listeleri, geçmiş/karşılaştırma ve benzeri uygun ekranlarda kullanılabilir; dosya seçici, yükleme/analiz işlemi veya kritik modal akışın üzerine bindirilmeyecek.
-- İlk analiz sonucu görünmeden önce tam ekran reklam gösterilmeyecek.
-- Mevcut production RC reklamsızdır ve INTERNET izni yoktur. AdMob/Google Mobile Ads entegrasyonu seçilirse mevcut production AAB/APK final release kabul edilmeyecek; yeni build gerekecek.
-- Reklam entegrasyonu; INTERNET/network erişimi, üçüncü taraf reklam SDK'sı, Google Play Data Safety, gizlilik politikası ve Play Console `Ads` beyanlarını yeniden ele almayı gerektirir.
-- Mevcut `Ads No` ve local-only Data Safety cevapları reklam SDK'sı eklendiğinde aynen kullanılamaz; SDK'nın veri işleme beyanları dahil edilmelidir.
-- Karar verilene kadar Play Console yükleme süreci beklemede tutulacak.
-- Açık reklam kararı: interstitial frequency cap / gösterim anı kesinleştirilecek.
+## AdMob entegrasyonu — TEST REKLAMLARIYLA RC SUCCESS
+Branch: `dev/ads-v1`.
+Backup: `backup/pre-ads-v1` reklamsız önceki güvenli hali koruyor.
 
-## Production kimliği
+Kod/al altyapı:
+- `google_mobile_ads: ^9.1.0` eklendi.
+- `AdsCoordinator`: UMP consent akışı, Mobile Ads initialize, banner readiness, interstitial preload/frequency cap.
+- `AnchoredAdaptiveAdBanner`: ekran genişliğine göre anchored adaptive banner.
+- `AdScreenFrame`: uygun route’ların altında sabit banner alanı.
+- `AnalysisExitAdGate`: analiz ekranından geri çıkarken uygun ise interstitial gösterir.
+- Home import akışlarında dosya seçme/analiz sırasında banner suppression uygulanır.
+- `Gizlilik ve Hakkında` ekranı reklam SDK veri işleme ayrımını ve UMP privacy options girişini içerir.
+- `AdConfig` test/live ayrımı yapar. Test RC’de Google’ın resmi test ID’leri kullanılır; canlı ID’ler henüz bağlanmadı.
+- Android manifest `com.google.android.gms.ads.APPLICATION_ID` placeholder kullanır.
+- Gradle `ADMOB_APP_ID` ortam değişkeni ile canlı App ID alabilir; verilmezse test App ID fail-safe fallback’tir.
+- Dart tarafında canlı banner/interstitial ID’leri `--dart-define` ile verilebilir; test RC `ADMOB_USE_TEST_IDS=true` kullanır.
+
+Sürüm:
+- Reklamlı aday `1.0.0+2` / versionName `1.0.0`, versionCode `2`.
 - Package `com.zmilastudio.takipanalizi`.
-- İlk production `1.0.0+1`; versionName `1.0.0`; versionCode `1`; target/compile SDK 36.
-- `.dev` paketinden farklıdır; ilk production fiziksel test temiz kurulumdur ve `.dev` verisini devralmaz.
+- target/compile SDK 36.
+
+### Ads RC CI
+Workflow: `.github/workflows/ads-rc-apk.yml`.
+İlk run `33804414674`:
+- signing/source guards PASS
+- analyze PASS
+- tek failure: eski privacy widget testi birebir `Local-first` başlığını bekliyordu; reklam kodu hatası değildi.
+- başlık canonical `Local-first` değerine döndürüldü.
+
+İkinci run `33804644499` / job `100812076200`: **SUCCESS**.
+Head SHA: `066881777128e9c855334298caaf3aaba4b1c29c`.
+PASS:
+- private Play upload key + fingerprint
+- production package/version/API identity
+- exact launcher source hash
+- `flutter analyze` clean
+- **23/23 test**
+- signed release APK build
+- signer verification
+- merged release manifest
+- backup=false / cleartext=false
+- test AdMob App ID present
+- debuggable/testOnly yok
+- exact launcher Android resource table’da mevcut
+- artifact upload
+
+APK build sonucu:
+- boyut `64,678,457` byte (~64.7 MB)
+- SHA-256 `4dee1e0f955508ff9b12990bebf69a0803f15c6696331b78e858b007c98bce23`
+- ZIP içindeki `.sha256` ile bağımsız hash eşleşmesi PASS.
+- Artifact `takip-analizi-ads-rc-apk-1.0.0-2`
+- Artifact ID `9912704423`
+- Artifact ZIP `31,106,806` byte
+- Artifact digest `sha256:b26d7bf69b06224bbfec2dfef9b8b18e65ec6e8197e0a6801bd195ea07db1b71`
+- GitHub artifact expiry: 4 Eylül 2026 20:59 UTC civarı; ayrıca yerel güvenli kopya çıkarıldı.
+
+### Reklamlı merged Android permission set — GERÇEK RC’DEN
+Google Mobile Ads 9.1.0 ile release merge sonucu:
+- `android.permission.ACCESS_ADSERVICES_AD_ID`
+- `android.permission.ACCESS_ADSERVICES_ATTRIBUTION`
+- `android.permission.ACCESS_ADSERVICES_TOPICS`
+- `android.permission.ACCESS_NETWORK_STATE`
+- `android.permission.FOREGROUND_SERVICE`
+- `android.permission.INTERNET`
+- `android.permission.WAKE_LOCK`
+- `com.google.android.gms.permission.AD_ID`
+- `com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
+
+Notlar:
+- Bunlar SDK/library merge izinleridir; sosyal medya arşivlerini okumak için geniş dosya/medya/contact/location/camera/mic/SMS/call-log izni eklenmedi.
+- `MANAGE_EXTERNAL_STORAGE`, `READ/WRITE_EXTERNAL_STORAGE`, contacts, camera, mic, location, SMS, call log izinleri yok.
+- Final production workflow’da yukarıdaki permission seti exact whitelist olarak kilitlenecek; SDK gelecekte yeni izin eklerse build duracak.
+
+## Production privacy/security — REKLAMLI MODEL
+- Analiz verisi local-first kalır.
+- `android:allowBackup=false` korunur.
+- `backup_rules.xml` ve `data_extraction_rules.xml` yerel app-managed veriyi backup/transfer kapsamı dışında tutar.
+- `android:usesCleartextTraffic=false` korunur.
+- AdMob nedeniyle production merged manifest artık INTERNET/network ve reklam SDK izinleri içerir; eski “production INTERNET yok” sözleşmesi reklamlı final için geçerli değildir.
+- Kullanıcının sosyal medya şifresi istenmez.
+- Dosya erişimi sistem file picker ile kullanıcı seçimine bağlı kalır.
+- Reklam SDK veri işlemesi Privacy/Data Safety’de ayrıca beyan edilir.
+
+## Privacy / Play belgeleri — REKLAM MODELİNE GÜNCELLENDİ
+`dev/ads-v1` üzerinde:
+- `PRIVACY_POLICY.md` reklamlı modele göre TR+EN güncellendi.
+- `PLAY_STORE_DATA_SAFETY.md` reklam SDK veri işlemesiyle güncellendi.
+- `PLAY_CONSOLE_FORM_ANSWERS.md`: Ads → **Yes**; Data Safety artık reklamsızdaki “No” cevabı değildir. Google Mobile Ads’in işlediği veri türleri final Play formunda SDK dokümanına göre beyan edilecek.
+- Uygulama içi `Gizlilik ve Hakkında` ekranı aynı modele güncellendi.
+- Public `main` privacy metni final canlı reklam build kilitlenince aynı içeriğe taşınacak.
+
+Google Mobile Ads için değerlendirmeye alınan reklam veri sınıfları:
+- IP address / approximate location türetimi
+- app interactions
+- diagnostics
+- device/advertising identifiers
+- advertising / analytics / fraud prevention amaçları
+Kesin Play Data Safety işaretleri final SDK davranışı ve Google’ın güncel disclosure dokümanıyla tekrar eşleştirilecek.
 
 ## Production signing — HAZIR
 - Private Play upload key: JKS, alias `takip-upload`, RSA 3072, SHA256withRSA.
@@ -64,39 +155,19 @@ Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip anal
 - Private keystore/parolalar repoya commit edilmedi.
 - GitHub Repository Secrets 5/5 TAMAM: `PLAY_UPLOAD_KEYSTORE_B64`, `PLAY_UPLOAD_STORE_PASSWORD`, `PLAY_UPLOAD_KEY_ALIAS`, `PLAY_UPLOAD_KEY_PASSWORD`, `PLAY_UPLOAD_CERT_SHA256`.
 
-## Production AAB — SUCCESS
-- Workflow `.github/workflows/production-rc-aab.yml`; normal durum manual-only `workflow_dispatch`.
-- İlk run `33616493137` failure: signing değil; artık kullanılmayan legacy launcher kaynaklarında AAPT2 resource compile hatası. Backup `backup/pre-production-rc-aapt-fix`.
-- Cleanup sonrası başarılı run `33627604993` / #30.
-- AAB build snapshot head `93eec18cd6ee53ccc0eaca8fc9df20f921089bd5`.
-- PASS: signing secrets/key/fingerprint, source guards, analyze, 23/23 test, signed AAB build, merged manifest, signer, exact launcher, artifact upload.
-- Artifact `takip-analizi-production-rc-1.0.0-1`, ID `9845630572`, ZIP `59,884,526` byte, artifact digest `sha256:a51a24ca088af43ac6ef5b9e237e6b6ac58cef7c981f61f068c484fc5092df70`.
-- Kullanıcı production AAB ZIP paketini cihazına başarıyla indirdi.
-
-## Production kurulabilir APK — HAZIR, FİZİKSEL PASS BEKLİYOR
-- Kullanıcı Play Console aşamasına geçerken production APK ile fiziksel test yapılmadığını fark etti; bu doğru kabul edildi. Play Console kapısı fiziksel test bitene kadar durduruldu.
-- AAB ile aynı runtime snapshot `93eec18cd6ee53ccc0eaca8fc9df20f921089bd5` temel alınarak `test/production-rc-apk-1.0.0-1` branch oluşturuldu. Sonraki commitler yalnız APK workflow doğrulaması; uygulama runtime kodu değişmedi.
-- Workflow `.github/workflows/production-rc-apk.yml` production upload key ile signed release APK üretir.
-- İlk APK run `33657387386`: APK build SUCCESS; package/version/targetSdk/signer/manifest kontrolleri PASS; yalnız yanlış `unzip` launcher-path guard'ı failure oldu. APK sorunu değildi.
-- Guard Android resource table üzerinden düzeltildi.
-- İkinci APK run `33658171635`: **SUCCESS**.
-- PASS: private upload key/fingerprint, production source identity + exact launcher source hash, signed release APK build, APK signer, package `com.zmilastudio.takipanalizi`, version `1.0.0 (1)`, targetSdk36, backup=false, cleartext=false, INTERNET yok, debuggable/testOnly yok, launcher resource table, artifact upload.
-- Artifact adı `takip-analizi-production-rc-apk-1.0.0-1`; ID `9857778252`; ZIP `28,700,652` byte; artifact digest `sha256:8d56c3c9ea2648a804280a97269e8ef9b302fe44b7b42d2ed12d2fc85a64a9f9`.
-- Çıkarılan doğrudan APK boyutu `61,698,385` byte.
-- Production APK SHA-256 `355a9687b72fc080b1b3d23d5e06fab2149c185d6142f31c02a5532fad765aca`; workflow `.sha256` dosyasıyla bağımsız hash eşleşmesi PASS.
-- Kullanıcıya verilen dosya: `Takip-Analizi-1.0.0-production-rc.apk`.
-- Bu APK upload key ile yerel fiziksel RC testine uygundur. Play App Signing etkinleşince Play üzerinden dağıtılan APK'lar Google'ın app-signing key'i ile imzalanacaktır; runtime doğrulama amacı aynıdır fakat dağıtım imzası farklı olacaktır.
-- Production fiziksel PASS henüz verilmedi.
+## Eski reklamsız Production AAB/APK — ARŞİV BASELINE, FINAL DEĞİL
+Reklam kararı öncesi production RC teknik olarak başarılıydı fakat artık final yayın adayı değildir.
+- AAB success run `33627604993`; artifact `takip-analizi-production-rc-1.0.0-1`.
+- Reklamsız production APK success run `33658171635`.
+- Reklamsız APK SHA-256 `355a9687b72fc080b1b3d23d5e06fab2149c185d6142f31c02a5532fad765aca`.
+- Bunlar rollback/reference baseline olarak korunur.
 
 ## Play Console / Play App Signing — BEKLEMEDE
-- Güncel yol: uygulama → `Google Play ile korunanlar` / bazı hesaplarda `Test edin ve yayınlayın > Uygulama bütünlüğü` → Play App Signing.
+- Reklamlı final build fiziksel PASS almadan Play Console’a final yükleme yapılmayacak.
 - Doğrulanacak upload certificate SHA-256 `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
-- AAB `1.0.0 (1)` internal testing için hazır ancak reklam kararı ve yeni final build gerekip gerekmediği netleşmeden yükleme sürecine devam edilmeyecek.
-
-## Privacy / Play hazırlığı
-Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
-- Şu anki belgeler reklamsız local-only build'e göredir.
-- Reklam eklenirse Data Safety, privacy ve Play Ads beyanları güncellenecek.
+- Canlı AdMob App ID + banner unit ID + interstitial unit ID henüz oluşturulup projeye bağlanmadı.
+- Play Console Ads beyanı: **Yes** olacak.
+- Data Safety reklam SDK’sı nedeniyle yeniden doldurulacak.
 
 ## Store görselleri
 - Exact 512×512 icon SHA-256 `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
@@ -105,18 +176,29 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - 8 gerçek-app screenshot hedefi: 1080×1920, 9:16, sentetik demo verisi, production RC üzerinden.
 
 ## Branch durumu
-- `test/device-apk` → v2-39 tested baseline.
+- `test/device-apk` → v2-39 fiziksel tested baseline.
 - `backup/device-v2-39-release-hardening-ci-working` korunuyor.
 - `backup/pre-production-rc-aapt-fix` korunuyor.
-- `dev/release-polish-v1` → production AAB success + release/store hazırlığı + reklam karar aşaması.
-- `test/production-rc-apk-1.0.0-1` → production RC APK SUCCESS; runtime AAB snapshot ile aynı.
-- `main` → privacy/support + production AAB workflow dispatch tanımı.
+- `backup/pre-ads-v1` → reklam entegrasyonu öncesi güvenli production hazırlığı.
+- `dev/release-polish-v1` → reklamsız production/store baseline.
+- `dev/ads-v1` → aktif reklam entegrasyonu; Ads RC APK CI SUCCESS.
+- `test/production-rc-apk-1.0.0-1` → eski reklamsız production RC APK.
+- `main` → public privacy/support + production workflow; reklamlı final privacy henüz main’e taşınmadı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. Interstitial frequency cap / gösterim anı kullanıcıyla birlikte kilitlenecek.
-2. Google Mobile Ads/AdMob entegrasyonu, privacy/Data Safety/Ads beyanları ve yeni production APK/AAB hazırlanacak.
-3. Yeni production APK Samsung cihazda temiz fiziksel testten geçecek.
-4. Fiziksel PASS sonrası Play Console → Play App Signing fingerprint doğrulaması.
-5. Final AAB Internal testing sürümüne yüklenecek.
-6. Data Safety / IARC / 18+ / app access alanları tamamlanacak.
-7. Feature graphic final onayı + production RC ile sentetik demo 8 store screenshot.
+1. Kullanıcı Samsung cihazda `1.0.0 (2)` Google test reklamlı production APK’yı fiziksel test edecek:
+   - uygulama açılışı,
+   - banner görünümü ve UI’yı kapatmaması,
+   - Instagram gerçek arşiv analizi,
+   - 5 liste ve profil/yok say temel smoke,
+   - analizden geri çıkışta test interstitial,
+   - kapat/aç yerel geçmiş persistence,
+   - X gerçek arşiv smoke.
+2. Fiziksel PASS sonrası AdMob Console’da gerçek Android uygulaması `com.zmilastudio.takipanalizi` oluşturulacak/bağlanacak.
+3. Canlı `App ID`, adaptive banner ad unit ve interstitial ad unit oluşturulacak.
+4. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final AAB build’e verilecek.
+5. Final production workflow merged permission setini exact whitelist ile doğrulayacak.
+6. Reklamlı final signed AAB hazırlanacak; public privacy `main` güncellenecek.
+7. Play App Signing fingerprint doğrulaması + Internal testing.
+8. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
+9. Feature graphic final onayı + 8 store screenshot.
