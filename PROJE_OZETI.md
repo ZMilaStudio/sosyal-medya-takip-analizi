@@ -1,6 +1,6 @@
 # PROJE_OZETI
 
-Son güncelleme: 2 Eylül 2026
+Son güncelleme: 3 Eylül 2026
 
 ## Çalışma protokolü
 - Her yeni iş başlangıcında bu dosya + canlı GitHub repo okunur.
@@ -38,6 +38,13 @@ Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip anal
 - Yalnız `com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` AndroidX internal signature izni toleranslı.
 - Impeller kapalı mevcut fiziksel uyumluluk kararı korunur.
 
+## Reklam / monetizasyon — KARAR AŞAMASI
+- 3 Eylül 2026: kullanıcı uygulamaya reklam eklemeyi gündeme aldı; henüz reklam formatı veya sıklığı kilitlenmedi, koda reklam SDK'sı eklenmedi.
+- Mevcut production RC reklamsızdır ve INTERNET izni yoktur. AdMob/Google Mobile Ads entegrasyonu seçilirse mevcut production AAB/APK final release kabul edilmeyecek; yeni build gerekecek.
+- Reklam entegrasyonu; INTERNET/network erişimi, üçüncü taraf reklam SDK'sı, Google Play Data Safety, gizlilik politikası ve Play Console `Ads` beyanlarını yeniden ele almayı gerektirir.
+- Mevcut `Ads No` ve local-only Data Safety cevapları reklam SDK'sı eklendiğinde aynen kullanılamaz; SDK'nın veri işleme beyanları dahil edilmelidir.
+- Karar verilene kadar Play Console yükleme süreci beklemede tutulacak.
+
 ## Production kimliği
 - Package `com.zmilastudio.takipanalizi`.
 - İlk production `1.0.0+1`; versionName `1.0.0`; versionCode `1`; target/compile SDK 36.
@@ -71,19 +78,19 @@ Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip anal
 - Artifact adı `takip-analizi-production-rc-apk-1.0.0-1`; ID `9857778252`; ZIP `28,700,652` byte; artifact digest `sha256:8d56c3c9ea2648a804280a97269e8ef9b302fe44b7b42d2ed12d2fc85a64a9f9`.
 - Çıkarılan doğrudan APK boyutu `61,698,385` byte.
 - Production APK SHA-256 `355a9687b72fc080b1b3d23d5e06fab2149c185d6142f31c02a5532fad765aca`; workflow `.sha256` dosyasıyla bağımsız hash eşleşmesi PASS.
-- Kullanıcıya verilecek dosya: `Takip-Analizi-1.0.0-production-rc.apk`.
+- Kullanıcıya verilen dosya: `Takip-Analizi-1.0.0-production-rc.apk`.
 - Bu APK upload key ile yerel fiziksel RC testine uygundur. Play App Signing etkinleşince Play üzerinden dağıtılan APK'lar Google'ın app-signing key'i ile imzalanacaktır; runtime doğrulama amacı aynıdır fakat dağıtım imzası farklı olacaktır.
 - Production fiziksel PASS henüz verilmedi.
 
-## Play Console / Play App Signing — FİZİKSEL TEST SONRASINA BEKLİYOR
+## Play Console / Play App Signing — BEKLEMEDE
 - Güncel yol: uygulama → `Google Play ile korunanlar` / bazı hesaplarda `Test edin ve yayınlayın > Uygulama bütünlüğü` → Play App Signing.
 - Doğrulanacak upload certificate SHA-256 `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
-- AAB `1.0.0 (1)` internal testing için hazır ancak production APK fiziksel PASS verilmeden yükleme sürecine devam edilmeyecek.
+- AAB `1.0.0 (1)` internal testing için hazır ancak reklam kararı ve yeni final build gerekip gerekmediği netleşmeden yükleme sürecine devam edilmeyecek.
 
 ## Privacy / Play hazırlığı
 Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CONSOLE_FORM_ANSWERS.md`, `PLAY_STORE_LISTING_TR.md`, `PLAY_STORE_LISTING_EN.md`, `PLAY_RELEASE_NOTES.md`, `PLAY_CONSOLE_LAUNCH_PACK.md`, `RELEASE_CHECKLIST.md`, `SIGNING_SETUP.md`, `STORE_VISUAL_CAPTURE_PLAN.md`, `STORE_ICON_DERIVATION.md`, `FEATURE_GRAPHIC.md`.
-- Data Safety mevcut local-only mimari için collection/sharing No.
-- Ads No; özel login/app access No; kendi user account'u yok; target audience 18+; Tools/Araçlar.
+- Şu anki belgeler reklamsız local-only build'e göredir.
+- Reklam eklenirse Data Safety, privacy ve Play Ads beyanları güncellenecek.
 
 ## Store görselleri
 - Exact 512×512 icon SHA-256 `c838ffe6ef39bab9cab0176951334f8dc79e0158fc02755cb27ca28c856ae717`.
@@ -95,14 +102,15 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - `test/device-apk` → v2-39 tested baseline.
 - `backup/device-v2-39-release-hardening-ci-working` korunuyor.
 - `backup/pre-production-rc-aapt-fix` korunuyor.
-- `dev/release-polish-v1` → production AAB success + release/store hazırlığı.
+- `dev/release-polish-v1` → production AAB success + release/store hazırlığı + reklam karar aşaması.
 - `test/production-rc-apk-1.0.0-1` → production RC APK SUCCESS; runtime AAB snapshot ile aynı.
 - `main` → privacy/support + production AAB workflow dispatch tanımı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. Kullanıcı `Takip-Analizi-1.0.0-production-rc.apk` dosyasını Samsung cihazına **temiz kurulum** ile yükler.
-2. Tek kritik production fiziksel test: uygulama açılışı + exact launcher; Instagram gerçek export import/listeler; uygulamayı tamamen kapat/aç ve local persistence; gerçek X arşivi; profil linki; Yok say/geri al; geçmiş/karşılaştırma temel smoke.
-3. Fiziksel PASS sonrası Play Console → Play App Signing fingerprint doğrulaması.
-4. AAB `1.0.0 (1)` Internal testing sürümüne yüklenir.
-5. Data Safety / IARC / 18+ / app access alanları tamamlanır.
-6. Feature graphic final onayı + production RC ile sentetik demo 8 store screenshot.
+1. Reklam modeli, formatları ve frequency cap kullanıcıyla birlikte kilitlenecek.
+2. Reklam kararı `var` ise Google Mobile Ads/AdMob entegrasyonu, privacy/Data Safety/Ads beyanları ve yeni production APK/AAB hazırlanacak.
+3. Yeni production APK Samsung cihazda temiz fiziksel testten geçecek.
+4. Fiziksel PASS sonrası Play Console → Play App Signing fingerprint doğrulaması.
+5. Final AAB Internal testing sürümüne yüklenecek.
+6. Data Safety / IARC / 18+ / app access alanları tamamlanacak.
+7. Feature graphic final onayı + production RC ile sentetik demo 8 store screenshot.
