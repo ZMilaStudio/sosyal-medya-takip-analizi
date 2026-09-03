@@ -18,7 +18,7 @@ class AboutPrivacyScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _InfoCard(
             icon: Icons.phone_android_rounded,
-            title: 'Analiz local-first',
+            title: 'Local-first',
             body:
                 'Instagram ve X arşivlerinin içeriği cihazında analiz edilir. Takip listelerin, analiz snapshot’ların ve Yok say tercihlerin reklam amacıyla Google’a veya geliştirici sunucusuna gönderilmez.',
           ),
