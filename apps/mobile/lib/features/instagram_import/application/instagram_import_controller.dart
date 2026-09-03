@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:follow_core/follow_core.dart';
 
+import '../../../core/ads/ads_coordinator.dart';
 import '../../../data/local/follow_history_provider.dart';
 
 final instagramImportControllerProvider = AsyncNotifierProvider<
@@ -23,6 +24,7 @@ class InstagramImportController
     String rawUsername,
   ) async {
     state = const AsyncLoading();
+    AdsCoordinator.instance.setBannerSuppressed(true);
 
     try {
       final username = _normalizeUsername(rawUsername);
@@ -64,6 +66,8 @@ class InstagramImportController
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       return null;
+    } finally {
+      AdsCoordinator.instance.setBannerSuppressed(false);
     }
   }
 
