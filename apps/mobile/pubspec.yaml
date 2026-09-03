@@ -1,7 +1,7 @@
 name: sosyal_medya_takip_analizi
 description: Local-first social media follow analysis application.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ">=3.12.0 <4.0.0"
@@ -19,6 +19,7 @@ dependencies:
   follow_core:
     path: ../../packages/follow_core
   go_router: ^18.0.0
+  google_mobile_ads: ^9.1.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
 
