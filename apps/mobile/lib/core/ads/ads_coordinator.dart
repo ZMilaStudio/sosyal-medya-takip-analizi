@@ -33,15 +33,15 @@ class AdsCoordinator {
     ConsentInformation.instance.requestConsentInfoUpdate(
       params,
       () async {
+        // A previous-session consent state can already permit ads here.
         await _startAdsIfAllowed();
-        await ConsentForm.loadAndShowConsentFormIfRequired((formError) {
-          if (formError != null) {
-            debugPrint(
-              'Ad consent form error ${formError.errorCode}: '
-              '${formError.message}',
-            );
-          }
-        });
+        final formError = await _loadAndShowConsentIfRequired();
+        if (formError != null) {
+          debugPrint(
+            'Ad consent form error ${formError.errorCode}: '
+            '${formError.message}',
+          );
+        }
         await _startAdsIfAllowed();
       },
       (formError) async {
@@ -49,9 +49,19 @@ class AdsCoordinator {
           'Ad consent update error ${formError.errorCode}: '
           '${formError.message}',
         );
+        // UMP can still have a valid previous-session state after an update
+        // error, so rely on canRequestAds rather than guessing consent.
         await _startAdsIfAllowed();
       },
     );
+  }
+
+  Future<FormError?> _loadAndShowConsentIfRequired() {
+    final completer = Completer<FormError?>();
+    ConsentForm.loadAndShowConsentFormIfRequired((formError) {
+      if (!completer.isCompleted) completer.complete(formError);
+    });
+    return completer.future;
   }
 
   Future<void> _startAdsIfAllowed() async {
@@ -82,10 +92,11 @@ class AdsCoordinator {
   }
 
   Future<FormError?> showPrivacyOptions() async {
-    FormError? result;
-    await ConsentForm.showPrivacyOptionsForm((formError) {
-      result = formError;
+    final completer = Completer<FormError?>();
+    ConsentForm.showPrivacyOptionsForm((formError) {
+      if (!completer.isCompleted) completer.complete(formError);
     });
+    final result = await completer.future;
     await _startAdsIfAllowed();
     return result;
   }
