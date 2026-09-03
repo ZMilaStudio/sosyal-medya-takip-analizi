@@ -39,11 +39,17 @@ Android öncelikli Flutter + Dart, local-first Instagram ve X/Twitter takip anal
 - Impeller kapalı mevcut fiziksel uyumluluk kararı korunur.
 
 ## Reklam / monetizasyon — KARAR AŞAMASI
-- 3 Eylül 2026: kullanıcı uygulamaya reklam eklemeyi gündeme aldı; henüz reklam formatı veya sıklığı kilitlenmedi, koda reklam SDK'sı eklenmedi.
+- 3 Eylül 2026: kullanıcı uygulamaya reklam eklemeyi gündeme aldı; henüz koda reklam SDK'sı eklenmedi.
+- Model yönü: **dengeli reklam modeli**. App Open ve rewarded başlangıçta yok; interstitial yalnız doğal geçişlerde ve seyrek olacak.
+- Banner kararı KİLİTLENDİ: **uygun olan mümkün olduğunca çok ekranda adaptive banner** kullanılabilir.
+- Takipçi listelerinde de banner olacak; liste öğelerinin arasına sokulmayacak, **ekranın altına sabit/anchored adaptive banner** olarak konumlanacak. Böylece liste kaydırması ve satır seçimi bölünmeyecek.
+- Banner; ana ekran, analiz özeti, takipçi kategorisi listeleri, geçmiş/karşılaştırma ve benzeri uygun ekranlarda kullanılabilir; dosya seçici, yükleme/analiz işlemi veya kritik modal akışın üzerine bindirilmeyecek.
+- İlk analiz sonucu görünmeden önce tam ekran reklam gösterilmeyecek.
 - Mevcut production RC reklamsızdır ve INTERNET izni yoktur. AdMob/Google Mobile Ads entegrasyonu seçilirse mevcut production AAB/APK final release kabul edilmeyecek; yeni build gerekecek.
 - Reklam entegrasyonu; INTERNET/network erişimi, üçüncü taraf reklam SDK'sı, Google Play Data Safety, gizlilik politikası ve Play Console `Ads` beyanlarını yeniden ele almayı gerektirir.
 - Mevcut `Ads No` ve local-only Data Safety cevapları reklam SDK'sı eklendiğinde aynen kullanılamaz; SDK'nın veri işleme beyanları dahil edilmelidir.
 - Karar verilene kadar Play Console yükleme süreci beklemede tutulacak.
+- Açık reklam kararı: interstitial frequency cap / gösterim anı kesinleştirilecek.
 
 ## Production kimliği
 - Package `com.zmilastudio.takipanalizi`.
@@ -107,8 +113,8 @@ Hazır: `PRIVACY_POLICY.md`, `SUPPORT.md`, `PLAY_STORE_DATA_SAFETY.md`, `PLAY_CO
 - `main` → privacy/support + production AAB workflow dispatch tanımı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. Reklam modeli, formatları ve frequency cap kullanıcıyla birlikte kilitlenecek.
-2. Reklam kararı `var` ise Google Mobile Ads/AdMob entegrasyonu, privacy/Data Safety/Ads beyanları ve yeni production APK/AAB hazırlanacak.
+1. Interstitial frequency cap / gösterim anı kullanıcıyla birlikte kilitlenecek.
+2. Google Mobile Ads/AdMob entegrasyonu, privacy/Data Safety/Ads beyanları ve yeni production APK/AAB hazırlanacak.
 3. Yeni production APK Samsung cihazda temiz fiziksel testten geçecek.
 4. Fiziksel PASS sonrası Play Console → Play App Signing fingerprint doğrulaması.
 5. Final AAB Internal testing sürümüne yüklenecek.
