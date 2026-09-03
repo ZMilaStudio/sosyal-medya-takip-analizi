@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../core/ads/ads_coordinator.dart';
 
 class AboutPrivacyScreen extends StatelessWidget {
   const AboutPrivacyScreen({super.key});
@@ -17,10 +18,26 @@ class AboutPrivacyScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _InfoCard(
             icon: Icons.phone_android_rounded,
-            title: 'Local-first',
+            title: 'Analiz local-first',
             body:
-                'Instagram ve X arşivleri cihazında analiz edilir. Production Android sürümü analiz verilerini geliştirici sunucusuna gönderecek INTERNET iznini istemeyecek şekilde hazırlanmıştır. Flutter debug/profile geliştirme build’leri geliştirme araçları için bu izni ekleyebilir.',
+                'Instagram ve X arşivlerinin içeriği cihazında analiz edilir. Takip listelerin, analiz snapshot’ların ve Yok say tercihlerin reklam amacıyla Google’a veya geliştirici sunucusuna gönderilmez.',
           ),
+          const SizedBox(height: 10),
+          const _InfoCard(
+            icon: Icons.ads_click_rounded,
+            title: 'Reklam bağlantısı ayrı çalışır',
+            body:
+                'Uygulama reklam göstermek için Google Mobile Ads kullanır. Reklam sunumu, ölçümü, analiz ve kötüye kullanım önleme amacıyla Google; IP adresi, uygulama etkileşimleri, tanılama bilgileri ve cihaz/reklam tanımlayıcıları gibi verileri işleyebilir. Bu reklam trafiği sosyal medya arşivlerinin içeriğinden ayrıdır.',
+          ),
+          const SizedBox(height: 10),
+          const _InfoCard(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Reklam gizlilik tercihleri',
+            body:
+                'Gerekli bölgelerde Google User Messaging Platform üzerinden reklam ve kişiselleştirme tercihleri alınır. Uygun olduğunda bu tercihleri aşağıdaki düğmeden daha sonra yeniden açabilirsin.',
+          ),
+          const SizedBox(height: 8),
+          const _PrivacyOptionsButton(),
           const SizedBox(height: 10),
           const _InfoCard(
             icon: Icons.password_rounded,
@@ -77,6 +94,35 @@ class AboutPrivacyScreen extends StatelessWidget {
   }
 }
 
+class _PrivacyOptionsButton extends StatelessWidget {
+  const _PrivacyOptionsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: AdsCoordinator.instance.isPrivacyOptionsRequired(),
+      builder: (context, snapshot) {
+        if (snapshot.data != true) return const SizedBox.shrink();
+        return OutlinedButton.icon(
+          onPressed: () async {
+            final error = await AdsCoordinator.instance.showPrivacyOptions();
+            if (!context.mounted || error == null) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Reklam gizlilik tercihleri açılamadı: ${error.message}',
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.tune_rounded),
+          label: const Text('Reklam gizlilik tercihlerini yönet'),
+        );
+      },
+    );
+  }
+}
+
 class _HeroCard extends StatelessWidget {
   const _HeroCard();
 
@@ -108,7 +154,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Instagram ve X takip ilişkilerini, hesabının şifresini paylaşmadan ve arşivlerini geliştirici sunucusuna göndermeden analiz etmek için tasarlanmıştır.',
+                  'Instagram ve X takip ilişkilerini, hesabının şifresini paylaşmadan ve arşivlerini geliştirici sunucusuna göndermeden analiz etmek için tasarlanmıştır. Reklam ağı trafiği analiz verisinden ayrı tutulur.',
                   style: TextStyle(color: AppColors.muted, height: 1.45),
                 ),
               ],
