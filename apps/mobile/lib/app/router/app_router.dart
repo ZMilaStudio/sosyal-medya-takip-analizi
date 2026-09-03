@@ -2,6 +2,7 @@ import 'package:follow_core/follow_core.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/ads/ad_screen_frame.dart';
+import '../../core/ads/analysis_exit_ad_gate.dart';
 import '../../features/about/presentation/about_privacy_screen.dart';
 import '../../features/analysis/presentation/analysis_screen.dart';
 import '../../features/data_management/presentation/local_data_management_screen.dart';
@@ -59,7 +60,9 @@ final GoRouter appRouter = GoRouter(
             if (extra is! FollowAnalysisResult) {
               return const HomeScreen();
             }
-            return AnalysisScreen(result: extra);
+            return AnalysisExitAdGate(
+              child: AnalysisScreen(result: extra),
+            );
           },
         ),
       ],
