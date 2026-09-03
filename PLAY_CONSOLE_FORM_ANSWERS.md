@@ -1,225 +1,203 @@
 # Takip Analizi — Play Console Form Cevap Taslağı
 
-Son güncelleme: 1 Eylül 2026
+Son güncelleme: 3 Eylül 2026
 
-Bu dosya mevcut **local-first release-hardening** mimarisine göre Google Play Console formlarında kullanılacak cevap taslağıdır. Production AAB davranışı değişirse cevaplar yeniden kontrol edilmelidir.
+Bu dosya **reklamlı Takip Analizi 1.0.0 (2)** adayı için Play Console cevap taslağıdır. Final AAB ve canlı AdMob kimlikleri doğrulanmadan Console’a körlemesine kopyalanmamalıdır.
 
 ## 1. Privacy policy
 
 Privacy policy URL:
-
 `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md`
 
-Geliştirici / gizlilik iletişimi:
-
+Gizlilik / destek:
 `zmilastudio@gmail.com`
 
 Support URL:
-
 `https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md`
 
-Uygulama içinde ayrıca güncel `Gizlilik ve Hakkında` ekranı vardır.
+Uygulama içinde `Gizlilik ve Hakkında` ekranı ve gerektiğinde Google UMP privacy-options girişi vardır.
 
 ## 2. Ads
 
-**Uygulama reklam içeriyor mu? → Hayır**
+**Uygulama reklam içeriyor mu? → Evet / Yes**
 
-Mevcut bağımlılıklarda reklam SDK’sı yoktur ve uygulama reklam göstermez.
+Formatlar:
+- anchored adaptive banner,
+- seyrek interstitial.
+
+Başlangıçta App Open ve rewarded kullanılmaz.
+
+Interstitial ürün kuralı:
+- ilk analiz sonucu görünmeden gösterilmez,
+- yalnız analiz tamamlandıktan sonraki doğal çıkış/geçişte,
+- iki interstitial arasında en az 10 dakika,
+- oturum başına en fazla 2.
 
 ## 3. App access
 
-**Uygulamanın tamamı veya bir bölümü özel erişim / üyelik / giriş bilgisi gerektiriyor mu? → Hayır**
+**Özel erişim / üyelik / login gerekiyor mu? → Hayır / No**
 
 - Takip Analizi kendi kullanıcı hesabını oluşturmaz.
-- Instagram veya X hesabına giriş yapmaz.
+- Instagram/X hesabına giriş yapmaz.
 - Sosyal medya şifresi istemez.
-- Uygulama ekranları özel demo hesabı olmadan açılabilir.
-- Arşiv analizi özelliğinin çalışması için kullanıcı kendi resmi Instagram/X dışa aktarma dosyasını seçer; bu bir uygulama erişim kısıtı değildir.
+- Arşiv analizi için kullanıcı kendi resmi dışa aktarma dosyasını seçer; bu özel uygulama erişimi değildir.
 
-Reviewer notes gerekiyorsa:
-
+Reviewer note:
 `No login or special access is required. Archive analysis is performed locally on files explicitly selected by the user.`
 
 ## 4. Data safety — temel cevap
 
-### Does your app collect or share any of the required user data types?
+### Does your app collect or share any required user data types?
 
-**Önerilen cevap: No**
+**Yes / Evet.**
 
-Gerekçe:
+Sebep: Google Mobile Ads SDK reklam sunumu, analytics ve fraud prevention için cihaz dışına veri aktarabilir. Sosyal medya arşiv içeriği ise cihazda kalır ve reklam isteğine eklenmez.
 
-- Instagram/X arşiv verileri yalnız cihaz üzerinde işlenir.
-- Analiz/snapshot verileri uygulama tarafından cihazda tutulur.
-- Mevcut mimaride ZMila Studio sunucusuna veri gönderilmez.
-- Analytics, reklam veya cloud SDK’sı yoktur.
-- Production kaynak manifestinde `INTERNET` veya app-defined `uses-permission` yoktur.
-- AndroidX Core merged manifestte eski Android sürümlerinde non-exported dynamic receiver güvenliği için paket-kapsamlı `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı signature-level internal permission ekleyebilir. Bu kullanıcıdan istenen runtime/data-access izni değildir.
-- Production CI bu AndroidX internal izni dışında başka merged `uses-permission` kabul etmez ve `INTERNET` iznini kesin olarak reddeder.
-- Production manifestte `android:allowBackup="false"` vardır ve backup/data-transfer extraction rule’ları app-managed local data domainlerini hariç tutar.
-- Google Play’in Data Safety tanımında yalnız cihazda erişilen/işlenen ve cihaz dışına gönderilmeyen veri “collected” olarak beyan edilmek zorunda değildir.
+### Önerilen data-type cevapları
+
+Google Mobile Ads’in güncel resmi data disclosure belgesine göre muhafazakâr Play eşlemesi:
+
+- **Location → Approximate location** — Collected: Yes, Shared: Yes. IP address genel konum tahmini için kullanılabilir.
+- **App activity → App interactions** — Collected: Yes, Shared: Yes.
+- **App info and performance → Diagnostics** — Collected: Yes, Shared: Yes.
+- **Device or other IDs** — Collected: Yes, Shared: Yes.
+
+Amaçlar, Console’daki güncel seçeneklere göre:
+- Advertising or marketing,
+- Analytics,
+- Fraud prevention, security and compliance.
+
+Google Mobile Ads resmi kaynak:
+https://developers.google.com/admob/android/privacy/play-data-disclosure
+
+### Is data encrypted in transit?
+
+**Yes / Evet.** Google Mobile Ads SDK bu aktarımların TLS ile şifrelendiğini belirtir.
+
+### User choice / consent
+
+Uygulama UMP kullanır:
+- her launch’ta consent info update,
+- gerekliyse consent form,
+- `canRequestAds()` false ise reklam isteği yapılmaz,
+- gerekli olduğunda uygulama içinden privacy options tekrar açılabilir.
+
+Final Console’daki “optional/required” alanı, o günkü form ifadesi ve aktif AdMob consent yapılandırmasıyla yeniden doğrulanacaktır.
+
+### Local-only social archive data
+
+Aşağıdaki analiz verileri ZMila Studio sunucusuna gönderilmez ve AdMob reklam request’ine eklenmez:
+- Instagram/X kullanıcı adı veya hesap kimliği,
+- followers/following listeleri,
+- analiz kategorileri,
+- snapshot geçmişi,
+- Yok say tercihleri.
 
 ### External profile links
 
-Kullanıcı bir hesap satırına dokunarak profil açmayı **kendisi başlatır**. URL, Android üzerinden ilgili sosyal uygulamaya veya tarayıcıya devredilir. Bu kullanıcı tarafından açıkça başlatılan ve beklenen bir eylemdir; Google’ın user-initiated transfer istisnası kapsamında “sharing” olarak beyan edilmesi gerekmeyen akış olarak değerlendirilmiştir.
+Kullanıcı profil açmayı açıkça kendisi başlatır; Android bağlantıyı ilgili sosyal uygulamaya/tarayıcıya devreder. Sonraki veri işleme üçüncü tarafın politikasına tabidir.
 
 ### Report copy / TXT export
 
-Kullanıcı analiz ekranındaki `Raporu kopyala` veya `TXT olarak kaydet` eylemini **kendisi başlatır**.
+Kullanıcı açıkça başlatır:
+- `Raporu kopyala` → sistem panosu,
+- `TXT olarak kaydet` → kullanıcının seçtiği dosya hedefi.
 
-- `Raporu kopyala` analiz metnini Android sistem panosuna yazar.
-- `TXT olarak kaydet` analiz metnini Android file picker üzerinden kullanıcının seçtiği dosya hedefine yazar.
-- Rapor hesap kullanıcı adlarını ve kategori sonuçlarını içerebilir.
-- Uygulama bu export’u ZMila Studio sunucusuna göndermez.
-- Bu, kullanıcının kendi verisini açıkça seçtiği hedefe aktardığı user-initiated local export olarak değerlendirilir.
-
-### Android automatic backup
-
-Production release için:
-
-- `android:allowBackup="false"`
-- Android 11 ve altı `backup_rules.xml`
-- Android 12+ `data_extraction_rules.xml`
-
-ile app-managed local analiz verisi cloud backup / backup extraction kapsamı dışında bırakılmıştır.
-
-Android dokümantasyonuna göre bazı OEM/system-level device-to-device migration davranışları uygulamanın tam kontrolü dışında olabilir. Bu nedenle mutlak bir “hiçbir sistem aktarımı olamaz” iddiası kullanılmaz; uygulama tarafından kontrol edilen backup policy’nin kapalı olduğu belirtilir.
+Rapor ZMila Studio sunucusuna gönderilmez.
 
 ### Local deletion
 
-- Uygulama kendi cloud hesabını oluşturmaz.
-- Geliştirici sunucusunda kullanıcı verisi tutulmaz.
-- Kullanıcı `Yerel Veri Yönetimi` ekranından analiz geçmişini, yok sayılanları veya tüm yerel uygulama verisini silebilir.
-- Android uygulama veri yönetimi / uygulama kaldırma da yerel veriyi temizlemek için kullanılabilir.
-- Kullanıcının ayrıca dışa aktardığı TXT dosyası veya panoya kopyaladığı içerik uygulama sandbox’ı dışında olduğundan bunların silinmesi kullanıcının seçtiği hedef/sistem panosu üzerinden yönetilir.
+`Yerel Veri Yönetimi` ekranı analiz geçmişini, Yok say tercihlerini ve app-managed yerel veriyi silebilir. ZMila Studio tarafında kullanıcı hesabı veya analiz verisi backend’i yoktur.
 
-### Encryption in transit
-
-Mevcut local analysis akışında geliştirici sunucusuna veri transferi olmadığı için uygulama veri toplama akışına ilişkin “encryption in transit” beyanı uygulanabilir bir geliştirici veri transferi değildir.
-
-Harici Instagram/X profili açma işlemi ilgili üçüncü taraf uygulama/tarayıcı tarafından yönetilir.
+Reklam ağı tarafından işlenen veriler Google’ın privacy/ad-ID/consent kontrollerine tabidir.
 
 ## 5. Target audience and content
 
-### Target age groups
+**Önerilen hedef yaş: 18 and over / 18 yaş ve üstü**
 
-**Önerilen seçim: 18 and over / 18 yaş ve üstü**
-
-Gerekçe:
-
-- Uygulama çocuklar için tasarlanmamıştır.
-- Çocuklara yönelik karakter, görsel dil, oyunlaştırma veya eğitim içeriği yoktur.
-- Gizlilik politikası da ürünün çocuklara yönelik olmadığını belirtir.
-- 13–17 yaş gruplarını sırf erişimi genişletmek için hedef kitleye eklememek Google’ın hedef kitle doğruluğu yaklaşımıyla uyumludur.
-
-Ek `Restrict minors` seçeneği Console’da görünürse yalnız uygulamanın 18 yaş altına teknik olarak kapatılması isteniyorsa etkinleştirilecektir; sırf 18+ hedef kitle seçildi diye otomatik işaretlenmeyecektir.
+Uygulama çocuklara yönelik değildir. Çocuklara yönelik karakter, oyunlaştırma veya eğitim içeriği yoktur.
 
 ## 6. Content rating / IARC
 
-Kategori seçimi için en uygun başlangıç:
+En yakın kategori: **Utility / Productivity / Other**.
 
-**Utility, Productivity, Communication, or Other**
-
-Mevcut uygulama davranışına göre questionnaire yaklaşımı:
-
+Mevcut içerik için başlangıç cevapları:
 - Violence → No
 - Sexual content / nudity → No
-- Language / profanity → No
+- Profanity → No
 - Controlled substances → No
 - Gambling → No
-- Horror / fear → No
-- User-generated content hosted/shared inside the app → No
-- Native online interaction/content exchange between Takip Analizi users → No
-- Location sharing → No
-- Purchases / digital goods → No
+- Horror/fear → No
+- App-hosted user-generated content → No
+- Native user-to-user communication → No
+- Location sharing feature → No
+- Digital goods / purchases → No
 
-Not: Uygulama kullanıcıları birbirleriyle iletişim kurmaz. Harici Instagram/X profil açma işlemi ikinci bir uygulamada gerçekleştiği için Takip Analizi’nin native online interaction özelliği değildir.
-
-IARC sonucu Console tarafından üretilecektir; herhangi bir yaş derecesi önceden uydurulmayacaktır.
+IARC sonucu Console tarafından üretilecek.
 
 ## 7. App category
 
 **Tools / Araçlar**
 
-Uygulama sosyal ağ değildir; kullanıcının resmi veri arşivini yerel olarak analiz eden yardımcı araçtır.
+## 8. News app
 
-## 8. News app declaration
+**No**
 
-**News app? → No**
+## 9. Government app
 
-## 9. Government app declaration
+**No**
 
-**Government app / government affiliation? → No**
+## 10. Health features
 
-## 10. Health apps declaration
+**No**
 
-**Health-related features? → No**
+## 11. Financial features
 
-## 11. Financial features declaration
+**No**
 
-**Financial features? → No**
+## 12. Account creation / deletion
 
-Uygulama ödeme, kredi, yatırım, kripto, para transferi veya finansal hesap işlevi sunmaz.
+Takip Analizi kendi kullanıcı hesabını oluşturmaz. Bu nedenle uygulama hesabı silme akışı yoktur. Yerel uygulama verileri uygulama içinden silinebilir.
 
-## 12. Account creation / account deletion
+## 13. Permissions / network
 
-Takip Analizi kendi kullanıcı hesabını oluşturmaz.
+Reklamlı production sözleşmesi:
+- source main manifestte geniş kullanıcı-verisi runtime izinları eklenmez,
+- Google Mobile Ads merged manifest üzerinden ağ/reklam izinları ekleyebilir,
+- `INTERNET` artık reklamlı production’da beklenen bir izindir,
+- `android:usesCleartextTraffic="false"` korunur,
+- `android:allowBackup="false"` korunur,
+- broad storage / contacts / SMS / call logs / camera / microphone / location runtime izinları kullanılmaz,
+- `debuggable=true` ve `testOnly=true` production’da reddedilir,
+- exact launcher korunur.
 
-Bu nedenle Play’in uygulama-içi hesap oluşturan ürünlere yönelik account-deletion gereksinimi uygulanmaz. Yerel uygulama verisi için uygulama içi silme mekanizması mevcuttur.
-
-## 13. Permissions / data access notları
-
-Production sözleşmesi:
-
-- Kaynak `main` manifestte app-defined `<uses-permission>` olmayacak.
-- Release merged manifestte yalnız AndroidX Core’un uygulama-kapsamlı signature-level `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` iznine tolerans gösterilecek.
-- `android.permission.INTERNET` ve başka tüm merged `uses-permission` girdileri CI tarafından reddedilecek.
-
-Ayrıca:
-
-- Dosyalar Android sistem file picker üzerinden kullanıcı tarafından seçilir.
-- `MANAGE_EXTERNAL_STORAGE` kullanılmaz.
-- `READ/WRITE_EXTERNAL_STORAGE` kullanılmaz.
-- `READ_MEDIA_*` kullanılmaz.
-- Contacts / SMS / Call Log / Location / Camera / Microphone runtime izinleri istenmez.
-- Production kaynak manifestinde `android:usesCleartextTraffic="false"` vardır.
-- Debug ve profile Flutter build’leri geliştirme araçları için `INTERNET` iznini kendi manifestlerinden ekleyebilir; bu production davranışı değildir.
-- Production workflow `android:debuggable="true"` veya `android:testOnly="true"` görülürse fail olur.
+İlk reklamlı RC build gerçek merged permission setini çıkaracak; final CI whitelist bu sete göre kilitlenecek.
 
 ## 14. Target API
 
-v2-39 CI debug APK badging doğrulaması:
+Final aday:
+- compileSdk 36,
+- targetSdk 36,
+- Android 16 target.
 
-- `compileSdkVersion = 36`
-- `targetSdkVersion = 36`
-- platform build = Android 16
+Reklamlı AAB ve APK üzerinde yeniden doğrulanacaktır.
 
-Bu, 31 Ağustos 2026’dan itibaren yeni mobil uygulamalar için geçerli API 36 hedefleme gereksinimiyle uyumludur.
+## 15. AdMob / UMP yayın kapısı
 
-Production AAB üzerinde de aynı targetSdk final release kontrol listesinde yeniden doğrulanacaktır.
-
-## 15. Console’a girerken tekrar kontrol edilecekler
-
-Aşağıdaki durumlarda bu dosyadaki cevapları otomatik kullanma; yeniden değerlendir:
-
-- canlı Instagram/X API veya OAuth eklenirse,
-- production release’e AndroidX internal receiver permission dışında yeni bir Android permission girerse,
-- `usesCleartextTraffic`, `allowBackup` veya backup/data-extraction policy gevşetilirse,
-- analytics/crash reporting/reklam SDK’sı eklenirse,
-- cloud sync veya kullanıcı hesabı eklenirse,
-- uygulama içi destek formu kişisel veri göndermeye başlarsa,
-- uygulama çocuk/genç hedef kitleye özel olarak yeniden tasarlanırsa,
-- kullanıcılar arasında mesajlaşma/paylaşım gibi native sosyal özellik eklenirse.
+Production’a geçmeden önce:
+1. Test App ID + Google test ad unit ID’leriyle reklamlı RC APK başarıyla build edilmeli.
+2. Fiziksel cihazda banner, listeler, import sırasında reklam suppression ve capped interstitial kontrol edilmeli.
+3. AdMob’da gerçek uygulama oluşturulmalı.
+4. Canlı `ADMOB_APP_ID`, `ADMOB_BANNER_UNIT_ID`, `ADMOB_INTERSTITIAL_UNIT_ID` güvenli CI secrets olarak girilmeli.
+5. Final AAB `ADMOB_USE_TEST_IDS=false` ile build edilmeli; sample/test IDs final pakette reddedilmeli.
+6. Public privacy policy reklamlı metne güncellenmiş olmalı.
+7. Ads ve Data Safety Console cevapları bu dokümanla final kez karşılaştırılmalı.
 
 ## Resmi referanslar
 
-Google Play:
-- Data Safety: https://support.google.com/googleplay/android-developer/answer/10787469
-- User Data / Privacy Policy: https://support.google.com/googleplay/android-developer/answer/10144311
+- Google Mobile Ads Data Safety disclosure: https://developers.google.com/admob/android/privacy/play-data-disclosure
+- Google UMP Flutter: https://developers.google.com/admob/flutter/privacy
+- Google Play Data Safety: https://support.google.com/googleplay/android-developer/answer/10787469
+- Google Play User Data: https://support.google.com/googleplay/android-developer/answer/10144311
 - Target audience: https://support.google.com/googleplay/android-developer/answer/9867159
 - Content ratings: https://support.google.com/googleplay/android-developer/answer/9898843
-- Target API requirements: https://support.google.com/googleplay/android-developer/answer/11926878
-
-Android / AndroidX:
-- Application manifest / allowBackup: https://developer.android.com/guide/topics/manifest/application-element
-- Android 12 backup/data transfer rules: https://developer.android.com/about/versions/12/behavior-changes-12
-- AndroidX Core merged receiver permission: https://android.googlesource.com/platform/prebuilts/sdk/+/fa1474c543bdd7eaa690ba935d9ea8249fd12880/current/androidx/manifests/androidx.core_core/AndroidManifest.xml
