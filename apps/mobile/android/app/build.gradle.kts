@@ -15,6 +15,10 @@ val playUploadStorePassword = System.getenv("PLAY_UPLOAD_STORE_PASSWORD")
 val playUploadKeyAlias = System.getenv("PLAY_UPLOAD_KEY_ALIAS")
 val playUploadKeyPassword = System.getenv("PLAY_UPLOAD_KEY_PASSWORD")
 
+val admobAppId = System.getenv("ADMOB_APP_ID")
+    ?.takeIf { it.isNotBlank() }
+    ?: "ca-app-pub-3940256099942544~3347511713"
+
 android {
     namespace = "com.zmilastudio.takipanalizi"
     compileSdk = flutter.compileSdkVersion
@@ -31,6 +35,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     signingConfigs {
