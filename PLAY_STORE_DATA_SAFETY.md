@@ -1,203 +1,153 @@
 # Google Play — Veri Güvenliği Taslağı
 
-Son güncelleme: 1 Eylül 2026
+Son güncelleme: 3 Eylül 2026
 
-Bu dosya Play Console **Veri güvenliği** formunu doldururken kullanılacak teknik taslaktır. Nihai beyan, production AAB ve mağaza yayını öncesi yeniden doğrulanmalıdır.
+Bu dosya reklamlı **Takip Analizi 1.0.0 (2)** adayı için Play Console Veri güvenliği formu çalışma taslağıdır. Nihai form, final production AAB’nin merged manifesti ve kullanılan Google Mobile Ads SDK sürümü doğrulandıktan sonra doldurulacaktır.
 
-## Mevcut mimari için teknik gerçekler
+## Mimari ayrımı
 
-- Uygulama local-first çalışır.
-- Production kaynak manifestinde `android.permission.INTERNET` yoktur ve app-defined `<uses-permission>` girdisi bulunmaz.
-- Flutter debug/profile geliştirme build’leri hot reload/debugger için kendi manifestlerinden `INTERNET` izni ekler; bu development davranışıdır.
-- AndroidX Core merged manifestte `${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` adlı app-scoped signature-level internal permission ekleyebilir. Bu runtime/user-data izni değildir; eski Android sürümlerinde non-exported dynamic receiver güvenliği için kullanılır.
-- Production RC workflow’u yalnız bu AndroidX internal iznine tolerans gösterir; `INTERNET` veya başka merged `uses-permission` görülürse build’i fail eder.
-- Production manifestinde `android:allowBackup="false"` vardır.
-- Android 11 ve altı için `res/xml/backup_rules.xml` tüm app-managed backup domainlerini hariç tutar.
-- Android 12+ için `res/xml/data_extraction_rules.xml` hem `cloud-backup` hem `device-transfer` tarafında `root`, `file`, `database`, `sharedpref`, `external` domainlerini hariç tutar.
-- Production RC workflow’u backup policy dosyalarını ve merged release manifestte `allowBackup=false` değerini doğrular.
-- Production kaynak manifestinde `android:usesCleartextTraffic="false"` vardır.
-- Kullanıcının sosyal medya şifresi uygulamaya girilmez.
-- Dosyalar Android sistem dosya seçicisi üzerinden kullanıcı tarafından seçilir.
-- Analiz snapshot’ları ve “Yok say” tercihleri cihaz üzerinde saklanır.
-- Uygulama geliştirici sunucusuna analiz verisi yüklemez.
-- Reklam SDK’sı yoktur.
-- Analytics/telemetri SDK’sı yoktur.
-- Bulut senkronizasyonu yoktur.
+### Sosyal medya analiz verisi
 
-## Play Console için önerilen mevcut beyan
+- Instagram/X arşivi yalnız cihaz üzerinde analiz edilir.
+- Sosyal medya şifresi alınmaz.
+- Takipçi/takip edilen listeleri, analiz sonuçları, snapshot geçmişi ve Yok say tercihleri ZMila Studio sunucusuna yüklenmez.
+- Dosyalar Android sistem dosya seçicisinden kullanıcı tarafından seçilir.
+- Yerel analiz verileri Android automatic backup kapsamı dışında tutulur (`allowBackup=false` + extraction rules).
 
-### Uygulama kullanıcı verisi topluyor veya paylaşıyor mu?
+Bu sosyal medya arşiv içeriği reklam SDK’sına verilmez.
 
-**Önerilen cevap: Hayır.**
+### Reklam ağı verisi
 
-Gerekçe:
+Uygulama Google Mobile Ads / AdMob kullanır. Google’ın güncel Mobile Ads veri açıklamasına göre SDK aşağıdaki verileri reklam, analytics ve fraud prevention amaçlarıyla otomatik olarak **toplayabilir ve paylaşabilir**:
 
-- Sosyal medya arşivindeki veriler yalnız cihaz üzerinde işlenir.
-- ZMila Studio sunucusuna veya üçüncü taraf sunucuya aktarılmaz.
-- Google Play Data Safety kapsamındaki yalnız-cihazda erişim/işleme, veri cihaz dışına gönderilmiyorsa “collection” olarak beyan edilmek zorunda değildir.
-- Production Android yapılandırması app-managed yerel veriyi Android automatic backup kapsamı dışında bırakacak şekilde sertleştirilmiştir.
-- AndroidX’in internal signature receiver permission’ı kullanıcı verisi toplama/paylaşma yetkisi sağlamaz.
+1. **IP adresi** — cihazın genel/yaklaşık konumunu tahmin etmek için kullanılabilir.
+2. **User product interactions / uygulama etkileşimleri** — app launch, taps, ad/video interactions gibi.
+3. **Diagnostic information / tanılama** — uygulama/SDK performansı, launch time, hang rate, energy usage gibi.
+4. **Device and Account identifiers / cihaz veya diğer kimlikler** — Android advertising ID, App Set ID ve uygun olduğunda başka tanımlayıcılar.
 
-### Profil bağlantısı açma “sharing” midir?
+Google, bu SDK verilerinin TLS ile aktarım sırasında şifrelendiğini belirtir. Android reklam kimliği kullanıcı/OS ayarları ve consent/limited-ad davranışlarına göre gönderilmeyebilir; ancak Data Safety beyanı SDK’nın mümkün olan otomatik veri işlemesini kapsayacak şekilde muhafazakâr hazırlanacaktır.
 
-Kullanıcı bir hesap satırına dokunarak harici Instagram/X profilini açmayı kendisi başlatır. URL Android üzerinden ilgili sosyal uygulamaya veya tarayıcıya devredilir.
+Resmi kaynak:
+https://developers.google.com/admob/android/privacy/play-data-disclosure
 
-Google Play Data Safety tanımında kullanıcı tarafından açıkça başlatılan ve kullanıcının paylaşım/aktarım beklediği third-party transferler “sharing” beyanı istisnası kapsamında olabilir. Mevcut profil-açma akışı bu user-initiated action istisnasına göre değerlendirilmiştir.
+## Play Console temel cevapları
 
-### Raporu kopyala / TXT olarak kaydet
+### Does your app collect or share any of the required user data types?
 
-Bu iki eylem kullanıcı tarafından açıkça başlatılır:
+**Yes / Evet.**
 
-- `Raporu kopyala`: analiz metnini sistem panosuna yazar.
-- `TXT olarak kaydet`: analiz metnini Android file picker üzerinden kullanıcının seçtiği hedefe yazar.
+Sebep: Google Mobile Ads SDK cihaz dışına reklam/ölçüm verisi aktarır.
 
-Rapor sosyal medya kullanıcı adlarını ve kategori sonuçlarını içerebilir. Uygulama bu raporu ZMila Studio sunucusuna göndermez. Kullanıcının seçtiği harici hedefteki TXT dosyası veya sistem panosu app-private veri alanı dışında olabilir ve uygulama içi Yerel Veri Yönetimi tarafından sonradan otomatik silinemez.
+### Data encrypted in transit?
 
-### Hesap oluşturma var mı?
+**Yes / Evet.**
 
-**Hayır.**
+Google Mobile Ads SDK bu veri aktarımında TLS kullandığını belirtir.
 
-Takip Analizi kendi kullanıcı hesabını oluşturmaz ve sosyal medya hesabına giriş yapmaz.
+### Ads declaration
 
-### Veri silme mekanizması
+**Contains ads / Reklam içeriyor → Yes / Evet.**
 
-Uygulama içinde **Yerel Veri Yönetimi** ekranı vardır. Kullanıcı:
+Uygulama anchored adaptive banner ve seyrek interstitial reklam kullanır.
 
-- analiz geçmişini,
-- yok sayılan hesapları,
-- tüm yerel uygulama verisini
+## Önerilen veri türü eşlemesi
 
-silebilir.
+Aşağıdaki eşleme Google Play’in veri kategorilerine çevrilirken kullanılacak muhafazakâr taslaktır:
 
-Uygulama hesabı veya geliştirici sunucusunda kullanıcı verisi olmadığı için server-side account deletion akışı yoktur.
+| Play veri kategorisi | Kaynak | Collected | Shared | Amaç |
+| --- | --- | --- | --- | --- |
+| Location → Approximate location | IP address ile genel konum tahmini | Yes | Yes | Advertising/marketing, Analytics, Fraud prevention/security/compliance |
+| App activity → App interactions | app launch, taps, ad/video interactions | Yes | Yes | Advertising/marketing, Analytics, Fraud prevention/security/compliance |
+| App info and performance → Diagnostics | SDK/app performance diagnostics | Yes | Yes | Advertising/marketing, Analytics, Fraud prevention/security/compliance |
+| Device or other IDs | Advertising ID, App Set ID, diğer uygun identifiers | Yes | Yes | Advertising/marketing, Analytics, Fraud prevention/security/compliance |
 
-## İşlenen fakat cihazdan çıkmayan veri türleri
+Not: Play Console’daki isimler veya amaç seçenekleri değişirse en yakın güncel seçenek kullanılacaktır. Google, geliştiricinin kendi uygulama kullanımına göre formdan nihai olarak sorumlu olduğunu belirtir.
 
-Bunlar mevcut mimaride Data Safety “collected” verisi olarak beyan edilmek zorunda değildir; yine de iç denetim için kaydedilmiştir:
+## User choice / required-or-optional notu
 
-- sosyal medya kullanıcı adı / hesap kimliği,
-- takipçi ilişkileri,
-- takip edilen ilişkileri,
+- UMP SDK her açılışta güncel consent bilgisini ister.
+- Gerekli olduğunda consent formu gösterilir.
+- `canRequestAds()` true olmadan uygulama reklam istemez.
+- Privacy options requirement varsa uygulama içinde yeniden açılabilir bir giriş noktası sunulur.
+- Kullanıcı consent tercihlerine göre personalized, non-personalized veya limited ad davranışı Google tarafında değişebilir.
+
+Bu nedenle Play formundaki “optional” sorusu final Console metnine göre dikkatle yanıtlanacaktır; SDK’nın bazı tanımlayıcıları consent/OS durumuna göre değişse de reklam özelliğinin teknik veri akışı cihaz dışına çıkar.
+
+## Uygulama tarafından cihazda tutulan ama geliştirici sunucusuna gönderilmeyen veriler
+
+- sosyal medya kullanıcı adı / hesap ID,
+- takipçi listesi,
+- takip edilen listesi,
 - analiz sonuçları,
 - analiz zamanı,
-- yerel geçmiş snapshot’ları,
-- yok sayılan hesap tercihleri.
+- snapshot geçmişi,
+- Yok say tercihleri.
 
-## Android backup / transfer politikası
+Bunlar uygulamanın kendi mimarisinde yalnız cihazda işlenir ve AdMob reklam isteğine eklenmez.
 
-Android’de `android:allowBackup` varsayılanı `true` olduğundan production manifestte açıkça `false` olarak sabitlendi.
+## User-initiated external transfers
 
-Ek koruma:
+### Profil açma
 
-- Android 11 ve altı: `@xml/backup_rules`
-- Android 12+: `@xml/data_extraction_rules`
+Kullanıcının bir Instagram/X profil bağlantısını harici uygulamada açması açıkça kullanıcı tarafından başlatılır. Sonraki veri işleme ilgili uygulama/hizmet politikasına tabidir.
 
-Her iki kural seti app-managed local data domainlerini backup dışında bırakır. Android 12+ tarafında hem cloud backup hem device-transfer extraction için exclusion yazılmıştır.
+### Rapor kopyala / TXT kaydet
 
-Amaç:
+Kullanıcı raporu sistem panosuna kopyalayabilir veya kendi seçtiği dosya hedefine TXT olarak kaydedebilir. Uygulama bu raporu ZMila Studio sunucusuna yüklemez. Dışa aktarılan içerik app-private alan dışında kalabilir.
 
-- Drift snapshot veritabanını,
-- SharedPreferences tabanlı Yok say tercihlerini,
-- uygulamanın private files/root alanındaki yerel durumunu
+## Yerel veri silme
 
-Android otomatik backup kapsamında taşımamaktır.
+Uygulamadaki **Yerel Veri Yönetimi** ekranı:
 
-Not: Android dokümantasyonuna göre bazı cihaz üreticilerinin doğrudan cihazdan cihaza taşıma davranışları sistem seviyesinde farklılık gösterebilir. Bu nedenle privacy policy mutlak “hiçbir koşulda cihazdan çıkamaz” iddiası kullanmaz; uygulama kontrolündeki backup mekanizmalarının kapatıldığı belirtilir.
+- analiz geçmişini,
+- Yok say tercihlerini,
+- app-managed tüm yerel veriyi
 
-## Permission / network notları
+silebilir. Uygulamanın ZMila Studio tarafında kullanıcı hesabı veya analiz verisi sunucusu yoktur.
 
-### Debug / profile
+AdMob/Google tarafından işlenen reklam verileri Google’ın kullanıcı gizlilik, reklam kimliği ve consent kontrollerine tabidir. Uygulama gerekli olduğunda UMP privacy-options formuna erişim sunar.
 
-Flutter geliştirme manifestleri:
+## Android permission / network kontratı
 
-`apps/mobile/android/app/src/debug/AndroidManifest.xml`
-`apps/mobile/android/app/src/profile/AndroidManifest.xml`
+Reklamlı build için eski “production INTERNET yasak” kontratı artık geçerli değildir.
 
-hot reload ve debugging için `android.permission.INTERNET` ekler.
+Korunacak kurallar:
 
-v2-39 debug APK badging doğrulaması:
+- source `main` manifestte sosyal medya verisine geniş erişim veren app-defined runtime izinları eklenmeyecek,
+- `android:usesCleartextTraffic="false"` korunacak,
+- `android:allowBackup="false"` korunacak,
+- targetSdk 36 korunacak,
+- `debuggable=true` / `testOnly=true` production’da reddedilecek,
+- exact launcher hash korunacak,
+- merged manifestteki reklam SDK izinleri CI tarafından gerçek build üzerinden çıkarılıp yalnız beklenen whitelist ile kabul edilecek.
 
-- `android.permission.INTERNET` — debug tooling nedeniyle,
-- `com.zmilastudio.takipanalizi.dev.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` — AndroidX internal signature receiver permission.
+Beklenen reklam SDK izinleri arasında `INTERNET`, `ACCESS_NETWORK_STATE`, reklam kimliği ve Android Privacy Sandbox/AdServices ile ilişkili izinler bulunabilir. Nihai whitelist ilk reklamlı RC build logundan kilitlenecektir.
 
-Bu debug APK production Data Safety beyanının doğrudan manifest kaynağı değildir.
+## UMP / consent
 
-### Production release
+Uygulama Google’ın Flutter UMP akışını izler:
 
-`apps/mobile/android/app/src/main/AndroidManifest.xml` `INTERNET` veya app-defined `uses-permission` içermez.
+1. Her app launch’ta `requestConsentInfoUpdate()`.
+2. Gerekliyse `loadAndShowConsentFormIfRequired()`.
+3. Ads request öncesi `canRequestAds()`.
+4. `PrivacyOptionsRequirementStatus.required` ise uygulama içi görünür privacy-options entry point.
 
-AndroidX Core release merge sırasında şu internal signature permission’ı ekleyebilir:
+Kaynak:
+https://developers.google.com/admob/flutter/privacy
 
-`com.zmilastudio.takipanalizi.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
+## Yayın öncesi kapı
 
-Production RC workflow’u AAB build’inden sonra merged release manifesti bulur ve:
-
-- `android.permission.INTERNET` görülürse,
-- AndroidX internal receiver permission dışında başka `uses-permission` görülürse,
-- `android:allowBackup="false"` kaybolursa,
-- `android:usesCleartextTraffic="false"` kaybolursa,
-- targetSdk 36 değilse,
-- `debuggable=true` veya `testOnly=true` görülürse
-
-build’i başarısız sayar.
-
-Böylece privacy/Data Safety beyanı gerçek release manifest üzerinden doğrulanmadan production adayı kabul edilmez.
-
-## Target API
-
-v2-39 CI debug APK doğrulaması:
-
-- compileSdkVersion: 36
-- targetSdkVersion: 36
-- platform build: Android 16
-
-31 Ağustos 2026 itibarıyla yeni mobil Google Play uygulamalarında gereken API 36 hedefi karşılanmaktadır. Production AAB’de de yeniden doğrulanacaktır.
-
-## Production öncesi tekrar kontrol edilmesi gereken değişiklikler
-
-Aşağıdakilerden herhangi biri eklenirse Veri Güvenliği formu ve gizlilik politikası mutlaka yeniden değerlendirilmelidir:
-
-- reklam veya AdMob,
-- Firebase Analytics / Crashlytics veya başka telemetri,
-- canlı Instagram/X API bağlantısı,
-- OAuth,
-- bulut yedekleme veya senkronizasyon,
-- kullanıcı hesabı,
-- push notification altyapısı,
-- ücretli üyelik / ödeme,
-- uzaktan hata loglama,
-- production release’e `INTERNET` veya kullanıcı verisine erişen başka Android izni eklenmesi,
-- `allowBackup`, `backup_rules` veya `data_extraction_rules` politikasının gevşetilmesi.
-
-## Public privacy / support
-
-Privacy policy:
-https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/PRIVACY_POLICY.md
-
-Support:
-https://github.com/ZMilaStudio/sosyal-medya-takip-analizi/blob/main/SUPPORT.md
-
-Privacy / support email:
-`zmilastudio@gmail.com`
-
-## Yayın kapısı
-
-Play Store’a production gönderimi yapılmadan önce:
-
-1. Production AAB’nin merged release manifest izinleri ve backup policy’si otomatik kontrolden geçmeli.
-2. Bağımlılık ağacı reklam/analytics SDK’sı açısından yeniden kontrol edilmeli.
-3. Public privacy/support URL’leri erişilebilir olmalı.
-4. Play Console Veri Güvenliği formu `PLAY_CONSOLE_FORM_ANSWERS.md` ile karşılaştırılarak doldurulmalı.
-5. Production mimarisi bu dosyadan sapıyorsa önce bu belge ve privacy policy güncellenmeli.
+1. Test AdMob App ID ve test ad unit ID’leriyle reklamlı RC APK build edilir.
+2. Merged release manifestte gerçek permission seti çıkarılır ve whitelist kilitlenir.
+3. Banner + interstitial + UMP fiziksel cihazda tek kritik RC testinden geçer.
+4. Canlı AdMob App ID + banner + interstitial ad unit ID’leri GitHub Secrets olarak girilir.
+5. Final AAB `ADMOB_USE_TEST_IDS=false` ile build edilir ve sample/test ID içermediği otomatik doğrulanır.
+6. Public `main` privacy policy reklamlı sürüme güncellenir.
+7. Play Console Ads + Data Safety cevapları bu dosyayla karşılaştırılarak doldurulur.
 
 ## Resmi referanslar
 
-Google Play:
-- https://support.google.com/googleplay/android-developer/answer/10787469
-- https://support.google.com/googleplay/android-developer/answer/10144311
-- https://support.google.com/googleplay/android-developer/answer/11926878
-
-Android / AndroidX:
-- https://developer.android.com/guide/topics/manifest/application-element
-- https://developer.android.com/about/versions/12/behavior-changes-12
-- https://android.googlesource.com/platform/prebuilts/sdk/+/fa1474c543bdd7eaa690ba935d9ea8249fd12880/current/androidx/manifests/androidx.core_core/AndroidManifest.xml
+- Google Mobile Ads data disclosure: https://developers.google.com/admob/android/privacy/play-data-disclosure
+- Google UMP Flutter: https://developers.google.com/admob/flutter/privacy
+- Google Play Data Safety: https://support.google.com/googleplay/android-developer/answer/10787469
+- Google Play User Data / Privacy: https://support.google.com/googleplay/android-developer/answer/10144311
