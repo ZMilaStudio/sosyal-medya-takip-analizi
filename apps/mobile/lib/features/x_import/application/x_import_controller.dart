@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:follow_core/follow_core.dart';
 
+import '../../../core/ads/ads_coordinator.dart';
 import '../../../data/local/follow_history_provider.dart';
 
 final xImportControllerProvider =
@@ -20,6 +21,7 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
 
   Future<XFollowAnalysisResult?> pickAndAnalyze(String rawUsername) async {
     state = const AsyncLoading();
+    AdsCoordinator.instance.setBannerSuppressed(true);
 
     try {
       final account = _account(rawUsername);
@@ -53,6 +55,8 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       return null;
+    } finally {
+      AdsCoordinator.instance.setBannerSuppressed(false);
     }
   }
 
@@ -60,6 +64,7 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
     String rawUsername,
   ) async {
     state = const AsyncLoading();
+    AdsCoordinator.instance.setBannerSuppressed(true);
 
     try {
       final account = _account(rawUsername);
@@ -99,6 +104,8 @@ class XImportController extends AsyncNotifier<XFollowAnalysisResult?> {
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       return null;
+    } finally {
+      AdsCoordinator.instance.setBannerSuppressed(false);
     }
   }
 
