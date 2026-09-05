@@ -127,9 +127,9 @@ Bizim risk ortamı:
 - compile/target SDK `36`
 - `google_mobile_ads 9.1.0`
 
-Bu nedenle bir sonraki test RC’si WorkManager `2.11.2` pin ile hazırlandı; başka ürün/analiz değişikliği eklenmedi.
+Bu nedenle RC4 WorkManager `2.11.2` pin ile hazırlandı; başka ürün/analiz değişikliği eklenmedi.
 
-## Android 16 WorkManager-fix Ads RC 1.0.0 (4) — CURRENT CANDIDATE
+## Android 16 WorkManager-fix Ads RC 1.0.0 (4) — CI SUCCESS, FİZİKSEL STARTUP + BANNER PASS
 Aktif runtime/CI head: `b58b2ceaae6e036a67eacc83ed790191928f9e3b`.
 Hazırlık branch’i: `dev/ads-android16-workmanager-fix-v1`; ardından `dev/ads-v1` üzerine fast-forward edildi.
 
@@ -180,7 +180,14 @@ RC4 Artifact:
 - APK SHA-256 `9dd334e69ecb8d932bd388bfc5cfeda756f274f69a175199d029ad02ddc74d99`
 - Artifact içindeki `.sha256` ile bağımsız yerel hash birebir eşleşti.
 - Kullanıcı handoff dosyası: `Takip-Analizi-1.0.0-4-ads-android16-workmanager-fix-test-rc.apk`.
-- **Fiziksel PASS henüz yok.**
+
+**6 Eylül 2026 fiziksel sonuç — STARTUP PASS / TEST BANNER PASS:**
+- Kullanıcı RC4’ü Samsung fiziksel cihazda açtı; ana `Takip Analizi` ekranı normal render edildi.
+- Önceki `(2)` ve `(3)`te görülen `sürekli olarak duruyor` startup crash’i RC4’te oluşmadı.
+- Kullanıcının ekran görüntüsünde alt bölümde Google test **AdMob Adaptive Banner** açıkça görünür durumda; `Test Reklamı` etiketi de görünüyor.
+- Böylece iki kritik fiziksel kapı aynı anda PASS: uygulama startup + reklam SDK/banner yükleme.
+- Bu sonuç, WorkManager `2.11.2` pininin hedeflenen Android 16/Google Mobile Ads uyumsuzluğunu çözmüş olduğuna dair çok güçlü kanıttır; kullanıcı logcat’i olmadığı için geçmiş crash’in kesin stack trace’i yine iddia edilmez.
+- Tam fiziksel ürün PASS henüz tamamlanmadı; gerçek Instagram analiz/listeler, interstitial, persistence ve X smoke aynı RC4 üzerinde sıradadır.
 
 ## Reklamlı merged Android permission whitelist
 RC3/RC4 exact set:
@@ -244,7 +251,7 @@ Google Mobile Ads için final Play Data Safety eşlemesinde değerlendirilecek s
 - Bunlar rollback/reference baseline olarak korunur.
 
 ## Play Console / Play App Signing — BEKLEMEDE
-- Reklamlı final build fiziksel PASS almadan Play Console final yüklemesine geçilmeyecek.
+- Reklamlı final build tam fiziksel PASS almadan Play Console final yüklemesine geçilmeyecek.
 - Doğrulanacak upload certificate SHA-256 `def6c59b9a84f51af6ea5c768f21927ecbadb868ec5dbcd17dc031876b5cca65`.
 - Canlı AdMob App ID + banner unit ID + interstitial unit ID henüz oluşturulup projeye bağlanmadı.
 - Play Console Ads beyanı **Yes** olacak.
@@ -265,23 +272,25 @@ Google Mobile Ads için final Play Data Safety eşlemesinde değerlendirilecek s
 - `dev/release-polish-v1` → reklamsız production/store baseline.
 - `dev/ads-startup-safe-v1` → RC3 provider-free/delayed/fail-closed hazırlık branch’i.
 - `dev/ads-android16-workmanager-fix-v1` → RC4 WorkManager fix hazırlık branch’i.
-- `dev/ads-v1` → **aktif: 1.0.0 (4) Android 16 WorkManager-fix CI SUCCESS, fiziksel startup PASS bekliyor.**
+- `dev/ads-v1` → **aktif: 1.0.0 (4) Android 16 WorkManager-fix CI SUCCESS; Samsung fiziksel startup + test adaptive banner PASS; tam ürün fiziksel turu devam ediyor.**
 - `test/production-rc-apk-1.0.0-1` → eski reklamsız production RC APK.
 - `main` → public privacy/support + eski production workflow; reklamlı final privacy henüz taşınmadı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. Kullanıcı Samsung cihazda yalnız `1.0.0 (4)` WorkManager-fix Google test reklamlı APK’yı kuracak.
-2. İlk ve tek kritik kontrol: splash ekranı geçilip normal ana ekran açılıyor mu; `sürekli olarak duruyor` hatası bitti mi?
-3. `(4)` de startup FAIL olursa yeni tahminlerle RC üretmek durdurulacak; gerçek Android crash log/logcat edinmek birinci öncelik olacak.
-4. Açılış PASS olursa aynı tek fiziksel turda anchored banner, Instagram gerçek analiz, 5 liste, profil/Yok say, analizden doğal geri çıkışta test interstitial, persistence ve X smoke tamamlanacak.
-5. Tam fiziksel PASS sonrası AdMob Console’da gerçek Android app `com.zmilastudio.takipanalizi` + canlı App ID + adaptive banner + interstitial unit oluşturulacak.
-6. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final signed AAB build’e verilecek.
-7. Public privacy `main` güncellenecek.
-8. Play App Signing fingerprint doğrulaması + Internal testing.
-9. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
-10. Feature graphic final onayı + 8 store screenshot.
+1. RC4 startup **PASS** ve anchored/adaptive test banner **PASS** tamamlandı; tekrar edilmeyecek.
+2. Aynı RC4 üzerinde gerçek Instagram export ZIP ile analiz yapılacak; 5 kategori/listenin doğru açıldığı fiziksel olarak doğrulanacak.
+3. Analiz ekranında profil açma/Yok say ve temel liste etkileşimleri smoke kontrol edilecek.
+4. İlk analiz sonucu görüldükten sonra analiz ekranından doğal geri çıkışta test interstitial davranışı doğrulanacak; ilk sonuç öncesinde interstitial çıkmamalı.
+5. Uygulama kapanıp yeniden açılarak snapshot/persistence korunumu kontrol edilecek.
+6. X resmi arşiv import smoke yapılacak.
+7. Tam fiziksel PASS sonrası AdMob Console’da gerçek Android app `com.zmilastudio.takipanalizi` + canlı App ID + adaptive banner + interstitial unit oluşturulacak.
+8. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final signed AAB build’e verilecek.
+9. Public privacy `main` güncellenecek.
+10. Play App Signing fingerprint doğrulaması + Internal testing.
+11. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
+12. Feature graphic final onayı + 8 store screenshot.
 
 ## Sohbet devri
 - Eski devir: `SOHBET_DEVRI_2026-09-05.md` — RC2 FAIL / RC3 candidate dönemini korur.
-- Güncel devir: `SOHBET_DEVRI_2026-09-06.md` — RC3 fiziksel FAIL + Android 16 WorkManager teşhisi + RC4 CI SUCCESS durumunu içerir.
-- Yeni sohbet başlangıcında güncel devir dosyası tercih edilmelidir.
+- Güncel devir: `SOHBET_DEVRI_2026-09-06.md` — RC3 fiziksel FAIL + Android 16 WorkManager teşhisi + RC4 CI SUCCESS durumunu içerir; PROJE_OZETI RC4 fiziksel startup/banner PASS ile daha günceldir.
+- Yeni sohbet başlangıcında `PROJE_OZETI.md` en güncel fiziksel durum olarak esas alınmalıdır.
