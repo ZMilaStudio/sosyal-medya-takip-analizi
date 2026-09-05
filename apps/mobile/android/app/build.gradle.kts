@@ -3,6 +3,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// google_mobile_ads currently pulls an older WorkManager runtime on Android.
+// Android 16 release-mode crashes have been reproduced upstream with that
+// combination. Pin the current stable runtime so AndroidX Startup can create
+// WorkDatabase safely before Flutter starts.
+dependencies {
+    implementation("androidx.work:work-runtime:2.11.2")
+}
+
 val deviceTestKeystorePath = System.getenv("DEVICE_TEST_KEYSTORE_PATH")
     ?.takeIf { it.isNotBlank() }
 val deviceTestStorePassword = System.getenv("DEVICE_TEST_STORE_PASSWORD")
