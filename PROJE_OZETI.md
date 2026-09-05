@@ -272,38 +272,38 @@ Google Mobile Ads için final Play Data Safety eşlemesinde değerlendirilecek s
 - `dev/release-polish-v1` → reklamsız production/store baseline.
 - `dev/ads-startup-safe-v1` → RC3 provider-free/delayed/fail-closed hazırlık branch’i.
 - `dev/ads-android16-workmanager-fix-v1` → RC4 WorkManager fix hazırlık branch’i.
-- `dev/ads-v1` → **aktif: 1.0.0 (4) Android 16 WorkManager-fix CI SUCCESS; Samsung fiziksel startup + test adaptive banner PASS; tam ürün fiziksel turu devam ediyor.**
+- `dev/ads-v1` → **aktif: 1.0.0 (4) CI SUCCESS; Samsung fiziksel startup, test adaptive banner, gerçek Instagram import/analiz, doğal çıkış interstitial ve cold-start persistence PASS; profil/Yok say + X smoke ve bir UX düzeltmesi bekliyor.**
 - `test/production-rc-apk-1.0.0-1` → eski reklamsız production RC APK.
 - `main` → public privacy/support + eski production workflow; reklamlı final privacy henüz taşınmadı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. RC4 startup **PASS** ve anchored/adaptive test banner **PASS** tamamlandı; tekrar edilmeyecek.
-2. Aynı RC4 üzerinde gerçek Instagram export ZIP ile analiz yapılacak; 5 kategori/listenin doğru açıldığı fiziksel olarak doğrulanacak.
-3. Analiz ekranında profil açma/Yok say ve temel liste etkileşimleri smoke kontrol edilecek.
-4. İlk analiz sonucu görüldükten sonra analiz ekranından doğal geri çıkışta test interstitial davranışı doğrulanacak; ilk sonuç öncesinde interstitial çıkmamalı.
-5. Uygulama kapanıp yeniden açılarak snapshot/persistence korunumu kontrol edilecek.
-6. X resmi arşiv import smoke yapılacak.
-7. Tam fiziksel PASS sonrası AdMob Console’da gerçek Android app `com.zmilastudio.takipanalizi` + canlı App ID + adaptive banner + interstitial unit oluşturulacak.
-8. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final signed AAB build’e verilecek.
-9. Public privacy `main` güncellenecek.
-10. Play App Signing fingerprint doğrulaması + Internal testing.
-11. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
-12. Feature graphic final onayı + 8 store screenshot.
+1. RC4 startup, anchored/adaptive test banner, gerçek Instagram ZIP import/analiz, doğal geri dönüş interstitial ve cold-start persistence **PASS**; tekrar edilmeyecek.
+2. Analiz ekranında profil açma/Yok say ve temel liste etkileşimleri smoke kontrol edilecek.
+3. X resmi arşiv import smoke yapılacak.
+4. Bilinen UX kusuru tek paket düzeltilecek: ana ekrandaki `Son hesaplar` satırına dokunmak şu an yalnız kullanıcı adını forma dolduruyor; satırdaki kuzeydoğu ok işareti açılma beklentisi oluşturduğu için satır doğrudan son kayıtlı analizi açmalı. Bu düzeltme RC5/polish paketine alınacak; ayrı mikro RC üretilmeyecek.
+5. Kalan fiziksel smoke + UX düzeltme sonrası reklamlı fiziksel baseline kilitlenecek.
+6. Tam fiziksel PASS sonrası AdMob Console’da gerçek Android app `com.zmilastudio.takipanalizi` + canlı App ID + adaptive banner + interstitial unit oluşturulacak.
+7. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final signed AAB build’e verilecek.
+8. Public privacy `main` güncellenecek.
+9. Play App Signing fingerprint doğrulaması + Internal testing.
+10. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
+11. Feature graphic final onayı + 8 store screenshot.
 
 ## Sohbet devri
 - Eski devir: `SOHBET_DEVRI_2026-09-05.md` — RC2 FAIL / RC3 candidate dönemini korur.
-- Güncel devir: `SOHBET_DEVRI_2026-09-06.md` — RC3 fiziksel FAIL + Android 16 WorkManager teşhisi + RC4 CI SUCCESS durumunu içerir; PROJE_OZETI RC4 fiziksel startup/banner PASS ile daha günceldir.
+- Güncel devir: `SOHBET_DEVRI_2026-09-06.md` — RC3 fiziksel FAIL + Android 16 WorkManager teşhisi + RC4 CI SUCCESS durumunu içerir; PROJE_OZETI en güncel fiziksel durum olarak esas alınmalıdır.
 - Yeni sohbet başlangıcında `PROJE_OZETI.md` en güncel fiziksel durum olarak esas alınmalıdır.
 
-## RC4 fiziksel tur ilerleme — 6 Eylül 2026 01:22
+## RC4 fiziksel tur ilerleme — 6 Eylül 2026 01:22+
 - Kullanıcı gerçek Instagram arşivini RC4 üzerinde başarıyla içe aktardı.
 - `Instagram Analizi` ekranı fiziksel cihazda açıldı; ekran görüntüsünde 74 takipçi / 46 takip edilen ve görünür kategori sayaçları `Takip Etmeyenler (5)`, `Karşılıklı (41)`, `Seni Takip Edenler (33)` doğrulandı.
 - Analiz ekranının altında anchored/adaptive Google test banner fiziksel olarak görünür kaldı.
 - Kullanıcı analizden doğal geri dönüşte **tam ekran test interstitial reklamın çıktığını** bildirdi. Bu, kilitli reklam politikasındaki `ilk analiz sonucu sonrası doğal çıkış` gate’inin fiziksel PASS olduğuna kanıttır.
-- Gönderilen ekran kaydında `Analiz Geçmişi` ekranında 1 kayıt ve ana ekranda `Son hesaplar` altında `@gece02.19` / 74 takipçi / 46 takip edilen satırı görülüyor; bu nedenle aynı oturum içinde snapshot yazımı + geçmiş/son hesaplar UI akışı fiziksel PASS kabul edilir.
-- Cold-start persistence henüz ayrı doğrulanmadı: uygulama tamamen kapatılıp yeniden açıldıktan sonra aynı kayıtların kalması kontrol edilecek.
+- Gönderilen ekran kaydında `Analiz Geçmişi` ekranında 1 kayıt ve ana ekranda `Son hesaplar` altında `@gece02.19` / 74 takipçi / 46 takip edilen satırı görülüyor; aynı oturum snapshot yazımı + geçmiş/son hesaplar UI akışı fiziksel PASS.
+- Kullanıcı uygulamayı tamamen kapatıp yeniden açtıktan sonra kayıtların korunduğunu bildirdi: **cold-start persistence PASS**.
+- Video tekrar incelendi: ana ekrandaki `Son hesaplar > Instagram @gece02.19` satırına dokununca ekran açılmıyor. Kodda `_selectRecentAccount` yalnız kullanıcı adını Instagram/X metin alanına dolduruyor; son snapshot analizi açılmıyor. Satırda `north_east` ok ikonu bulunduğundan bu gerçek bir UX uyumsuzluğudur ve RC5/polish paketinde düzeltilecek.
 - Profil açma/Yok say smoke ve X arşiv smoke hâlâ bekliyor.
 
 ### Güncel fiziksel PASS durumu
-PASS: startup, adaptive banner, gerçek Instagram ZIP import, analiz ekranı, temel kategori/listeler, doğal geri dönüş interstitial, aynı-oturum geçmiş/son hesaplar yazımı.
-BEKLEYEN: profil açma/Yok say smoke, uygulamayı tamamen kapat-aç sonrası persistence, X resmi arşiv import smoke.
+PASS: startup, adaptive banner, gerçek Instagram ZIP import, analiz ekranı, temel kategori/listeler, doğal geri dönüş interstitial, aynı-oturum geçmiş/son hesaplar yazımı, **cold-start persistence**.
+BEKLEYEN: profil açma/Yok say smoke, X resmi arşiv import smoke, `Son hesaplar` satırının doğrudan son analizi açması UX düzeltmesi.
