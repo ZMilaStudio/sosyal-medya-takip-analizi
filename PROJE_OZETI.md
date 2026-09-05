@@ -294,3 +294,16 @@ Google Mobile Ads için final Play Data Safety eşlemesinde değerlendirilecek s
 - Eski devir: `SOHBET_DEVRI_2026-09-05.md` — RC2 FAIL / RC3 candidate dönemini korur.
 - Güncel devir: `SOHBET_DEVRI_2026-09-06.md` — RC3 fiziksel FAIL + Android 16 WorkManager teşhisi + RC4 CI SUCCESS durumunu içerir; PROJE_OZETI RC4 fiziksel startup/banner PASS ile daha günceldir.
 - Yeni sohbet başlangıcında `PROJE_OZETI.md` en güncel fiziksel durum olarak esas alınmalıdır.
+
+## RC4 fiziksel tur ilerleme — 6 Eylül 2026 01:22
+- Kullanıcı gerçek Instagram arşivini RC4 üzerinde başarıyla içe aktardı.
+- `Instagram Analizi` ekranı fiziksel cihazda açıldı; ekran görüntüsünde 74 takipçi / 46 takip edilen ve görünür kategori sayaçları `Takip Etmeyenler (5)`, `Karşılıklı (41)`, `Seni Takip Edenler (33)` doğrulandı.
+- Analiz ekranının altında anchored/adaptive Google test banner fiziksel olarak görünür kaldı.
+- Kullanıcı analizden doğal geri dönüşte **tam ekran test interstitial reklamın çıktığını** bildirdi. Bu, kilitli reklam politikasındaki `ilk analiz sonucu sonrası doğal çıkış` gate’inin fiziksel PASS olduğuna kanıttır.
+- Gönderilen ekran kaydında `Analiz Geçmişi` ekranında 1 kayıt ve ana ekranda `Son hesaplar` altında `@gece02.19` / 74 takipçi / 46 takip edilen satırı görülüyor; bu nedenle aynı oturum içinde snapshot yazımı + geçmiş/son hesaplar UI akışı fiziksel PASS kabul edilir.
+- Cold-start persistence henüz ayrı doğrulanmadı: uygulama tamamen kapatılıp yeniden açıldıktan sonra aynı kayıtların kalması kontrol edilecek.
+- Profil açma/Yok say smoke ve X arşiv smoke hâlâ bekliyor.
+
+### Güncel fiziksel PASS durumu
+PASS: startup, adaptive banner, gerçek Instagram ZIP import, analiz ekranı, temel kategori/listeler, doğal geri dönüş interstitial, aynı-oturum geçmiş/son hesaplar yazımı.
+BEKLEYEN: profil açma/Yok say smoke, uygulamayı tamamen kapat-aç sonrası persistence, X resmi arşiv import smoke.
