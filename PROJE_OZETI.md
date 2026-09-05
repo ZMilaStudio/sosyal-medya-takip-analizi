@@ -307,3 +307,19 @@ Google Mobile Ads için final Play Data Safety eşlemesinde değerlendirilecek s
 ### Güncel fiziksel PASS durumu
 PASS: startup, adaptive banner, gerçek Instagram ZIP import, analiz ekranı, temel kategori/listeler, doğal geri dönüş interstitial, aynı-oturum geçmiş/son hesaplar yazımı, **cold-start persistence**.
 BEKLEYEN: profil açma/Yok say smoke, X resmi arşiv import smoke, `Son hesaplar` satırının doğrudan son analizi açması UX düzeltmesi.
+
+## Google Play kapalı test kararı ve AAB — 6 Eylül 2026
+- Kullanıcı kalan fiziksel smoke testlerini şimdilik erteleyip doğrudan Google Play **kapalı teste geçme** kararı verdi. Bu karar production yayın onayı değildir.
+- Bilinen açıklar kapalı test boyunca takip edilecek: profil açma/Yok say fiziksel smoke, X resmi arşiv smoke ve `Son hesaplar` satırının doğrudan son analizi açması UX düzeltmesi.
+- RC4 runtime kodu değiştirilmedi. Yalnız kapalı test paketi üretmek için `.github/workflows/closed-test-aab.yml` eklendi.
+- Workflow commit: `a8234b40962e5fd052eae38b09af671f17254acc`.
+- Closed-test CI run `33997958258`, job `101391672759`: **SUCCESS**.
+- Analyze PASS, 23/23 test PASS, private Play upload signer PASS, WorkManager `2.11.2` resolved PASS, merged reklam permission whitelist PASS, `MobileAdsInitProvider` yok, `allowBackup=false`, `usesCleartextTraffic=false`, exact launcher PASS.
+- AAB kapalı testte yanlış canlı reklam trafiği oluşturmamak için **Google test AdMob ID’leri** ile build edildi (`ADMOB_USE_TEST_IDS=true`). Bu AAB production/canlı reklam build’i değildir.
+- Package `com.zmilastudio.takipanalizi`, versionName `1.0.0`, versionCode `4`, target SDK 36.
+- Artifact: `takip-analizi-closed-test-1.0.0-4`, ID `9978728912`, ZIP `65,233,839` byte, artifact digest `sha256:844ce15a277b08bb339b5619b7943d5a7379ff8745790772186ea329b11b00df`.
+- AAB boyutu `65,628,629` byte.
+- AAB SHA-256 `fe556556cfe9a06b4aa22c1ae84e6af080b467f5a96f99b545ba6118bafaff98`; artifact içindeki `.sha256` ile bağımsız yerel hesap birebir eşleşti.
+- Kullanıcı handoff dosyası: `Takip-Analizi-1.0.0-4-Google-Play-Kapali-Test.aab`.
+- Kapalı testte sıradaki dış adım: Play Console’da bu AAB’yi Closed testing track’e yüklemek, Play App Signing/upload certificate eşleşmesini doğrulamak, tester grubunu tanımlamak ve release’i incelemeye göndermek.
+- Kapalı test geri bildirimleri + ertelenen fiziksel smoke + RC5 UX polish tamamlanmadan production/canlı AdMob build’e geçilmeyecek.
