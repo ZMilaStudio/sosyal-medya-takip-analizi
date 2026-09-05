@@ -91,14 +91,6 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
-      - name: Verify Android 16 WorkManager runtime override
-        run: |
-          DEPENDENCY_OUTPUT="$(cd android && ./gradlew :app:dependencyInsight \
-            --configuration releaseRuntimeClasspath \
-            --dependency androidx.work:work-runtime)"
-          printf '%s\n' "$DEPENDENCY_OUTPUT"
-          printf '%s\n' "$DEPENDENCY_OUTPUT" | grep -F 'androidx.work:work-runtime:2.11.2'
-
       - name: Analyze
         run: flutter analyze
 
@@ -112,6 +104,14 @@ jobs:
             --build-name="$EXPECTED_VERSION_NAME" \
             --build-number="$EXPECTED_VERSION_CODE" \
             --dart-define=ADMOB_USE_TEST_IDS=true
+
+      - name: Verify resolved Android 16 WorkManager runtime
+        run: |
+          WORK_RUNTIME_DIR="$HOME/.gradle/caches/modules-2/files-2.1/androidx.work/work-runtime/2.11.2"
+          test -d "$WORK_RUNTIME_DIR"
+          WORK_RUNTIME_AAR="$(find "$WORK_RUNTIME_DIR" -type f -name '*.aar' -print -quit)"
+          test -n "$WORK_RUNTIME_AAR"
+          printf 'Resolved WorkManager runtime: %s\n' "$WORK_RUNTIME_AAR"
 
       - name: Verify Android 16 WorkManager-fix ads RC APK
         run: |
