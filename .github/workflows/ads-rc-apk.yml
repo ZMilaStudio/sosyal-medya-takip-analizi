@@ -19,7 +19,7 @@ jobs:
     env:
       EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
       EXPECTED_VERSION_NAME: '1.0.0'
-      EXPECTED_VERSION_CODE: '3'
+      EXPECTED_VERSION_CODE: '4'
       EXPECTED_TARGET_SDK: '36'
       EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
       EXPECTED_TEST_ADMOB_APP_ID: ca-app-pub-3940256099942544~3347511713
@@ -73,8 +73,9 @@ jobs:
         run: |
           grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
           grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
-          grep -F 'version: 1.0.0+3' pubspec.yaml
+          grep -F 'version: 1.0.0+4' pubspec.yaml
           grep -F 'google_mobile_ads: ^9.1.0' pubspec.yaml
+          grep -F 'implementation("androidx.work:work-runtime:2.11.2")' android/app/build.gradle.kts
           grep -F 'com.google.android.gms.ads.APPLICATION_ID' android/app/src/main/AndroidManifest.xml
           grep -F 'manifestPlaceholders["admobAppId"] = admobAppId' android/app/build.gradle.kts
           grep -F "$EXPECTED_TEST_ADMOB_APP_ID" android/app/build.gradle.kts
@@ -90,13 +91,21 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Verify Android 16 WorkManager runtime override
+        run: |
+          DEPENDENCY_OUTPUT="$(cd android && ./gradlew :app:dependencyInsight \
+            --configuration releaseRuntimeClasspath \
+            --dependency androidx.work:work-runtime)"
+          printf '%s\n' "$DEPENDENCY_OUTPUT"
+          printf '%s\n' "$DEPENDENCY_OUTPUT" | grep -F 'androidx.work:work-runtime:2.11.2'
+
       - name: Analyze
         run: flutter analyze
 
       - name: Test
         run: flutter test --reporter expanded
 
-      - name: Build signed startup-safe ads RC APK with Google test ads
+      - name: Build signed Android 16 WorkManager-fix ads RC APK with Google test ads
         run: |
           flutter build apk \
             --release \
@@ -104,7 +113,7 @@ jobs:
             --build-number="$EXPECTED_VERSION_CODE" \
             --dart-define=ADMOB_USE_TEST_IDS=true
 
-      - name: Verify startup-safe ads RC APK
+      - name: Verify Android 16 WorkManager-fix ads RC APK
         run: |
           APK="build/app/outputs/flutter-apk/app-release.apk"
           test -f "$APK"
@@ -170,10 +179,10 @@ jobs:
           "$AAPT" dump resources "$APK" | grep -F 'takip_launcher_user' >/dev/null
           sha256sum "$APK" > build/app/outputs/flutter-apk/app-release.apk.sha256
 
-      - name: Upload startup-safe ads RC APK
+      - name: Upload Android 16 WorkManager-fix ads RC APK
         uses: actions/upload-artifact@v4
         with:
-          name: takip-analizi-ads-startup-safe-rc-apk-1.0.0-3
+          name: takip-analizi-ads-android16-workmanager-fix-rc-apk-1.0.0-4
           path: |
             apps/mobile/build/app/outputs/flutter-apk/app-release.apk
             apps/mobile/build/app/outputs/flutter-apk/app-release.apk.sha256
