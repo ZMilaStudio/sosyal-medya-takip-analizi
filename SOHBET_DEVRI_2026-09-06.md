@@ -51,7 +51,7 @@ Bizim RC ortamı aynı risk ailesine yakın:
 - compile/target SDK `36`
 - `google_mobile_ads 9.1.0`
 
-## Android 16 WorkManager-fix Ads RC 1.0.0 (4) — CURRENT CANDIDATE
+## Android 16 WorkManager-fix Ads RC 1.0.0 (4) — AKTİF FİZİKSEL ADAY
 Aktif branch `dev/ads-v1`.
 Runtime/CI head: `b58b2ceaae6e036a67eacc83ed790191928f9e3b`.
 
@@ -95,10 +95,26 @@ Artifact:
 - artifact içindeki `.sha256` ile bağımsız yerel SHA-256 eşleşti
 - kullanıcı handoff adı: `Takip-Analizi-1.0.0-4-ads-android16-workmanager-fix-test-rc.apk`
 
+## RC4 fiziksel sonuç — 6 Eylül 2026
+PASS olanlar:
+- Samsung fiziksel cihazda startup: ana ekran normal açıldı; `(2)`/`(3)` startup crash’i yok.
+- Google test adaptive banner ana ekranda fiziksel olarak render edildi.
+- Gerçek Instagram arşivi başarıyla içe aktarıldı.
+- `Instagram Analizi` ekranı açıldı; kullanıcı ekran görüntüsünde 74 takipçi / 46 takip edilen, `Takip Etmeyenler (5)`, `Karşılıklı (41)`, `Seni Takip Edenler (33)` görünür.
+- Analiz ekranının altında test adaptive banner görünür kaldı.
+- Kullanıcı analizden doğal geri çıkışta **tam ekran test interstitial reklamın çıktığını** doğruladı; ilk analiz sonucu sonrası doğal çıkış gate’i PASS.
+- Gönderilen ekran kaydında `Analiz Geçmişi` içinde 1 kayıt ve ana ekranda `Son hesaplar` altında `@gece02.19` / 74 / 46 satırı görünüyor; aynı oturum snapshot yazımı + geçmiş/son hesaplar UI akışı PASS.
+
+Henüz ayrı doğrulanmayanlar:
+- Profil açma / Yok say smoke.
+- Uygulamayı tamamen kapatıp yeniden açtıktan sonra cold-start persistence.
+- X resmi arşiv import smoke.
+
 ## Sıradaki kesin iş
-1. Kullanıcı Samsung cihazda **yalnız `(4)` APK'yı** kurup açılışı kontrol edecek.
-2. İlk kritik soru: splash geçilip normal ana ekran geliyor mu, `sürekli olarak duruyor` hatası bitti mi?
-3. Açılış FAIL ise WorkManager eşleşmesine rağmen artık yeni varsayım üretmeden gerçek Android crash log/logcat edinmek öncelik olacak.
-4. Açılış PASS ise aynı tek fiziksel turda banner, Instagram gerçek analiz, 5 liste, profil/Yok say, analizden doğal çıkışta interstitial, persistence ve X smoke tamamlanacak.
-5. Tam fiziksel PASS sonrasında gerçek AdMob App ID + banner/interstitial unit IDs oluşturulup secure CI inputs ile final signed AAB hazırlanacak.
-6. Sonra public privacy `main`, Play App Signing/Internal testing, Ads/Data Safety/IARC/app access ve store varlıkları tamamlanacak.
+1. RC4 startup/banner/Instagram import/interstitial testleri tekrar edilmeyecek.
+2. Profil açma ve `Yok say` temel smoke kontrolü yapılacak.
+3. Uygulama tamamen kapatılıp yeniden açılacak; `Son hesaplar` ve `Analiz Geçmişi` kayıtlarının kaldığı doğrulanacak.
+4. X resmi arşiv ZIP import smoke yapılacak.
+5. Bunlar da PASS olursa RC4 tam fiziksel reklamlı ürün baseline’ı kabul edilecek.
+6. Sonrasında gerçek AdMob App ID + banner/interstitial unit IDs oluşturulup secure CI inputs ile final signed AAB hazırlanacak.
+7. Sonra public privacy `main`, Play App Signing/Internal testing, Ads/Data Safety/IARC/app access ve store varlıkları tamamlanacak.
