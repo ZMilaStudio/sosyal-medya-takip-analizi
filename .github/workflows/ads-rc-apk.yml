@@ -19,7 +19,7 @@ jobs:
     env:
       EXPECTED_PRODUCTION_PACKAGE_ID: com.zmilastudio.takipanalizi
       EXPECTED_VERSION_NAME: '1.0.0'
-      EXPECTED_VERSION_CODE: '2'
+      EXPECTED_VERSION_CODE: '3'
       EXPECTED_TARGET_SDK: '36'
       EXPECTED_USER_ICON_SHA256: 7543b6233c3d23a139b94ecad6058ddd5ff861773339055268ccc85873923de0
       EXPECTED_TEST_ADMOB_APP_ID: ca-app-pub-3940256099942544~3347511713
@@ -73,11 +73,13 @@ jobs:
         run: |
           grep -F 'applicationId = "com.zmilastudio.takipanalizi"' android/app/build.gradle.kts
           grep -F 'signingConfigs.getByName("playUpload")' android/app/build.gradle.kts
-          grep -F 'version: 1.0.0+2' pubspec.yaml
+          grep -F 'version: 1.0.0+3' pubspec.yaml
           grep -F 'google_mobile_ads: ^9.1.0' pubspec.yaml
           grep -F 'com.google.android.gms.ads.APPLICATION_ID' android/app/src/main/AndroidManifest.xml
           grep -F 'manifestPlaceholders["admobAppId"] = admobAppId' android/app/build.gradle.kts
           grep -F "$EXPECTED_TEST_ADMOB_APP_ID" android/app/build.gradle.kts
+          grep -F 'com.google.android.gms.ads.MobileAdsInitProvider' android/app/src/main/AndroidManifest.xml
+          grep -F 'tools:node="remove"' android/app/src/main/AndroidManifest.xml
           ! grep -F '<uses-permission' android/app/src/main/AndroidManifest.xml
           grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
           grep -F 'android:usesCleartextTraffic="false"' android/app/src/main/AndroidManifest.xml
@@ -94,7 +96,7 @@ jobs:
       - name: Test
         run: flutter test --reporter expanded
 
-      - name: Build signed ads RC APK with Google test ads
+      - name: Build signed startup-safe ads RC APK with Google test ads
         run: |
           flutter build apk \
             --release \
@@ -102,7 +104,7 @@ jobs:
             --build-number="$EXPECTED_VERSION_CODE" \
             --dart-define=ADMOB_USE_TEST_IDS=true
 
-      - name: Verify ads RC APK and inspect merged permissions
+      - name: Verify startup-safe ads RC APK
         run: |
           APK="build/app/outputs/flutter-apk/app-release.apk"
           test -f "$APK"
@@ -141,42 +143,37 @@ jobs:
           grep -F "$EXPECTED_TEST_ADMOB_APP_ID" "$RELEASE_MANIFEST"
           ! grep -F 'android:debuggable="true"' "$RELEASE_MANIFEST"
           ! grep -F 'android:testOnly="true"' "$RELEASE_MANIFEST"
+          ! grep -F 'com.google.android.gms.ads.MobileAdsInitProvider' "$RELEASE_MANIFEST"
 
           MERGED_PERMISSIONS="$(grep -oE '<uses-permission[^>]+android:name="[^"]+"' "$RELEASE_MANIFEST" \
             | sed -E 's/.*android:name="([^"]+)".*/\1/' \
             | sort -u || true)"
+          EXPECTED_PERMISSIONS="$(printf '%s\n' \
+            android.permission.ACCESS_ADSERVICES_AD_ID \
+            android.permission.ACCESS_ADSERVICES_ATTRIBUTION \
+            android.permission.ACCESS_ADSERVICES_TOPICS \
+            android.permission.ACCESS_NETWORK_STATE \
+            android.permission.FOREGROUND_SERVICE \
+            android.permission.INTERNET \
+            android.permission.WAKE_LOCK \
+            com.google.android.gms.permission.AD_ID \
+            "$EXPECTED_PRODUCTION_PACKAGE_ID.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" \
+            | sort -u)"
+
           printf 'ADS_RC_MERGED_PERMISSIONS_BEGIN\n%s\nADS_RC_MERGED_PERMISSIONS_END\n' "$MERGED_PERMISSIONS"
-
-          printf '%s\n' "$MERGED_PERMISSIONS" | grep -Fx 'android.permission.INTERNET'
-          printf '%s\n' "$MERGED_PERMISSIONS" | grep -Fx 'android.permission.ACCESS_NETWORK_STATE'
-
-          for forbidden in \
-            android.permission.MANAGE_EXTERNAL_STORAGE \
-            android.permission.READ_EXTERNAL_STORAGE \
-            android.permission.WRITE_EXTERNAL_STORAGE \
-            android.permission.READ_CONTACTS \
-            android.permission.WRITE_CONTACTS \
-            android.permission.CAMERA \
-            android.permission.RECORD_AUDIO \
-            android.permission.ACCESS_FINE_LOCATION \
-            android.permission.ACCESS_COARSE_LOCATION \
-            android.permission.READ_SMS \
-            android.permission.SEND_SMS \
-            android.permission.READ_CALL_LOG \
-            android.permission.WRITE_CALL_LOG; do
-            if printf '%s\n' "$MERGED_PERMISSIONS" | grep -Fx "$forbidden"; then
-              echo "Forbidden permission in ads RC: $forbidden" >&2
-              exit 1
-            fi
-          done
+          if [ "$MERGED_PERMISSIONS" != "$EXPECTED_PERMISSIONS" ]; then
+            echo 'Unexpected merged permission set.' >&2
+            printf 'EXPECTED:\n%s\n' "$EXPECTED_PERMISSIONS" >&2
+            exit 1
+          fi
 
           "$AAPT" dump resources "$APK" | grep -F 'takip_launcher_user' >/dev/null
           sha256sum "$APK" > build/app/outputs/flutter-apk/app-release.apk.sha256
 
-      - name: Upload ads RC APK
+      - name: Upload startup-safe ads RC APK
         uses: actions/upload-artifact@v4
         with:
-          name: takip-analizi-ads-rc-apk-1.0.0-2
+          name: takip-analizi-ads-startup-safe-rc-apk-1.0.0-3
           path: |
             apps/mobile/build/app/outputs/flutter-apk/app-release.apk
             apps/mobile/build/app/outputs/flutter-apk/app-release.apk.sha256
