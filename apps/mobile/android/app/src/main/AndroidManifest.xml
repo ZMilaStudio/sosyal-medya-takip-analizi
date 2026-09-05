@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:label="Takip Analizi"
         android:name="${applicationName}"
@@ -26,6 +27,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!--
+          Google Mobile Ads normally merges a ContentProvider that runs before
+          Flutter renders its first frame. The physical 1.0.0 (2) RC crashed in
+          that startup window on the target Samsung device. We initialize the
+          SDK manually after the first frame instead, so ad startup can fail
+          closed without taking down the analysis app.
+        -->
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.mobileadsinitprovider"
+            tools:node="remove" />
+
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
