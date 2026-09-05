@@ -248,3 +248,9 @@ Reklam kararı öncesi production RC teknik olarak başarılıydı fakat artık 
 8. Play App Signing fingerprint doğrulaması + Internal testing.
 9. Play Console Ads / Data Safety / IARC / 18+ / app access tamamlanacak.
 10. Feature graphic final onayı + 8 store screenshot.
+
+## Sohbet devri — 5 Eylül 2026
+- Yeni devir dosyası: `SOHBET_DEVRI_2026-09-05.md`.
+- Oluşturma commit’i: `11cb543f56f1b646787f546efaa5b3160ce7ff4f`.
+- Devir, reklamlı `(2)` fiziksel startup FAIL kanıtını ve startup-safe `(3)` CI SUCCESS / fiziksel PASS bekleyen durumu eksiksiz içerir.
+- Yeni sohbet başlangıcı: önce `PROJE_OZETI.md` + `SOHBET_DEVRI_2026-09-05.md` + canlı `dev/ads-v1` okunacak; kod değişikliğinden önce `(3)` fiziksel startup sonucu esas alınacak.
