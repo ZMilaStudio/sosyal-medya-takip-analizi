@@ -108,25 +108,52 @@ APK build sonucu:
 - Logcat olmadan kesin stack trace iddiası yapılmıyor.
 - En güçlü şüphe: Google Mobile Ads’in Flutter ilk frame’inden önce çalışan `com.google.android.gms.ads.MobileAdsInitProvider` erken startup yolu. Merged manifestte test App ID gerçekten mevcut olduğundan sorun körlemesine `App ID eksik` olarak etiketlenmedi.
 
-### Startup-safe Ads RC 1.0.0 (3) — HAZIRLIK
-Çalışma branch’i: `dev/ads-startup-safe-v1`.
-Başlangıç noktası: `dev/ads-v1` head `39d72c298badf531dda93db0e9a7e1e12a76e268`.
+### Startup-safe Ads RC 1.0.0 (3) — CI SUCCESS, FİZİKSEL PASS BEKLİYOR
+Çalışma branch’i `dev/ads-startup-safe-v1` üzerinde hazırlandı, ardından `dev/ads-v1` üzerine tek fast-forward ile taşındı.
+CI head: `7da23dfd61564d2bb28efa653c1489d22ff3ae50`.
 
 Uygulanan güvenlik paketi:
-- Sürüm `1.0.0+3` yapıldı; aynı production package ile `(2)` üzerine güncellenebilir.
-- Google Mobile Ads library’nin erken `MobileAdsInitProvider` provider’ı manifest merge’de `tools:node="remove"` ile kaldırılıyor.
+- Sürüm `1.0.0+3` yapıldı; aynı production package ve aynı upload signer ile `(2)` üzerine güncellenebilir.
+- Google Mobile Ads library’nin erken `MobileAdsInitProvider` provider’ı manifest merge’de `tools:node="remove"` ile kaldırıldı.
 - AdMob App ID metadata korunuyor.
 - `MobileAds.instance.initialize()` ve UMP işlemleri Flutter ilk frame’i çizildikten **750 ms sonra** başlatılıyor.
 - `AdsCoordinator` startup/consent/MobileAds init hatalarını yakalayıp **fail-closed** davranıyor: reklam katmanı hata verirse `adsReady=false`; analiz uygulaması çalışmaya devam etmeli.
 - Mobile Ads init başarısız olursa oturum reklamları devre dışı kalıyor; app startup reklam SDK’sına bağımlı değil.
 - Interstitial load/show ve privacy options çağrıları da exception-safe hale getirildi.
 - Exact launcher ve analiz mimarisi değiştirilmedi.
-- Workflow versionCode 3’e güncellendi ve merged manifestte `MobileAdsInitProvider` gerçekten yoksa PASS edecek guard eklendi.
-- Reklam permission seti artık exact whitelist olarak kontrol edilecek; SDK sessizce yeni permission eklerse CI fail edecek.
-- Hazırlık branch’inde commitler Actions tetiklemeden yapıldı; `dev/ads-v1` üzerine tek fast-forward ile yalnız bir CI turu çalıştırılacak.
+- Reklam permission seti exact whitelist olarak kontrol ediliyor; SDK sessizce yeni permission eklerse CI fail ediyor.
+
+CI run `33962525980` / job `101296777913`: **SUCCESS**.
+PASS:
+- private Play upload key + certificate fingerprint
+- package `com.zmilastudio.takipanalizi`
+- versionName `1.0.0`, versionCode `3`
+- target/compile SDK 36
+- `flutter analyze` clean
+- **23/23 test**
+- signed release APK build
+- signer verification
+- `allowBackup=false`, `usesCleartextTraffic=false`
+- Google test AdMob App ID merged
+- debuggable/testOnly yok
+- merged release manifestte **`MobileAdsInitProvider` yok**
+- exact reklam permission whitelist PASS
+- exact launcher resource table PASS
+- artifact upload PASS
+
+Artifact:
+- ad `takip-analizi-ads-startup-safe-rc-apk-1.0.0-3`
+- ID `9968483492`
+- ZIP boyutu `31,114,323` byte
+- ZIP digest `sha256:21e1497977974f645db73e2097b387e815693fef6290ef179987c9fe38b3e8f1`
+- APK boyutu `64,743,709` byte
+- APK SHA-256 `e0185d2f33f643e0c14814f8f812df00d84787a995e08f2adee0c4a8d6a723b7`
+- Artifact içindeki `.sha256` ile bağımsız yerel hash eşleşmesi PASS.
+- Kullanıcıya verilecek dosya: `Takip-Analizi-1.0.0-3-ads-startup-safe-test-rc.apk`.
+- **Fiziksel PASS henüz yok.** İlk kritik doğrulama yalnız uygulamanın açılışta artık çökmemesi olacak.
 
 ### Reklamlı merged Android permission set — GERÇEK RC’DEN
-Google Mobile Ads 9.1.0 ile release merge sonucu:
+Google Mobile Ads 9.1.0 ile release merge sonucu ve `(3)` exact whitelist:
 - `android.permission.ACCESS_ADSERVICES_AD_ID`
 - `android.permission.ACCESS_ADSERVICES_ATTRIBUTION`
 - `android.permission.ACCESS_ADSERVICES_TOPICS`
@@ -140,7 +167,7 @@ Google Mobile Ads 9.1.0 ile release merge sonucu:
 Notlar:
 - Bunlar SDK/library merge izinleridir; sosyal medya arşivlerini okumak için geniş dosya/medya/contact/location/camera/mic/SMS/call-log izni eklenmedi.
 - `MANAGE_EXTERNAL_STORAGE`, `READ/WRITE_EXTERNAL_STORAGE`, contacts, camera, mic, location, SMS, call log izinleri yok.
-- Final production workflow’da yukarıdaki permission seti exact whitelist olarak kilitlenecek; SDK gelecekte yeni izin eklerse build duracak.
+- Final production workflow’da bu permission seti exact whitelist olarak korunacak; SDK gelecekte yeni izin eklerse build duracak.
 
 ## Production privacy/security — REKLAMLI MODEL
 - Analiz verisi local-first kalır.
@@ -202,15 +229,15 @@ Reklam kararı öncesi production RC teknik olarak başarılıydı fakat artık 
 - `backup/pre-production-rc-aapt-fix` korunuyor.
 - `backup/pre-ads-v1` → reklam entegrasyonu öncesi güvenli production hazırlığı.
 - `dev/release-polish-v1` → reklamsız production/store baseline.
-- `dev/ads-v1` → reklam entegrasyonu; `1.0.0 (2)` CI SUCCESS fakat fiziksel startup FAIL.
-- `dev/ads-startup-safe-v1` → `1.0.0 (3)` provider-free, delayed/fail-closed reklam startup düzeltmesi hazırlanıyor.
+- `dev/ads-v1` → startup-safe `1.0.0 (3)` Ads RC CI SUCCESS; fiziksel PASS bekliyor.
+- `dev/ads-startup-safe-v1` → provider-free, delayed/fail-closed reklam startup düzeltmesinin hazırlık branch’i.
 - `test/production-rc-apk-1.0.0-1` → eski reklamsız production RC APK.
 - `main` → public privacy/support + production workflow; reklamlı final privacy henüz main’e taşınmadı.
 
 ## Sıradaki iş — KİLİTLİ SIRA
-1. `dev/ads-startup-safe-v1` tamamlanıp `dev/ads-v1` üzerine tek fast-forward yapılacak; yalnız bir Ads RC CI turu çalışacak.
-2. CI SUCCESS olursa `1.0.0 (3)` startup-safe Google test reklamlı APK kullanıcıya verilecek.
-3. Samsung fiziksel test: önce uygulamanın açılışta çökmemesi; sonra banner, Instagram analiz, 5 liste, interstitial, persistence ve X smoke.
+1. Kullanıcı Samsung cihazda `1.0.0 (3)` startup-safe Google test reklamlı APK’yı `(2)` üzerine kuracak.
+2. İlk kritik fiziksel doğrulama: uygulama normal açılıyor mu, `sürekli olarak duruyor` hatası ortadan kalktı mı?
+3. Açılış PASS olursa aynı tek fiziksel turda banner, Instagram gerçek analiz, 5 liste, interstitial, persistence ve X smoke tamamlanacak.
 4. Fiziksel PASS sonrası AdMob Console’da gerçek Android uygulaması `com.zmilastudio.takipanalizi` oluşturulacak/bağlanacak.
 5. Canlı `App ID`, adaptive banner ad unit ve interstitial ad unit oluşturulacak.
 6. Canlı ID’ler repoya sabitlenmeden secure CI inputs/secrets üzerinden final AAB build’e verilecek.
