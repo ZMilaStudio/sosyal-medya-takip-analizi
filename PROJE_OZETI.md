@@ -254,3 +254,11 @@ Reklam kararı öncesi production RC teknik olarak başarılıydı fakat artık 
 - Oluşturma commit’i: `11cb543f56f1b646787f546efaa5b3160ce7ff4f`.
 - Devir, reklamlı `(2)` fiziksel startup FAIL kanıtını ve startup-safe `(3)` CI SUCCESS / fiziksel PASS bekleyen durumu eksiksiz içerir.
 - Yeni sohbet başlangıcı: önce `PROJE_OZETI.md` + `SOHBET_DEVRI_2026-09-05.md` + canlı `dev/ads-v1` okunacak; kod değişikliğinden önce `(3)` fiziksel startup sonucu esas alınacak.
+
+## V2 devam doğrulaması — 5 Eylül 2026
+- Yeni V2 sohbetinde `PROJE_OZETI.md`, `SOHBET_DEVRI_2026-09-05.md` ve canlı `dev/ads-v1` tekrar okundu.
+- Runtime RC head `7da23dfd61564d2bb28efa653c1489d22ff3ae50` ile V2 başlangıcındaki branch tip `299d928d10a3a135065644ef7e40146969c2e52e` karşılaştırıldı: branch 4 commit ileride, fark yalnız `PROJE_OZETI.md` ve `SOHBET_DEVRI_2026-09-05.md`; uygulama/runtime kaynağında drift yok.
+- Run `33962525980` artifact `9968483492` yeniden doğrulandı: expired=false, branch `dev/ads-v1`, head `7da23dfd61564d2bb28efa653c1489d22ff3ae50`.
+- Artifact tekrar indirildi ve APK yeniden çıkarıldı. Bağımsız SHA-256 tekrar `e0185d2f33f643e0c14814f8f812df00d84787a995e08f2adee0c4a8d6a723b7`; artifact içi hash ve devir kaydıyla birebir eşleşti.
+- Kullanıcı handoff dosyası tekrar hazırlandı: `Takip-Analizi-1.0.0-3-ads-startup-safe-test-rc.apk`.
+- Yeni Actions run tetiklenmedi, kod değiştirilmedi. Fiziksel startup PASS hâlâ tek kritik kapıdır.
