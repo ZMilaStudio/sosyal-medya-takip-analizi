@@ -103,6 +103,7 @@ APK build sonucu:
 **5 Eylül 2026 fiziksel sonuç: FAIL.**
 - Kullanıcı Samsung cihazda APK’yı kurdu.
 - Uygulama açılışta Android tarafından kapatıldı; ekranda `Takip Analizi sürekli olarak duruyor` mesajı görüldü.
+- 5 Eylül 15:36’da gönderilen ikinci ekran görüntüsü aynı `(2)` splash/startup crash davranışını tekrar doğruladı; startup-safe `(3)` bu aşamada henüz kullanıcı tarafından kurulup doğrulanmış değildi.
 - Bu nedenle `1.0.0 (2)` fiziksel PASS değildir ve yayın adayı olamaz.
 - Reklamsız production RC aynı cihaz ailesindeki önceki mimaride çalıştığı için regresyon reklam entegrasyonu/startup yoluna izole edildi.
 - Logcat olmadan kesin stack trace iddiası yapılmıyor.
@@ -149,7 +150,8 @@ Artifact:
 - APK boyutu `64,743,709` byte
 - APK SHA-256 `e0185d2f33f643e0c14814f8f812df00d84787a995e08f2adee0c4a8d6a723b7`
 - Artifact içindeki `.sha256` ile bağımsız yerel hash eşleşmesi PASS.
-- Kullanıcıya verilecek dosya: `Takip-Analizi-1.0.0-3-ads-startup-safe-test-rc.apk`.
+- Taze kullanıcı handoff dosyası yeniden çıkarıldı: `Takip-Analizi-1.0.0-3-ads-startup-safe-test-rc.apk`.
+- Backup `backup/ads-v1-startup-crash-baseline` startup-fix öncesi reklamlı dal durumunu koruyor.
 - **Fiziksel PASS henüz yok.** İlk kritik doğrulama yalnız uygulamanın açılışta artık çökmemesi olacak.
 
 ### Reklamlı merged Android permission set — GERÇEK RC’DEN
@@ -228,6 +230,7 @@ Reklam kararı öncesi production RC teknik olarak başarılıydı fakat artık 
 - `backup/device-v2-39-release-hardening-ci-working` korunuyor.
 - `backup/pre-production-rc-aapt-fix` korunuyor.
 - `backup/pre-ads-v1` → reklam entegrasyonu öncesi güvenli production hazırlığı.
+- `backup/ads-v1-startup-crash-baseline` → reklamlı `(2)` startup crash döneminin güvenli referansı.
 - `dev/release-polish-v1` → reklamsız production/store baseline.
 - `dev/ads-v1` → startup-safe `1.0.0 (3)` Ads RC CI SUCCESS; fiziksel PASS bekliyor.
 - `dev/ads-startup-safe-v1` → provider-free, delayed/fail-closed reklam startup düzeltmesinin hazırlık branch’i.
