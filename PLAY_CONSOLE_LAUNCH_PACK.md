@@ -1,4 +1,4 @@
-# Takip Analizi — Play Console Launch Pack
+# TakipRadar — Play Console Launch Pack
 
 Son güncelleme: 2 Eylül 2026
 
@@ -95,10 +95,10 @@ Mevcut ürün davranışına göre temel cevaplar:
 - Horror / fear → No
 - Location sharing → No
 - Digital purchases → No
-- Takip Analizi kullanıcıları arasında native messaging / content exchange → No
+- TakipRadar kullanıcıları arasında native messaging / content exchange → No
 - Uygulama içinde host edilen user-generated content → No
 
-Harici Instagram/X profilini açmak Takip Analizi kullanıcıları arasında native sosyal özellik değildir.
+Harici Instagram/X profilini açmak TakipRadar kullanıcıları arasında native sosyal özellik değildir.
 
 - [ ] Questionnaire tamamlandı.
 - [ ] IARC'ın ürettiği gerçek rating kaydedildi.
@@ -147,7 +147,7 @@ Kaynak:
 
 ### App name
 
-`Takip Analizi`
+`TakipRadar`
 
 ### Short description
 
@@ -181,7 +181,7 @@ Kaynak:
 `PLAY_STORE_LISTING_EN.md`
 
 - [ ] English localization eklendi.
-- [ ] App name aynı: `Takip Analizi`.
+- [ ] App name aynı: `TakipRadar`.
 - [ ] EN short/full description girildi.
 
 ## 9. Store graphics
@@ -231,7 +231,7 @@ Kaynak plan:
 
 Önerilen release adı:
 
-`Takip Analizi 1.0.0 (1)`
+`TakipRadar 1.0.0 (1)`
 
 Release notes kaynağı:
 `PLAY_RELEASE_NOTES.md`
