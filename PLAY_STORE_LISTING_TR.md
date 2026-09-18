@@ -1,4 +1,4 @@
-# Takip Analizi — Google Play Mağaza Girişi (TR)
+# TakipRadar — Google Play Mağaza Girişi (TR)
 
 Son güncelleme: 1 Eylül 2026
 
@@ -21,7 +21,7 @@ Resmi kaynaklar:
 
 ## Önerilen mağaza adı
 
-**Takip Analizi**
+**TakipRadar**
 
 Karakter sayısı: 13 / 30.
 
@@ -31,7 +31,7 @@ Ad mevcut uygulama etiketiyle aynıdır ve Instagram/X ile resmi bir ilişki ima
 
 **Araçlar**
 
-Gerekçe: Takip Analizi bir sosyal ağ veya iletişim platformu değil; kullanıcının kendi resmi veri arşivini yerel olarak inceleyen bir yardımcı analiz aracıdır. Google Play kategori örneklerinde `Sosyal` sosyal ağ/check-in uygulamaları, `Araçlar` ise Android cihazları için araçlar olarak tanımlanır.
+Gerekçe: TakipRadar bir sosyal ağ veya iletişim platformu değil; kullanıcının kendi resmi veri arşivini yerel olarak inceleyen bir yardımcı analiz aracıdır. Google Play kategori örneklerinde `Sosyal` sosyal ağ/check-in uygulamaları, `Araçlar` ise Android cihazları için araçlar olarak tanımlanır.
 
 Alternatif olarak uygulamanın konumlandırması gelecekte görev/iş akışı odaklı hale gelirse `Verimlilik` yeniden değerlendirilebilir. Mevcut ürün için ilk tercih `Araçlar` olmalıdır.
 
@@ -43,7 +43,7 @@ Karakter sayısı: 68 / 80.
 
 ## Tam açıklama
 
-Takip Analizi, Instagram ve X takip ilişkilerini resmi veri arşivlerinden cihazında incelemeni sağlayan local-first bir analiz aracıdır.
+TakipRadar, Instagram ve X takip ilişkilerini resmi veri arşivlerinden cihazında incelemeni sağlayan local-first bir analiz aracıdır.
 
 ### Şifre paylaşmadan analiz yap
 
@@ -80,7 +80,7 @@ Analiz sonucunu kopyalayabilir veya TXT dosyası olarak kaydedebilirsin. Analiz 
 
 Takip arşivleri geliştirici sunucusuna yüklenmez; analiz cihazda kalacak şekilde tasarlanmıştır. Flutter geliştirme build’leri debug araçları için internet izni içerebilir, ancak production release hattı merged release manifestinde Android INTERNET izni bulunursa build’i kabul etmeyecek şekilde hazırlanmıştır. Bir sosyal medya profilini açmayı seçersen bağlantı kullanıcı tarafından başlatılan bir işlem olarak ilgili üçüncü taraf uygulamaya veya tarayıcıya devredilir.
 
-Takip Analizi bağımsız bir ZMila Studio uygulamasıdır; Instagram veya X tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
+TakipRadar bağımsız bir ZMila Studio uygulamasıdır; Instagram veya X tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
 
 Tam açıklama 4.000 karakter sınırının altındadır.
 
