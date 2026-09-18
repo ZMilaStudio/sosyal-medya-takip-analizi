@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application
-        android:label="Takip Analizi"
+        android:label="TakipRadar"
         android:name="${applicationName}"
         android:icon="@drawable/takip_launcher_user"
         android:roundIcon="@drawable/takip_launcher_user"
