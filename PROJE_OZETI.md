@@ -71,7 +71,7 @@ Kod/al altyapı:
 - Analyze clean, 23/23 test, signed release APK, signer/package/version/manifest/launcher kontrolleri PASS.
 - APK `64,678,457` byte; SHA-256 `4dee1e0f955508ff9b12990bebf69a0803f15c6696331b78e858b007c98bce23`.
 - Artifact `takip-analizi-ads-rc-apk-1.0.0-2`, ID `9912704423`.
-- 5 Eylül 2026 fiziksel sonuç: Samsung cihazda splash/startup aşamasında `Takip Analizi sürekli olarak duruyor`; iki ayrı denemeyle **FAIL**.
+- 5 Eylül 2026 fiziksel sonuç: Samsung cihazda splash/startup aşamasında `TakipRadar sürekli olarak duruyor`; iki ayrı denemeyle **FAIL**.
 - Logcat alınmadığı için kesin exception adı iddia edilmedi.
 
 ## Startup-safe Ads RC 1.0.0 (3) — CI SUCCESS, FİZİKSEL FAIL
@@ -182,7 +182,7 @@ RC4 Artifact:
 - Kullanıcı handoff dosyası: `Takip-Analizi-1.0.0-4-ads-android16-workmanager-fix-test-rc.apk`.
 
 **6 Eylül 2026 fiziksel sonuç — STARTUP PASS / TEST BANNER PASS:**
-- Kullanıcı RC4’ü Samsung fiziksel cihazda açtı; ana `Takip Analizi` ekranı normal render edildi.
+- Kullanıcı RC4’ü Samsung fiziksel cihazda açtı; ana `TakipRadar` ekranı normal render edildi.
 - Önceki `(2)` ve `(3)`te görülen `sürekli olarak duruyor` startup crash’i RC4’te oluşmadı.
 - Kullanıcının ekran görüntüsünde alt bölümde Google test **AdMob Adaptive Banner** açıkça görünür durumda; `Test Reklamı` etiketi de görünüyor.
 - Böylece iki kritik fiziksel kapı aynı anda PASS: uygulama startup + reklam SDK/banner yükleme.
