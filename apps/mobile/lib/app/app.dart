@@ -9,7 +9,7 @@ class SosyalMedyaTakipApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Takip Analizi',
+      title: 'TakipRadar',
       debugShowCheckedModeBanner: false,
       routerConfig: appRouter,
       theme: AppTheme.light,
