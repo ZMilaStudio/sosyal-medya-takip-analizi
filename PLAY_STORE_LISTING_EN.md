@@ -1,4 +1,4 @@
-# Takip Analizi — Google Play Store Listing (EN)
+# TakipRadar — Google Play Store Listing (EN)
 
 Last updated: September 1, 2026
 
@@ -6,7 +6,7 @@ This file contains the prepared English localization for the production Google P
 
 ## App name
 
-**Takip Analizi**
+**TakipRadar**
 
 13 / 30 characters.
 
@@ -16,7 +16,7 @@ The product name stays identical across locales and does not imply an official r
 
 **Tools**
 
-Takip Analizi is not a social network or messaging service. It is a utility that analyzes the user’s own official social-media archive files locally. `Social` can be reconsidered only if the product itself later becomes a social-networking experience.
+TakipRadar is not a social network or messaging service. It is a utility that analyzes the user’s own official social-media archive files locally. `Social` can be reconsidered only if the product itself later becomes a social-networking experience.
 
 ## Short description
 
@@ -26,7 +26,7 @@ Takip Analizi is not a social network or messaging service. It is a utility that
 
 ## Full description
 
-Takip Analizi is a local-first utility for reviewing Instagram and X follow relationships from your official data archive files.
+TakipRadar is a local-first utility for reviewing Instagram and X follow relationships from your official data archive files.
 
 ### Analyze without sharing passwords
 
@@ -49,7 +49,7 @@ You do not need to enter your Instagram or X password. The app does not sign in 
 
 ### Compare changes over time
 
-Analysis snapshots can be stored locally on your device. When you import a newer archive for the same account, Takip Analizi can automatically compare it with the previous snapshot. You can also manually compare two historical snapshots.
+Analysis snapshots can be stored locally on your device. When you import a newer archive for the same account, TakipRadar can automatically compare it with the previous snapshot. You can also manually compare two historical snapshots.
 
 ### Manage lists
 
@@ -63,7 +63,7 @@ Copy an analysis report or save it as a TXT file. You can delete analysis histor
 
 Your follow-archive files are not uploaded to a developer-operated server. Analysis is designed to stay on the device. Flutter development builds can include internet access for debugging, while the production release pipeline explicitly rejects a merged release manifest containing the Android INTERNET permission. If you choose to open a social-media profile, the link is handed off to the relevant third-party app or browser as a user-initiated action.
 
-Takip Analizi is an independent ZMila Studio application and is not developed, sponsored, endorsed, or approved by Instagram or X.
+TakipRadar is an independent ZMila Studio application and is not developed, sponsored, endorsed, or approved by Instagram or X.
 
 ## Tag strategy
 
